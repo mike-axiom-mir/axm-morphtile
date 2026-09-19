@@ -8,7 +8,7 @@ Ground rules that are already true and should stay true:
 5. Ops and merge-unit keys address tiles by PATH. Never add an API that only works at the root.
 6. A form may stop descending (a simple view). It may never keep its own reduced copy of the world.
 
-**If you are the next model picking this up: read `docs/PRINCIPLES.md`, then run `npm test` (72 tests). Every test name is a claim; if one fails, that claim is what broke.** The workshop is `npm run build` -> `dist/axiomatter-workshop.html`, one file, no server.
+**If you are the next model picking this up: read `docs/PRINCIPLES.md`, then `docs/FORMAT.md`, then run `npm test` (99 tests). Every test name is a claim; if one fails, that claim is what broke.** The workshop is `npm run build` -> `dist/axiomatter-workshop.html`, one file, no server.
 
 Priority order changed on 2026-09-19 by Mike's principle 1: **deepen native matter before adding bridges.** Items 1-2 below (bridges) now come AFTER the depth list.
 
@@ -18,7 +18,7 @@ the live website and outside bridges come after that. v0.3 implements the sleepi
 
 Depth list (do these first):
 - ~~**D10 Recipes that compose.**~~ **Done in v0.3** (`{use: <def>}` with shared budget, cycle and depth guards). Per-use settings (`with`) are done too. Next: `use` a plain tile or a shelf entry as well as a definition.
-- **D11 Recipes for the other facets.** Materials are done (`paint`). Still to do: behavior as a recipe (motion written as expressions rather than chosen from spin/bob/orbit/pulse), and painting that can read a surface's direction, not only its position.
+- ~~**D11 Recipes for the other facets.**~~ **Done in v0.3**: `paint` for materials, `motion` for behavior. Every facet is now describable in the same little language. World-defined words are done too (`word.define`, `world.words`). Both are done too: painting reads `nx, ny, nz, up`, and words travel as verified packs (`exportWords`/`importWords`). Kits (`exportKit`/`importKit`) now carry a tile with its definitions and words, which covers copying between worlds. Still open: per-pixel detail (the triangle is the smallest unit of colour today), and a *linked* library several worlds point at rather than copy from.
 - ~~**D7 More ways to wake.**~~ **Done in v0.3**: `signal`, `near` (with hysteresis), `value`, `time`, `manual`, via the pure `pendingWakes` + `settle`. Next: waking because a *form* needs it (a panel opening, a website compiling), and a schedule.
 - ~~**D8 Capability from anywhere.**~~ **Done in v0.3** for definitions (`grants_ref`), with HOLD on an unresolvable name. Next: references to a shelf entry, a file, or a bridged package — the resolver is one function (`grantsOf`), so add cases there and keep the evidence labels.
 - **D9 Nothing computed unless read.** `renderAsset({within})` is done and proven. Still linear: add a spatial index (a grid keyed by place) so `leaves()` and `pendingWakes` stop touching every tile, and cache `leaves()` per structure hash.
@@ -39,6 +39,8 @@ Bridge and other steps (after the depth list):
 5. **More forms**: `tool` (a tile graph as a runnable pipeline — signals already are one), `glb` export of `compileMesh` output.
 6. **Glove**: a `HandState` -> ops adapter (grab = select, move together = edge.add, rotate = facet.swap of `rot`). Core needs no change.
 7. **Schema 0.2** + a protocol-evolution style test that proves meaning survives 0.1 -> 0.2, not just parsing.
+
+**Porting this into something else (UC, another language):** implement against `docs/FORMAT.md` and check yourself with `conformance/vectors.json` — it is designed so a second implementation can be proven equivalent rather than assumed so. If you change behaviour on purpose, regenerate the vectors (`npm run conformance`) in the same commit as the reason, so the contract and the code never drift apart silently.
 
 Known rough edges: mesh cache keyed by JSON string; rasterizer has no near-plane clipping (triangles crossing the
 camera are dropped); `orbit` facing assumes +z is forward; workshop re-renders whole panes (fine at this size).

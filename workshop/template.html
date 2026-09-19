@@ -53,6 +53,14 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
 .mt-panel{flex:1 1 12rem;border:1px solid var(--tile);border-top-width:4px;background:color-mix(in srgb,var(--tile) 10%,var(--deep));padding:.6rem .7rem;display:grid;gap:.4rem;align-content:start}
 .mt-panel.is-lit{box-shadow:0 0 0 1px var(--glow),0 0 22px -4px var(--glow)}
 .mt-panel header{display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}.mt-panel h3{margin:0;font:600 .95rem var(--body)}.mt-kind,.mt-behavior{font-size:.78rem;color:var(--dim);margin:0}
+.mt-panel.is-view{border-top-width:6px}.v-holder{flex:1 1 12rem;display:grid;gap:.6rem}
+.v-text{margin:0;font-size:.9rem}.v-text.is-strong{font-weight:600;font-size:1rem}.v-label{font-size:.75rem;color:var(--dim)}
+.v-value{display:flex;align-items:baseline;gap:.5rem}.v-value b{font:1.3rem var(--mono)}
+.v-meter{display:grid;gap:.2rem}.v-bar{height:.55rem;border:1px solid var(--tile);border-radius:99px;overflow:hidden}.v-bar i{display:block;height:100%;background:var(--tile)}
+.v-row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}.v-group,.v-repeat{display:grid;gap:.35rem}.v-repeat{grid-template-columns:repeat(auto-fill,minmax(5rem,1fr))}
+.v-item{border:1px dashed var(--tile);border-radius:6px;padding:.15rem .4rem;font-size:.8rem}
+.v-button{border-color:var(--tile)}.v-control{display:grid;gap:.15rem}.v-control input[type=range]{width:100%;accent-color:var(--tile)}
+.v-embed{border-left:3px solid var(--tile);padding-left:.5rem}.v-missing{margin:0;font-size:.8rem;color:var(--hold)}
 .mt-params{display:grid;gap:.3rem}.mt-params label{display:grid;grid-template-columns:1fr auto;gap:.15rem .5rem;font-size:.78rem;color:var(--ice);align-items:center}.mt-params label>span{opacity:.8}.mt-params input[type=range],.mt-params select{grid-column:1/-1;width:100%;accent-color:var(--tile);min-height:34px}.mt-params output{font:12px var(--mono);color:var(--ice)}.mt-params label.is-dormant{color:var(--hold)}
 .ctl{flex-wrap:nowrap;min-width:0}.ctl input[type=range]{flex:1 1 3rem;min-width:0;accent-color:var(--ion)}.ctl select{min-width:0;flex:1 1 4rem}.ctl input[type=text]{width:3.6rem;flex:0 0 auto}.ctl output{font:12px var(--mono);min-width:2.4rem;text-align:right;flex:0 0 auto}.ctl button{flex:0 0 auto;padding:.3rem .5rem;font-size:.8rem;min-height:34px}
 .mt-panel dl{margin:0;display:flex;gap:1rem;flex-wrap:wrap}.mt-panel dt{font-size:.75rem;color:var(--dim)}.mt-panel dd{margin:0;font:1.15rem var(--mono)}
@@ -221,6 +229,28 @@ function paneTiles(w) {
     const meshes = Object.assign(t.interior ? { 'its contents': { type: 'interior', source: null, data: {} } } : {}, MT.PRESETS.mesh);
     const ta = el('textarea', { value: JSON.stringify(t.facets[ui.facetEdit], null, 1), spellcheck: false, 'aria-label': 'Facet JSON' });
     const rec = t.facets.mesh.type === 'generated' && t.facets.mesh.data.generator === 'recipe' ? t.facets.mesh.data : null;
+    out.push(el('div', { class: 'card' }, el('h4', { text: 'Interface' }),
+      el('p', { class: 'note', text: t.view ? 'This tile carries its own interface. In Panel form it is shown this way instead of the card the workshop would draw.' : 'The card the workshop draws is only a default. Give this tile an interface and the world decides how it presents itself.' }),
+      el('details', { open: !!t.view }, el('summary', { text: t.view ? 'Edit this interface' : 'Give this tile an interface' }), (function () {
+        const start = t.view || { title: t.name, body: [].concat(Object.keys(MT.readVars(w, sel, now())).map((n) => ({ value: n })),
+          (t.facets.connect.sockets || []).filter((x) => x.kind === 'signal' && x.dir === 'in').map((x) => ({ button: x.id })),
+          (t.params || []).map((pm) => ({ control: pm.id })), [{ text: 'Written by hand, in the same language as everything else.' }]) };
+        const vt = el('textarea', { class: 'code', value: JSON.stringify(start, null, 1), spellcheck: false, 'aria-label': 'Interface JSON' });
+        return [el('p', { class: 'note', text: 'body is a list of: {"text"}, {"value":"<a value of this tile>"}, {"meter":<expr>,"min","max"}, {"button":"<signal>"}, {"control":"<control id>"}, {"tile":"<another tile>"}, {"row":[…]}, {"repeat":<expr>,"as":"i","body":[…]}, each optionally with {"when":<expr>}.' }), vt,
+          el('div', { class: 'acts' }, el('button', { class: 'go', text: t.view ? 'Apply interface' : 'Give it this interface', onclick: () => { let v; try { v = JSON.parse(vt.value); } catch (e) { return toast('That is not valid JSON: ' + e.message, true); } if (edit({ op: 'view.set', id: sel, view: v })) { ui.form = 'panel'; renderAll(); } } }),
+            t.view ? el('button', { class: 'warn', text: 'Back to the default card', onclick: () => edit({ op: 'view.set', id: sel, view: null }) }) : null)]; })())));
+    const mo = (t.facets.behavior.data || {}).motion;
+    if (mo) out.push(el('div', { class: 'card' }, el('h4', { text: 'Motion' }),
+      el('p', { class: 'note', text: 'This movement is not one of the ready-made moves \u2014 it is written here as expressions of time and of this tile\u2019s own numbers.' }),
+      Object.keys(mo.vars || {}).map((k) => el('div', { class: 'row' }, el('span', { text: k }), el('div', { class: 'acts ctl' },
+        el('input', { type: 'range', min: 0, max: Math.max(1, Math.abs(mo.vars[k]) * 3), step: 0.05, value: mo.vars[k], 'aria-label': k,
+          oninput: (e) => { const o = e.target.parentNode.querySelector('output'); if (o) o.textContent = e.target.value; },
+          onchange: (e) => { const d = MT.clone(t.facets.behavior.data); d.motion.vars[k] = Number(e.target.value); swap('behavior', { type: 'scripted', data: d }); } }),
+        el('output', { text: String(mo.vars[k]) }),
+        el('button', { text: 'Make a control', onclick: () => edit({ op: 'param.add', id: sel, param: { id: 'move_' + k, label: k, type: 'number', min: 0, max: Math.max(1, Math.abs(mo.vars[k]) * 3), step: 0.05, binds: [{ facet: 'behavior', at: 'data.motion.vars.' + k }] } }) })))),
+      el('details', {}, el('summary', { text: 'Write the motion itself' }), (function () { const mt = el('textarea', { class: 'code', value: JSON.stringify(mo, null, 1), spellcheck: false, 'aria-label': 'Motion JSON' });
+        return [el('p', { class: 'note', text: 'pos and rot are three expressions each; glow is one. ["t"] is the clock, ["var","name"] is one of these numbers or one of this tile\u2019s own values, and sin, cos, sqrt, pow, abs and wrap are available.' }), mt,
+          el('div', { class: 'acts' }, el('button', { class: 'go', text: 'Apply motion', onclick: () => { try { const d = MT.clone(t.facets.behavior.data); d.motion = JSON.parse(mt.value); swap('behavior', { type: 'scripted', data: d }); } catch (e) { toast('That is not valid JSON: ' + e.message, true); } } }))]; })())));
     const paint = (t.facets.material.data || {}).paint;
     if (paint) out.push(el('div', { class: 'card' }, el('h4', { text: 'Painting' }),
       el('p', { class: 'note', text: 'This colour is not a swatch \u2014 it is written as an expression of where you are on the shape, using x, y, z and these numbers.' }),
@@ -231,7 +261,7 @@ function paneTiles(w) {
         el('output', { text: String(paint.vars[k]) }),
         el('button', { text: 'Make a control', onclick: () => edit({ op: 'param.add', id: sel, param: { id: 'paint_' + k, label: k, type: 'number', min: 0, max: Math.max(1, Math.abs(paint.vars[k]) * 3), step: Math.abs(paint.vars[k]) > 4 ? 1 : 0.05, binds: [{ facet: 'material', at: 'data.paint.vars.' + k }] } }) })))),
       el('details', {}, el('summary', { text: 'Write the painting itself' }), (function () { const pt = el('textarea', { class: 'code', value: JSON.stringify(paint, null, 1), spellcheck: false, 'aria-label': 'Painting JSON' });
-        return [el('p', { class: 'note', text: 'color: three expressions, each giving 0 to 1. [\"var\",\"y\"] is how high this piece sits; anything it cannot read is simply ignored.' }), pt,
+        return [el('p', { class: 'note', text: 'color: three expressions, each giving 0 to 1. ["var","y"] is how high this piece sits, and ["var","up"] is how much it faces the sky (1 flat on top, 0 a sheer flank). x, z, nx, ny, nz are there too; anything it cannot read is simply ignored.' }), pt,
           el('div', { class: 'acts' }, el('button', { class: 'go', text: 'Apply painting', onclick: () => { try { const d = MT.clone(t.facets.material.data); d.paint = JSON.parse(pt.value); swap('material', { type: t.facets.material.type, source: null, data: d }); } catch (e) { toast('That is not valid JSON: ' + e.message, true); } } }))]; })())));
     if (rec) { const built = MT.compileMesh(t, w);
       out.push(el('div', { class: 'card' }, el('h4', { text: 'Recipe' }),
@@ -329,6 +359,26 @@ function paneTiles(w) {
             if (edit({ op: 'cap.add', id: sel, capability: cap })) { nm.value = on.value = near.value = ''; renderAll(); }
           } }))]; })())));
   }
+  const words = w.words || {}, wordIds = Object.keys(words).sort();
+  out.push(el('div', { class: 'card' }, el('h4', { text: 'Words this world knows' }),
+    el('p', { class: 'note', text: 'Every expression in this world — shapes, paintings, motion, logic — is written in the same small language. These are words the world taught itself; they work everywhere the built-in ones do.' }),
+    wordIds.length ? el('ul', { class: 'plain' }, wordIds.map((k) => el('li', {}, el('b', { text: k + '(' + (words[k].args || []).join(', ') + ')' }), words[k].note ? el('span', { class: 'tag', text: words[k].note }) : null,
+      el('span', { class: 'tag', text: MT.canonical(words[k].body).slice(0, 40) }), el('button', { text: 'Forget it', onclick: () => edit({ op: 'word.remove', name: k }) })))) : el('p', { class: 'note', text: 'None yet. The engine knows ' + MT.BUILTIN_WORDS.length + ' words; this world can add its own.' }),
+    el('div', { class: 'acts' }, wordIds.length ? el('button', { text: 'Save these words as a file', onclick: () => download('morphtile-words.json', JSON.stringify(MT.exportWords(w), null, 1)) }) : null,
+      el('button', { text: 'Open a words file', onclick: () => openFile('.json', (pack) => { const r = MT.importWords(w, pack);
+        if (!r.ok) return toast(r.status + (r.observed ? ' (claimed ' + String(r.claimed).slice(0, 10) + ', got ' + r.observed.slice(0, 10) + ')' : ''), true);
+        if (!r.ops.length) return toast(r.conflicts.length ? 'Held: ' + r.conflicts.map((c) => c.name + ' — ' + c.why).join('; ') : 'This world already knows all of those words.', !!r.conflicts.length);
+        for (const op of r.ops) if (!edit(op)) return;
+        toast(r.ops.length + ' word' + (r.ops.length === 1 ? '' : 's') + ' added' + (r.conflicts.length ? ', ' + r.conflicts.length + ' held' : '') + '. Commit in Safety.'); renderAll(); }) })),
+    el('details', {}, el('summary', { text: 'Teach this world a word' }), (function () {
+      const nmw = el('input', { type: 'text', placeholder: 'name, e.g. ease', 'aria-label': 'Word name' });
+      const ar = el('input', { type: 'text', placeholder: 'what it takes, e.g. x, y', 'aria-label': 'Word arguments' });
+      const bd = el('textarea', { class: 'code', placeholder: '["*", ["var", "x"], ["var", "x"]]', spellcheck: false, 'aria-label': 'Word body' });
+      const nt = el('input', { type: 'text', placeholder: 'what it is for (optional)', 'aria-label': 'Word note' });
+      return [el('div', { class: 'row' }, el('span', { text: 'Name' }), nmw), el('div', { class: 'row' }, el('span', { text: 'Takes' }), ar), el('div', { class: 'row' }, el('span', { text: 'Note' }), nt),
+        el('p', { class: 'note', text: 'Its body is an expression using those names. Once taught, write it as ["' + (wordIds[0] || 'ease') + '", …] anywhere.' }), bd,
+        el('div', { class: 'acts' }, el('button', { class: 'go', text: 'Teach it', onclick: () => { let body; try { body = JSON.parse(bd.value); } catch (e) { return toast('The body is not valid JSON: ' + e.message, true); }
+          if (edit({ op: 'word.define', name: nmw.value.trim(), args: ar.value.split(',').map((x) => x.trim()).filter(Boolean), body, note: nt.value || undefined })) { nmw.value = ar.value = bd.value = nt.value = ''; renderAll(); } } }))]; })())));
   const defs = w.defs || {}, defIds = Object.keys(defs).sort();
   if (t || defIds.length) out.push(el('div', { class: 'card' }, el('h4', { text: 'Shared definitions' }),
     el('p', { class: 'note', text: 'Instances of a definition are the same thing in many places: each keeps its own name, position, wires and state, and a change promoted to the definition reaches all of them.' }),
@@ -345,13 +395,21 @@ function paneTiles(w) {
       : el('button', { text: 'Make “' + t.name + '” a shared definition', onclick: () => { if (edit({ op: 'def.create', id: sel, by: 'human' })) renderAll(); } }),
       t.provenance.instance_of ? el('span', { class: 'tag', text: 'instance of ' + (defs[t.provenance.instance_of] || {}).name } ) : null) : null));
   const shelf = shelfRead();
-  out.push(el('div', { class: 'card' }, el('h4', { text: 'Shelf' }), el('p', { class: 'note', text: 'Whole tiles kept in this browser, at full depth with their controls. Put one here and drop it into any world, at any depth.' }),
+  out.push(el('div', { class: 'card' }, el('h4', { text: 'Shelf' }), el('p', { class: 'note', text: 'Whole tiles kept in this browser, at full depth with their controls \u2014 and with the shapes and words they are made of, so they still work somewhere else.' }),
     shelf.length ? el('ul', { class: 'plain' }, shelf.map((entry, i) => el('li', {}, el('b', { text: entry.tile.name }), el('span', { class: 'tag', text: MT.countTiles({ tiles: { x: entry.tile } }) + ' tiles' }), el('span', { class: 'tag', text: entry.saved }),
-      el('button', { class: 'go', text: 'Place here', onclick: () => { if (edit({ op: 'tile.add', in: ui.scope, tile: entry.tile, rename: true })) renderAll(); } }),
-      el('button', { text: 'Save as file', onclick: () => download(entry.tile.id + '.tile.json', JSON.stringify(entry.tile, null, 1)) }),
+      el('button', { class: 'go', text: 'Place here', onclick: () => { const kit = entry.kit && (entry.kit.expect.defs || entry.kit.expect.words) ? MT.importKit(w, entry.kit, { in: ui.scope, partial: true }) : null;
+        if (kit && kit.ops.length) { for (const op of kit.ops) if (!edit(op)) return; if (kit.conflicts.length) toast(kit.conflicts.length + ' part(s) already differed here and were left alone.'); return renderAll(); }
+        if (edit({ op: 'tile.add', in: ui.scope, tile: entry.tile, rename: true })) renderAll(); } }),
+      el('button', { text: 'Save as file', onclick: () => download(entry.tile.id + (entry.kit ? '.kit.json' : '.tile.json'), JSON.stringify(entry.kit || entry.tile, null, 1)) }),
       el('button', { class: 'warn', text: 'Forget', onclick: () => { const l = shelfRead(); l.splice(i, 1); shelfWrite(l); renderPane(); } })))) : el('p', { class: 'note', text: 'The shelf is empty.' }),
-    el('div', { class: 'acts' }, t ? el('button', { text: 'Put “' + t.name + '” on the shelf', onclick: () => { const l = shelfRead(); l.unshift({ tile: MT.clone(t), saved: new Date().toISOString().slice(0, 10) }); if (shelfWrite(l.slice(0, 40))) { toast('On the shelf.'); renderPane(); } } }) : null,
-      el('button', { text: 'Open a tile file', onclick: () => openFile('.json', (obj) => { if (edit({ op: 'tile.add', in: ui.scope, tile: obj, rename: true })) { toast('Placed.'); renderAll(); } }) }))));
+    el('div', { class: 'acts' }, t ? el('button', { text: 'Put “' + t.name + '” on the shelf', onclick: () => { const kit = MT.exportKit(w, sel), l = shelfRead(); l.unshift({ tile: MT.clone(t), kit, saved: new Date().toISOString().slice(0, 10) }); if (shelfWrite(l.slice(0, 40))) { toast(kit && (kit.expect.defs || kit.expect.words) ? 'On the shelf, with the ' + kit.expect.defs + ' shape(s) and ' + kit.expect.words + ' word(s) it needs.' : 'On the shelf.'); renderPane(); } } }) : null,
+      el('button', { text: 'Open a tile or kit file', onclick: () => openFile('.json', (obj) => {
+        if (obj && obj.format === 'morphtile-kit') { const r = MT.importKit(w, obj, { in: ui.scope });
+          if (!r.ok) return toast(r.status + (r.observed ? ' (claimed ' + String(r.claimed).slice(0, 10) + ', got ' + r.observed.slice(0, 10) + ')' : ''), true);
+          if (!r.ops.length) return toast(r.detail || ('Held: ' + r.conflicts.map((c) => c.name + ' \u2014 ' + c.why).join('; ')), true);
+          for (const op of r.ops) if (!edit(op)) return;
+          toast('Placed, with everything it needs' + (r.already.length ? ' (' + r.already.length + ' part(s) already here)' : '') + '.'); return renderAll(); }
+        if (edit({ op: 'tile.add', in: ui.scope, tile: obj, rename: true })) { toast('Placed.'); renderAll(); } }) }))));
   out.push(el('div', { class: 'card' }, el('h4', { text: 'Paste a tile' }), el('p', { class: 'note', text: 'A tile is one JSON object, however deep. Paste one saved from anywhere; if its id is taken here, it is renamed rather than overwriting anything.' }),
     (() => { const inp = el('textarea', { placeholder: '{ "id": "mt_…", "kind": "morphtile", … }', spellcheck: false, 'aria-label': 'Tile JSON to paste' });
       return [inp, el('div', { class: 'acts' }, el('button', { class: 'go', text: 'Paste into ' + (ui.scope ? (MT.resolveTile(w, ui.scope) || {}).name : w.name), onclick: () => { let obj; try { obj = JSON.parse(inp.value); } catch (e) { return toast('That is not valid JSON: ' + e.message, true); } if (edit({ op: 'tile.add', in: ui.scope, tile: obj, rename: true })) { inp.value = ''; renderAll(); } } }))]; })()));

@@ -99,7 +99,7 @@
     };
   }
   function contentHash(tile) {
-    return hashOf({ id: tile.id, kind: tile.kind, version: tile.version, name: tile.name, facets: tile.facets, form_hints: tile.form_hints, interior: tile.interior, params: tile.params, capabilities: tile.capabilities });
+    return hashOf({ id: tile.id, kind: tile.kind, version: tile.version, name: tile.name, facets: tile.facets, form_hints: tile.form_hints, interior: tile.interior, params: tile.params, capabilities: tile.capabilities, view: tile.view });
   }
   function createTile(spec) {
     spec = spec || {};
@@ -114,6 +114,7 @@
     };
     if (spec.params) tile.params = clone(spec.params);
     if (spec.capabilities) tile.capabilities = clone(spec.capabilities);
+    if (spec.view) tile.view = clone(spec.view);
     tile.provenance.sha256 = contentHash(tile);
     return tile;
   }
@@ -150,13 +151,28 @@
       case '%': { const d = v(1); return d === 0 ? 0 : v(0) % d; }
       case 'min': return Math.min(v(0), v(1)); case 'max': return Math.max(v(0), v(1));
       case 'floor': return Math.floor(v(0));
+      case 'abs': return Math.abs(v(0));
+      case 'sqrt': { const a = v(0); return a < 0 ? 0 : Math.sqrt(a); }
+      case 'pow': return Math.pow(v(0), v(1));
+      case 'sin': return Math.sin(v(0)); case 'cos': return Math.cos(v(0));
+      case 'wrap': { const a = v(0), b = v(1); return b === 0 ? 0 : a - b * Math.floor(a / b); }
       case '==': return v(0) === v(1); case '!=': return v(0) !== v(1);
       case '<': return v(0) < v(1); case '>': return v(0) > v(1); case '<=': return v(0) <= v(1); case '>=': return v(0) >= v(1);
       case 'and': return !!(v(0) && v(1)); case 'or': return !!(v(0) || v(1)); case 'not': return !v(0);
       case 'if': return v(0) ? v(1) : v(2);
-      default: return null; // unknown operator: inert, never executes anything
+      default: { // a word the world itself defined: the vocabulary is not the engine's to own
+        const w = ctx.words && ctx.words[op];
+        if (!w) return null; // still unknown: inert, never executes anything
+        const depth = (ctx.depth || 0) + 1;
+        if (depth > 12) return null; // a word that leans on itself forever simply stops being readable
+        const args = (w.args || []).map((_, i) => evalExpr(x[i + 1], ctx)), scope = {};
+        (w.args || []).forEach((n, i) => (scope[n] = args[i]));
+        return evalExpr(w.body, { t: ctx.t, depth, words: ctx.words, get: (n) => (n in scope ? scope[n] : ctx.get ? ctx.get(n) : undefined) });
+      }
     }
   }
+  const BUILTIN_WORDS = ['var', 't', '+', '-', '*', '/', '%', 'min', 'max', 'floor', 'abs', 'sqrt', 'pow', 'sin', 'cos', 'wrap', '==', '!=', '<', '>', '<=', '>=', 'and', 'or', 'not', 'if'];
+  const wordsOf = (world) => (world && world.words) || null;
   // Paths. "mt_a/mt_b/mt_c" addresses a tile at any depth: a tile may hold a whole graph in `interior`
   // ({tiles, edges, ports}). The root world and every interior are the same kind of container.
   const splitPath = (p) => { const i = p.lastIndexOf('/'); return i < 0 ? ['', p] : [p.slice(0, i), p.slice(i + 1)]; };
@@ -266,7 +282,7 @@
     if (isAccrual(def)) {
       // closed form: value = base + rate * (t - t0). Nothing is simulated while time passes.
       const base = mut ? mut.base : def.base || 0, t0 = mut ? mut.t0 : 0;
-      const ctx = { t, get: (n) => ((depth || 0) > 8 ? 0 : getVar(world, path, n, t, (depth || 0) + 1, tile)) };
+      const ctx = { t, words: wordsOf(world), get: (n) => ((depth || 0) > 8 ? 0 : getVar(world, path, n, t, (depth || 0) + 1, tile)) };
       const rate = Number(evalExpr(def.accrue.rate, ctx)) || 0;
       const val = base + rate * Math.max(0, t - t0);
       return def.accrue.cap != null ? Math.min(def.accrue.cap, val) : val;
@@ -282,7 +298,7 @@
     if (Object.keys(bag).length === 0) delete world.vars[path];
   }
   function readVars(world, path, t) { const tile = activeTile(world, path), o = {}; if (tile) for (const n of Object.keys(varDefs(tile))) o[n] = getVar(world, path, n, t, 0, tile); return o; }
-  const tileCtx = (world, path, t, tile) => ({ t, get: (n) => getVar(world, path, n, t, 0, tile) });
+  const tileCtx = (world, path, t, tile) => ({ t, words: wordsOf(world), get: (n) => getVar(world, path, n, t, 0, tile) });
   function rekeyVars(vars, rekeys) { // state follows a tile when it moves deeper or shallower; values are never touched
     for (const [from, to] of rekeys || []) for (const k of Object.keys(vars)) if (k === from || k.startsWith(from + '/')) { vars[to + k.slice(from.length)] = vars[k]; delete vars[k]; }
     return vars;
@@ -332,7 +348,7 @@
   // Definitions: one shared body that many tiles ARE. The body lives once in world.defs; each instance is a real tile
   // with its own id, name, place, wires and state. Syncing a definition rewrites every instance's body through ordinary
   // merge units — so instancing gains nothing that is hidden from planning, receipts or rollback.
-  const BODY = ['facets', 'form_hints', 'params', 'interior', 'capabilities'];
+  const BODY = ['facets', 'form_hints', 'params', 'interior', 'capabilities', 'view'];
   // A body is what the instances share. It deliberately excludes everything that is each instance's own:
   // its place, and — at every depth inside it — each tile's state and provenance. Those are history, not shape.
   const stripHistory = (c) => { for (const k in c.tiles) { const t = c.tiles[k]; delete t.state; delete t.provenance; if (t.interior) stripHistory(t.interior); } return c; };
@@ -357,7 +373,7 @@
   }
   function instancesOf(world, defId) { const out = []; for (const e of leaves(world)) if (e.tile.provenance && e.tile.provenance.instance_of === defId) out.push(e); return out; }
   function defDrift(world, defId) { const def = (world.defs || {})[defId]; if (!def) return null; const h = bodyHash(def.body); return instancesOf(world, defId).filter((e) => bodyHash(bodyOf(e.tile)) !== h).map((e) => e.path); }
-  const structHash = (world) => hashOf({ tiles: world.tiles, edges: world.edges, defs: world.defs || {} });
+  const structHash = (world) => hashOf({ tiles: world.tiles, edges: world.edges, defs: world.defs || {}, words: world.words || {} });
   const parentEdgeOf = (c, tileId) => sortedEdges(c).find((e) => e.kind === 'attach' && e.to.tile === tileId) || null;
   const childrenOf = (c, tileId) => sortedEdges(c).filter((e) => e.kind === 'attach' && e.from.tile === tileId).map((e) => e.to.tile);
   const rootsOf = (c) => Object.keys(c.tiles).sort().filter((id) => !parentEdgeOf(c, id));
@@ -435,6 +451,18 @@
     switch (op.op) {
       case 'tile.add': { const c = box(op.in), t = clone(op.tile); if (c.tiles[t.id] && op.rename) { const b0 = t.id; let n = 2; while (c.tiles[b0 + '_' + n]) n++; t.id = b0 + '_' + n; } if (c.tiles[t.id]) throw new Error('tile exists: ' + t.id); c.tiles[t.id] = t; break; }
       case 'tile.replace': { const [cpath, id] = splitPath(op.id), c = box(cpath); need(op.id); if (!op.tile || op.tile.id !== id) throw new Error('the replacement must keep the id ' + id); c.tiles[id] = clone(op.tile); break; }
+      case 'word.define': { // teach this world a word; every expression anywhere in it can use it at once
+        const name = op.name;
+        if (!name || !/^[a-z][a-z0-9_]*$/i.test(name)) throw new Error('a word needs a plain name');
+        if (BUILTIN_WORDS.indexOf(name) >= 0) throw new Error('"' + name + '" is one of the words the engine already knows');
+        if (op.body === undefined) throw new Error('a word needs a body');
+        world.words = world.words || {};
+        world.words[name] = { name, args: clone(op.args || []), body: clone(op.body), note: op.note || null };
+        break;
+      }
+      case 'def.put': { world.defs = world.defs || {}; if (!op.id) throw new Error('a definition needs an id'); world.defs[op.id] = { id: op.id, name: op.name || op.id, body: clone(op.body), created_by: op.by || 'human' }; break; }
+      case 'word.remove': { if (!(world.words || {})[op.name]) throw new Error('no word ' + op.name); delete world.words[op.name]; if (!Object.keys(world.words).length) delete world.words; break; }
+      case 'view.set': { const t = need(op.id); if (op.view === null || op.view === undefined) delete t.view; else t.view = clone(op.view); break; }
       case 'cap.add': { const t = need(op.id), c = clone(op.capability); if (!c.id) throw new Error('a capability needs an id'); if (capOf(t, c.id)) throw new Error('capability exists: ' + c.id); (t.capabilities = t.capabilities || []).push(c); break; }
       case 'cap.remove': { const t = need(op.id); if (!capOf(t, op.capability)) throw new Error('no capability ' + op.capability); t.capabilities = t.capabilities.filter((c) => c.id !== op.capability); if (!t.capabilities.length) delete t.capabilities; break; }
       case 'def.create': { // this tile becomes the first instance of a shared definition
@@ -487,7 +515,7 @@
           const target = relTile(x, b.tile || '');
           if (!target) throw new Error('parameter points at a missing tile: ' + b.tile);
           if (target.state && target.state.mutable === false) throw new Error('tile is not mutable: ' + b.tile);
-          const val = b.expr !== undefined ? evalExpr(b.expr, { t: 0, get: (nm) => (nm === 'value' ? v : undefined) }) : clone(v);
+          const val = b.expr !== undefined ? evalExpr(b.expr, { t: 0, words: wordsOf(world), get: (nm) => (nm === 'value' ? v : undefined) }) : clone(v);
           if (!b.at) target.facets[b.facet] = val; else if (getAt(target.facets[b.facet], b.at) !== undefined) setAt(target.facets[b.facet], b.at, val); // a secondary place that no longer exists is skipped
         }
         break;
@@ -562,6 +590,7 @@
   const metaOf = (t) => ({ name: t.name, form_hints: t.form_hints, bridges: t.provenance.bridges, created_by: t.provenance.created_by, instance_of: t.provenance.instance_of, was_instance_of: t.provenance.was_instance_of });
   function parseKey(key) { const rest = key.slice(5), h = rest.indexOf('#'); return { isEdge: key.startsWith('edge:'), path: h < 0 ? rest : rest.slice(0, h), part: h < 0 ? null : rest.slice(h + 1) }; }
   function unitValue(world, key) {
+    if (key.startsWith('word:')) return (world.words || {})[key.slice(5)] || null;
     if (key.startsWith('def:')) return (world.defs || {})[key.slice(4)] || null;
     const k = parseKey(key), [cp, id] = splitPath(k.path), c = containerAt(world, cp);
     if (!c) return null;
@@ -569,9 +598,10 @@
     const t = c.tiles[id];
     if (!k.part) return t || null;
     if (!t) return null;
-    return k.part === 'meta' ? metaOf(t) : k.part === 'capabilities' ? t.capabilities || null : k.part === 'params' ? t.params || null : k.part === 'ports' ? (t.interior ? t.interior.ports : null) : k.part === 'interior' ? t.interior || null : t.facets[k.part.slice(6)] || null;
+    return k.part === 'meta' ? metaOf(t) : k.part === 'view' ? t.view || null : k.part === 'capabilities' ? t.capabilities || null : k.part === 'params' ? t.params || null : k.part === 'ports' ? (t.interior ? t.interior.ports : null) : k.part === 'interior' ? t.interior || null : t.facets[k.part.slice(6)] || null;
   }
   function setUnit(world, key, value) {
+    if (key.startsWith('word:')) { world.words = world.words || {}; if (value === null) delete world.words[key.slice(5)]; else world.words[key.slice(5)] = clone(value); return; }
     if (key.startsWith('def:')) { world.defs = world.defs || {}; if (value === null) delete world.defs[key.slice(4)]; else world.defs[key.slice(4)] = clone(value); return; }
     const k = parseKey(key), [cp, id] = splitPath(k.path), c = containerAt(world, cp);
     if (!c) throw new Error('unit targets a missing container: ' + key);
@@ -583,6 +613,7 @@
       for (const f of ['instance_of', 'was_instance_of']) { if (value[f] === undefined) delete t.provenance[f]; else t.provenance[f] = value[f]; } }
     else if (k.part === 'params') { if (value === null) delete t.params; else t.params = clone(value); }
     else if (k.part === 'capabilities') { if (value === null) delete t.capabilities; else t.capabilities = clone(value); }
+    else if (k.part === 'view') { if (value === null) delete t.view; else t.view = clone(value); }
     else if (k.part === 'ports') t.interior.ports = clone(value);
     else if (k.part === 'interior') { if (value === null) delete t.interior; else t.interior = clone(value); }
     else t.facets[k.part.slice(6)] = clone(value);
@@ -596,6 +627,7 @@
       if (!same(metaOf(x), metaOf(y))) out.push({ key: 'tile:' + p + '#meta', value: clone(metaOf(y)) });
       if (!same(x.params, y.params)) out.push({ key: 'tile:' + p + '#params', value: y.params ? clone(y.params) : null });
       if (!same(x.capabilities, y.capabilities)) out.push({ key: 'tile:' + p + '#capabilities', value: y.capabilities ? clone(y.capabilities) : null });
+      if (!same(x.view, y.view)) out.push({ key: 'tile:' + p + '#view', value: y.view ? clone(y.view) : null });
       if (!x.interior !== !y.interior) out.push({ key: 'tile:' + p + '#interior', value: y.interior ? clone(y.interior) : null });
       else if (x.interior) { if (!same(x.interior.ports, y.interior.ports)) out.push({ key: 'tile:' + p + '#ports', value: clone(y.interior.ports) }); diffContainer(x.interior, y.interior, p, out); }
     }
@@ -604,14 +636,15 @@
     return out;
   }
   function diffUnits(base, cand) {
-    const out = diffContainer(base, cand, '', []), a = base.defs || {}, b = cand.defs || {};
+    const out = diffContainer(base, cand, '', []), a = base.defs || {}, b = cand.defs || {}, wa = base.words || {}, wb = cand.words || {};
     for (const id of Array.from(new Set([...Object.keys(a), ...Object.keys(b)])).sort()) if (canonical(a[id]) !== canonical(b[id])) out.push({ key: 'def:' + id, value: b[id] ? clone(b[id]) : null });
+    for (const id of Array.from(new Set([...Object.keys(wa), ...Object.keys(wb)])).sort()) if (canonical(wa[id]) !== canonical(wb[id])) out.push({ key: 'word:' + id, value: wb[id] ? clone(wb[id]) : null });
     return out;
   }
-  const isWhole = (key) => !key.startsWith('edge:') && !key.startsWith('def:') && (key.indexOf('#') < 0 || key.endsWith('#interior'));
-  const touchedPath = (key) => { if (key.startsWith('def:')) return null; const k = parseKey(key); return k.isEdge ? splitPath(k.path)[0] || null : k.path; };
+  const isWhole = (key) => !key.startsWith('edge:') && !key.startsWith('def:') && !key.startsWith('word:') && (key.indexOf('#') < 0 || key.endsWith('#interior'));
+  const touchedPath = (key) => { if (key.startsWith('def:') || key.startsWith('word:')) return null; const k = parseKey(key); return k.isEdge ? splitPath(k.path)[0] || null : k.path; };
   const ancestors = (path) => { const out = []; let p = path; while (p.indexOf('/') >= 0) { p = splitPath(p)[0]; out.push(p); } return out; };
-  const unitOrder = (key) => (key.startsWith('def:') ? -1 : key.startsWith('edge:') ? 2 : key.indexOf('#') < 0 ? 0 : key.endsWith('#interior') ? 1 : 3);
+  const unitOrder = (key) => (key.startsWith('word:') ? -2 : key.startsWith('def:') ? -1 : key.startsWith('edge:') ? 2 : key.indexOf('#') < 0 ? 0 : key.endsWith('#interior') ? 1 : 3);
   // Events: the only way a live world changes. Deterministic: same world + same event -> same world.
   function applyEvent(world, ev) {
     const trace = [];
@@ -771,6 +804,72 @@
     return out;
   }
   // A world on its own, with no history: for handing one world to another system, or starting fresh from where you are.
+  // Words can leave a world and join another: the same evidence discipline as every other thing that arrives from outside.
+  function exportWords(world, names) {
+    const src = world.words || {}, pick = {};
+    for (const k of (names && names.length ? names : Object.keys(src)).sort()) if (src[k]) pick[k] = clone(src[k]);
+    return { format: 'morphtile-words', version: '0.3', words: pick, expect: { sha256: hashOf(pick), count: Object.keys(pick).length } };
+  }
+  function importWords(world, pack, opts) {
+    opts = opts || {};
+    if (!pack || pack.format !== 'morphtile-words' || !pack.words) return { ok: false, status: 'HOLD_NOT_A_WORD_PACK', ops: [], conflicts: [] };
+    const claimed = pack.expect && pack.expect.sha256, observed = hashOf(pack.words);
+    if (claimed && claimed !== observed) return { ok: false, status: 'HOLD_HASH_MISMATCH', claimed, observed, ops: [], conflicts: [] };
+    const mine = world.words || {}, ops = [], conflicts = [], already = [];
+    for (const k of Object.keys(pack.words).sort()) {
+      const w = pack.words[k];
+      if (BUILTIN_WORDS.indexOf(k) >= 0) { conflicts.push({ name: k, why: 'the engine already knows this word' }); continue; }
+      if (mine[k]) { if (canonical(mine[k]) === canonical(w)) { already.push(k); continue; } if (!opts.overwrite) { conflicts.push({ name: k, why: 'this world has a different word by that name', mine: mine[k], theirs: w }); continue; } }
+      ops.push({ op: 'word.define', name: k, args: w.args, body: w.body, note: w.note });
+    }
+    return { ok: true, status: conflicts.length ? 'PARTIAL_HELD' : 'READY', evidence: claimed ? 'verified_payload_sha256' : 'structurally_possible_not_tested', ops, conflicts, already };
+  }
+  // What a tile needs in order to be itself somewhere else: the definitions it names, at any depth, and the words its
+  // expressions are written in. Gathered by reading the matter, so nothing is assumed and nothing is forgotten.
+  function needsOf(world, value, found) {
+    found = found || { defs: {}, words: {} };
+    const walk = (v) => {
+      if (Array.isArray(v)) { const head = v[0];
+        if (typeof head === 'string' && (world.words || {})[head]) { if (!found.words[head]) { found.words[head] = clone(world.words[head]); walk(world.words[head].body); } }
+        for (const x of v) walk(x); return;
+      }
+      if (!v || typeof v !== 'object') return;
+      for (const k of Object.keys(v)) {
+        const x = v[k];
+        const named = (k === 'use' && typeof x === 'string') ? x : (k === 'grants_ref' && x && x.def) ? x.def : (k === 'instance_of' && typeof x === 'string') ? x : null;
+        if (named && !found.defs[named]) { const d = (world.defs || {})[named]; if (d) { found.defs[named] = clone(d); walk(d.body); } else found.defs[named] = null; }
+        walk(x);
+      }
+    };
+    walk(value);
+    return found;
+  }
+  function exportKit(world, path, opts) {
+    const tile = resolveTile(world, path);
+    if (!tile) return null;
+    const need = needsOf(world, tile), missing = Object.keys(need.defs).filter((k) => !need.defs[k]);
+    for (const k of missing) delete need.defs[k];
+    const kit = { format: 'morphtile-kit', version: '0.3', name: (opts && opts.name) || tile.name, tile: clone(tile), defs: need.defs, words: need.words };
+    kit.expect = { sha256: hashOf({ tile: kit.tile, defs: kit.defs, words: kit.words }), defs: Object.keys(kit.defs).length, words: Object.keys(kit.words).length, missing };
+    return kit;
+  }
+  function importKit(world, kit, opts) {
+    opts = opts || {};
+    if (!kit || kit.format !== 'morphtile-kit' || !kit.tile) return { ok: false, status: 'HOLD_NOT_A_KIT', ops: [], conflicts: [] };
+    const claimed = kit.expect && kit.expect.sha256, observed = hashOf({ tile: kit.tile, defs: kit.defs || {}, words: kit.words || {} });
+    if (claimed && claimed !== observed) return { ok: false, status: 'HOLD_HASH_MISMATCH', claimed, observed, ops: [], conflicts: [] };
+    const ops = [], conflicts = [], already = [];
+    const wordPack = importWords(world, { format: 'morphtile-words', version: '0.3', words: kit.words || {} }, opts);
+    ops.push(...wordPack.ops); conflicts.push(...wordPack.conflicts); already.push(...(wordPack.already || []));
+    for (const id of Object.keys(kit.defs || {}).sort()) {
+      const mine = (world.defs || {})[id], theirs = kit.defs[id];
+      if (mine) { if (canonical(mine.body) === canonical(theirs.body)) { already.push(id); continue; } if (!opts.overwrite) { conflicts.push({ name: id, why: 'this world has a different definition by that name' }); continue; } }
+      ops.push({ op: 'def.put', id, name: theirs.name, body: theirs.body, by: theirs.created_by });
+    }
+    if (conflicts.length && !opts.partial) return { ok: true, status: 'HELD_INCOMPLETE', evidence: claimed ? 'verified_payload_sha256' : 'structurally_possible_not_tested', ops: [], conflicts, already, detail: 'the tile would arrive without something it needs, so nothing is applied' };
+    ops.push({ op: 'tile.add', in: opts.in || '', tile: kit.tile, rename: true });
+    return { ok: true, status: conflicts.length ? 'PARTIAL_HELD' : 'READY', evidence: claimed ? 'verified_payload_sha256' : 'structurally_possible_not_tested', ops, conflicts, already };
+  }
   function exportWorld(world, name) { const w = clone(world); if (name) w.name = name; return { format: 'morphtile-world', version: '0.3', world: w, expect: { struct_hash: structHash(w), tiles: countTiles(w) } }; }
   function importWorld(data) {
     const w = data && data.format === 'morphtile-world' ? data.world : data && data.kind === 'morphtile-world' ? data : null;
@@ -922,7 +1021,7 @@
     const vars = Object.assign({}, data.vars || {}), budget = Math.min(data.budget || RECIPE_BUDGET, RECIPE_BUDGET);
     const world = ctx.world || null, seen = ctx.seen || [], depth0 = ctx.depth || 0, spent = ctx.made || 0; // what the rest of the chain has already used
     let made = 0, stopped = null;
-    const num = (v, scope, d) => { if (v === undefined) return d; const x = evalExpr(v, { t: 0, get: (n) => (n in scope ? scope[n] : vars[n]) }); return typeof x === 'number' && isFinite(x) ? x : d; };
+    const num = (v, scope, d) => { if (v === undefined) return d; const x = evalExpr(v, { t: 0, words: wordsOf(world), get: (n) => (n in scope ? scope[n] : vars[n]) }); return typeof x === 'number' && isFinite(x) ? x : d; };
     const vec = (v, scope, d) => (Array.isArray(v) ? [num(v[0], scope, d[0]), num(v[1], scope, d[1]), num(v[2], scope, d[2])] : d);
     const walk = (nodes, scope, depth) => {
       if (stopped || depth > 8) { if (depth > 8) stopped = stopped || 'HOLD_RECIPE_TOO_DEEP'; return; }
@@ -934,7 +1033,7 @@
           for (let i = 0; i < count; i++) { const inner = Object.assign({}, scope); inner[n.as || 'i'] = i; inner[(n.as || 'i') + '_of'] = count; inner[(n.as || 'i') + '_at'] = count > 1 ? i / (count - 1) : 0; walk(n.body, inner, depth + 1); if (stopped) return; }
           continue;
         }
-        if (n.when !== undefined && !evalExpr(n.when, { t: 0, get: (k) => (k in scope ? scope[k] : vars[k]) })) continue;
+        if (n.when !== undefined && !evalExpr(n.when, { t: 0, words: wordsOf(world), get: (k) => (k in scope ? scope[k] : vars[k]) })) continue;
         if (n.body) { walk(n.body, scope, depth + 1); continue; }
         if (n.use !== undefined) { // a part that is another invented shape: composition, not a special case
           if (!world) { stopped = 'HOLD_NO_WORLD_TO_LOOK_IN'; return; }
@@ -1022,7 +1121,8 @@
       const pv = paint.vars || {};
       for (let i = 0; i < out.T.length; i++) {
         const o = i * 9, px = (out.P[o] + out.P[o + 3] + out.P[o + 6]) / 3, py = (out.P[o + 1] + out.P[o + 4] + out.P[o + 7]) / 3, pz = (out.P[o + 2] + out.P[o + 5] + out.P[o + 8]) / 3;
-        const ctx2 = { t: 0, get: (k) => (k === 'x' ? px : k === 'y' ? py : k === 'z' ? pz : pv[k]) };
+        const nrm = norm(cross([out.P[o + 3] - out.P[o], out.P[o + 4] - out.P[o + 1], out.P[o + 5] - out.P[o + 2]], [out.P[o + 6] - out.P[o], out.P[o + 7] - out.P[o + 1], out.P[o + 8] - out.P[o + 2]]));
+        const ctx2 = { t: 0, words: wordsOf(world), get: (k) => (k === 'x' ? px : k === 'y' ? py : k === 'z' ? pz : k === 'nx' ? nrm[0] : k === 'ny' ? nrm[1] : k === 'nz' ? nrm[2] : k === 'up' ? Math.max(0, nrm[1]) : pv[k]) };
         const ch = paint.color.map((e) => { const v = evalExpr(e, ctx2); return typeof v === 'number' && isFinite(v) ? Math.max(0, Math.min(1, v)) : null; });
         if (ch.every((v) => v !== null)) out.K[i] = ch;
       }
@@ -1042,6 +1142,13 @@
     const pose = { pos: [0, 0, 0], r: [0, 0, 0], glow: 0 }, bh = tile.facets.behavior;
     if (bh.type !== 'scripted') return pose;
     const ctx = tileCtx(world, path, t, tile);
+    const mo = bh.data.motion; // {vars, pos: [expr,expr,expr], rot: [...], glow: expr} — motion written, not chosen
+    if (mo) {
+      const mv = mo.vars || {}, mctx = { t, words: wordsOf(world), get: (n) => (n in mv ? mv[n] : ctx.get(n)) };
+      const one = (e, d) => { if (e === undefined) return d; const v = evalExpr(e, mctx); return typeof v === 'number' && isFinite(v) ? v : d; };
+      const three = (a, into) => { if (!Array.isArray(a)) return; for (let i = 0; i < 3; i++) into[i] += one(a[i], 0); };
+      three(mo.pos, pose.pos); three(mo.rot, pose.r); pose.glow += one(mo.glow, 0);
+    }
     for (const op of bh.data.ops || []) {
       if (op.when !== undefined && !evalExpr(op.when, ctx)) continue;
       const by = op.by !== undefined ? Number(evalExpr(op.by, ctx)) || 0 : t, rate = op.rate == null ? 1 : op.rate;
@@ -1147,12 +1254,60 @@
   const h = (tag, props, children) => Object.assign({ tag, children: children || [] }, props || {});
   const fmt = (v) => (typeof v === 'number' ? (Number.isInteger(v) ? String(v) : v.toFixed(1)) : String(v));
   function meshSummary(tile) { const m = tile.facets.mesh; return m.type === 'interior' ? 'holds ' + countTiles(tile.interior || { tiles: {} }) + ' tiles, ' + depthOf(tile) + ' deep' : m.type === 'generated' ? 'generated ' + m.data.generator : m.type === 'reference' ? 'referenced' : m.data.parts ? m.data.parts.length + ' parts' : m.data.shape || 'box'; }
+  // A tile may carry its own interface in `view`: the same little language, deciding what is shown and how.
+  // The engine's card is only the default for a tile that has not said otherwise — presentation stops being
+  // the engine's to decide. Views read; they never write, and every control they place addresses a real path.
+  function compileView(world, path, tile, t, ctxExtra, depth, seen) {
+    depth = depth || 0; seen = seen || [];
+    const vctx = { t, words: wordsOf(world), get: (n) => { if (ctxExtra && n in ctxExtra) return ctxExtra[n]; const v = getVar(world, path, n, t, 0, tile); return v === undefined ? undefined : v; } };
+    const ev = (e, d) => { if (e === undefined) return d; if (typeof e === 'string' || typeof e === 'number' || typeof e === 'boolean') return e; const v = evalExpr(e, vctx); return v === null || v === undefined ? d : v; };
+    const label = (e, d) => { const v = ev(e, d); return v === undefined || v === null ? d : (typeof v === 'number' ? fmt(v) : String(v)); };
+    const one = (n, scope) => {
+      if (n === null || n === undefined) return null;
+      if (typeof n === 'string') return h('p', { cls: 'v-text', text: n });
+      const sctx = scope ? Object.assign({}, ctxExtra, scope) : ctxExtra;
+      const evs = (e, d) => { if (e === undefined) return d; const v = evalExpr(e, { t, words: wordsOf(world), get: (k) => (sctx && k in sctx ? sctx[k] : getVar(world, path, k, t, 0, tile)) }); return v === null || v === undefined ? d : v; };
+      if (n.when !== undefined && !evs(n.when, false)) return null;
+      if (n.repeat !== undefined) { const count = Math.max(0, Math.min(200, Math.floor(Number(evs(n.repeat, 0)) || 0))), out = [];
+        for (let i = 0; i < count; i++) { const inner = Object.assign({}, sctx); inner[n.as || 'i'] = i; inner[(n.as || 'i') + '_of'] = count; out.push(h('div', { cls: 'v-item' }, (n.body || []).map((x) => one(x, inner)).filter(Boolean))); }
+        return h('div', { cls: 'v-repeat' }, out); }
+      if (n.text !== undefined) return h('p', { cls: 'v-text' + (n.strong ? ' is-strong' : ''), text: label(n.text, '') });
+      if (n.value !== undefined) { const v = getVar(world, path, n.value, t, 0, tile);
+        return h('div', { cls: 'v-value' }, [h('span', { cls: 'v-label', text: n.label || n.value }), h('b', { text: fmt(v === undefined ? 0 : v), bind: { tile: path, name: n.value } })]); }
+      if (n.meter !== undefined) { const v = Number(evs(n.meter, 0)) || 0, lo = Number(evs(n.min, 0)) || 0, hi = Number(evs(n.max, 1)) || 1, k = hi === lo ? 0 : Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+        return h('div', { cls: 'v-meter' }, [h('span', { cls: 'v-label', text: label(n.label, '') }), h('div', { cls: 'v-bar' }, [h('i', { style: { width: (k * 100).toFixed(1) + '%' } })])]); }
+      if (n.button !== undefined) { const sock = findSocket(tile, n.button);
+        return h('button', { cls: 'v-button', text: label(n.label, (sock && sock.label) || n.button), on: { type: 'signal', tile: path, name: (sock && (sock.signal || sock.id)) || n.button } }); }
+      if (n.control !== undefined) { const p2 = (tile.params || []).find((q) => q.id === n.control);
+        if (!p2) return h('p', { cls: 'v-missing', text: 'no control called ' + n.control });
+        const v = paramValue(tile, p2), ctl = { tile: path, id: p2.id };
+        if (v === undefined) return h('p', { cls: 'v-missing', text: (p2.label || p2.id) + ' is dormant' });
+        return h('label', { cls: 'v-control' }, [h('span', { cls: 'v-label', text: label(n.label, p2.label || p2.id) }), p2.type === 'choice'
+          ? h('select', { param: ctl }, p2.options.map((o) => h('option', { text: o.label, attrs: Object.assign({ value: o.label }, canonical(o.value) === canonical(v) ? { selected: 'selected' } : {}) })))
+          : h('input', { param: ctl, attrs: { type: 'range', min: p2.min, max: p2.max, step: p2.step || 1, value: v } }), h('output', { text: fmt(v) })]); }
+      if (n.tile !== undefined) { // show another tile here: interfaces compose the way shapes do
+        const sub = n.tile.indexOf('/') === 0 ? n.tile.slice(1) : join(splitPath(path)[0], n.tile), st = resolveTile(world, sub) || resolveTile(world, n.tile);
+        const spath = resolveTile(world, sub) ? sub : n.tile;
+        if (!st) return h('p', { cls: 'v-missing', text: 'no tile called ' + n.tile });
+        if (depth > 6 || seen.indexOf(spath) >= 0) return h('p', { cls: 'v-missing', text: 'this view leans on itself' });
+        const at = activeTile(world, spath, st);
+        return h('div', { cls: 'v-embed', tile: spath }, [at.view ? compileView(world, spath, at, t, null, depth + 1, seen.concat(path)) : h('p', { cls: 'v-text', text: at.name })]); }
+      if (n.row || n.group) return h('div', { cls: n.row ? 'v-row' : 'v-group' }, (n.row || n.group).map((x) => one(x, sctx)).filter(Boolean));
+      return null;
+    };
+    const v = tile.view, md = tile.facets.material.data || {}, col = md.color || [0.5, 0.55, 0.8];
+    return h('section', { cls: 'mt-panel is-view' + (md.hold ? ' is-hold' : ''), tile: path,
+      style: { '--tile': Array.isArray(v.accent) ? css(v.accent) : typeof v.accent === 'string' ? v.accent : css(col), 'flex-grow': String(Math.max(1, Number(ev(v.width, 1)) || 1)) } },
+      [v.title === undefined ? null : h('header', {}, [h('h3', { text: label(v.title, tile.name) })])].concat((v.body || []).map((x) => one(x, null))).filter(Boolean));
+  }
   function compilePanel(world, opts) {
     opts = opts || {};
     const t = opts.t == null ? world.time : opts.t, skipped = [], isOpen = (p) => opts.open === true || !!(opts.open && opts.open[p]);
     const node = (c, cpath, id) => {
       const path = join(cpath, id), tile = activeTile(world, path, c.tiles[id]), kids = childrenOf(c, id).map((k) => node(c, cpath, k));
       const inside = tile.interior && isOpen(path) ? h('div', { cls: 'mt-interior' }, rootsOf(tile.interior).map((k) => node(tile.interior, path, k))) : null;
+      if (tile.view && declares(tile, ['ui_panel'])) { const own = compileView(world, path, tile, t, null, 0, []);
+        return kids.length || inside ? h('div', { cls: 'v-holder' }, [own].concat(inside ? [inside] : [], kids.length ? [h('div', { cls: 'mt-children' }, kids)] : [])) : own; }
       if (!declares(tile, ['ui_panel'])) { skipped.push(path); return h('div', { cls: 'mt-foreign', tile: path }, [h('span', { text: tile.name + ' is not declared for this form' })].concat(kids, inside ? [inside] : [])); }
       const md = tile.facets.material.data || {}, col = md.color || [0.5, 0.55, 0.8], shape = tile.facets.mesh.data && tile.facets.mesh.data.shape, size = (tile.facets.mesh.data && tile.facets.mesh.data.size) || [1, 1, 1];
       const em = Math.max(0, Number(evalExpr(md.emissive, tileCtx(world, path, t, tile))) || 0), vars = readVars(world, path, t), socks = tile.facets.connect.sockets || [];
@@ -1182,7 +1337,7 @@
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   function vnodeToHTML(v) {
     const style = v.style ? ' style="' + esc(Object.keys(v.style).map((k) => k + ':' + v.style[k]).join(';')) + '"' : '';
-    const attrs = (v.cls ? ' class="' + esc(v.cls) + '"' : '') + style + (v.tile ? ' data-tile="' + esc(v.tile) + '"' : '') + (v.on ? ' data-signal="' + esc(v.on.tile + ':' + v.on.name) + '"' : '') + (v.toggle ? ' data-toggle="' + esc(v.toggle) + '"' : '') + (v.param ? ' data-param="' + esc(v.param.tile + ':' + v.param.id) + '"' : '') + Object.keys(v.attrs || {}).map((k) => ' ' + k + '="' + esc(v.attrs[k]) + '"').join('');
+    const attrs = (v.cls ? ' class="' + esc(v.cls) + '"' : '') + style + (v.tile ? ' data-tile="' + esc(v.tile) + '"' : '') + (v.on ? ' data-signal="' + esc(v.on.tile + ':' + v.on.name) + '"' : '') + (v.toggle ? ' data-toggle="' + esc(v.toggle) + '"' : '') + (v.param ? ' data-param="' + esc(v.param.tile + ':' + v.param.id) + '"' : '') + (v.bind ? ' data-bind="' + esc(v.bind.tile + '|' + v.bind.name) + '"' : '') + Object.keys(v.attrs || {}).map((k) => ' ' + k + '="' + esc(v.attrs[k]) + '"').join('');
     return '<' + v.tag + attrs + '>' + (v.text != null ? esc(v.text) : '') + v.children.map(vnodeToHTML).join('') + '</' + v.tag + '>';
   }
   // FORM website — static export of the same graph, always opened to full depth. No runtime in the page: it is a compiled delivery.
@@ -1208,6 +1363,7 @@
       for (const s of t.facets.connect.sockets || []) if (!s.port) lines.push(pad + IND + 'socket ' + s.id + ' ' + s.kind + (s.kind === 'signal' ? ' ' + s.dir + (s.signal && s.signal !== s.id ? ' ' + s.signal : '') : ' at ' + (s.pos || [0, 0, 0]).join(' ')) + (s.label ? ' ' + JSON.stringify(s.label) : ''));
       for (const p of t.params || []) lines.push(pad + IND + 'control ' + p.id + ' ' + jsonish(p));
       for (const cp of t.capabilities || []) lines.push(pad + IND + 'capability ' + cp.id + ' ' + jsonish(cp));
+      if (t.view) lines.push(pad + IND + 'view ' + jsonish(t.view));
       for (const b of t.provenance.bridges || []) lines.push(pad + IND + 'bridge ' + jsonish(b));
       if (t.interior) {
         lines.push(pad + IND + 'inside');
@@ -1218,7 +1374,7 @@
       }
     };
     const c = only ? (resolveTile(world, only) || {}).interior || { tiles: {}, edges: {} } : world;
-    if (!only) lines.push('world ' + JSON.stringify(world.name));
+    if (!only) { lines.push('world ' + JSON.stringify(world.name)); for (const k of Object.keys(world.words || {}).sort()) lines.push('word ' + k + ' ' + jsonish(world.words[k])); }
     for (const id of Object.keys(c.tiles).sort()) tile(c, id, 0);
     for (const id of Object.keys(c.edges).sort()) { const e = c.edges[id]; lines.push('wire ' + id + ' ' + e.kind + ' ' + e.from.tile + '.' + e.from.socket + ' -> ' + e.to.tile + '.' + e.to.socket); }
     return lines.join('\n') + '\n';
@@ -1236,6 +1392,7 @@
       while (stack.length > 1 && indent <= stack[stack.length - 1].indent) stack.pop();
       const c = stack[stack.length - 1].c;
       if (word === 'world') { out.name = readJSON(rest, i); continue; }
+      if (word === 'word') { const m = /^([A-Za-z][A-Za-z0-9_]*)\s+(\{.*\})$/.exec(rest) || fail(i, 'expected: word <name> {json}'); const wd = readJSON(m[2], i); wd.name = m[1]; (out.words = out.words || {})[m[1]] = wd; continue; }
       if (word === 'end') { if (stack.length > 1) stack.pop(); cur = null; continue; }
       if (word === 'tile') {
         const m = /^([A-Za-z0-9_\-]+)\s+("(?:[^"\\]|\\.)*")(?:\s+as\s+(.*))?$/.exec(rest) || fail(i, 'expected: tile <id> "<name>" [as <forms>]');
@@ -1271,6 +1428,7 @@
         else { const a = /^(in|out)(?:\s+([A-Za-z0-9_\-]+))?(?:\s+(".*"))?$/.exec(tail) || fail(i, 'expected: socket <id> signal in|out [name] ["label"]'); s.dir = a[1]; s.signal = a[2] || m[1]; if (a[3]) s.label = JSON.parse(a[3]); }
         cur.facets.connect.sockets.push(s); continue;
       }
+      if (word === 'view') { cur.view = readJSON(rest, i); continue; }
       if (word === 'capability') { const m = /^([A-Za-z0-9_\-]+)\s+(\{.*\})$/.exec(rest) || fail(i, 'expected: capability <id> {json}'); const cp = readJSON(m[2], i); cp.id = m[1]; (cur.capabilities = cur.capabilities || []).push(cp); continue; }
       if (word === 'control') { const m = /^([A-Za-z0-9_\-]+)\s+(\{.*\})$/.exec(rest) || fail(i, 'expected: control <id> {json}'); const p = readJSON(m[2], i); p.id = m[1]; (cur.params = cur.params || []).push(p); continue; }
       if (word === 'bridge') { (cur.provenance.bridges = cur.provenance.bridges || []).push(readJSON(rest, i)); continue; }
@@ -1303,6 +1461,7 @@
       const out = clone(have);
       for (const f of FACETS) if (!same(normFacet(want.facets[f], f), normFacet(have.facets[f], f))) out.facets[f] = clone(want.facets[f]);
       if (want.capabilities) out.capabilities = clone(want.capabilities); else delete out.capabilities;
+      if (want.view) out.view = clone(want.view); else delete out.view;
       out.name = want.name; out.form_hints = clone(want.form_hints); out.provenance.bridges = clone(want.provenance.bridges);
       if (want.params) out.params = clone(want.params); else delete out.params;
       if (!want.interior) delete out.interior;
@@ -1315,6 +1474,10 @@
       }
       out.provenance.sha256 = contentHash(out); return out;
     };
+    if (!into) { const pw = parsed.words || {}, hw = world.words || {};
+      for (const k of Object.keys(pw).sort()) if (!same(pw[k], hw[k])) ops.push({ op: 'word.define', name: k, args: pw[k].args, body: pw[k].body, note: pw[k].note });
+      for (const k of Object.keys(hw).sort()) if (!pw[k] && !opts.additive) ops.push({ op: 'word.remove', name: k });
+    }
     for (const id of Object.keys(parsed.tiles).sort()) {
       const want = parsed.tiles[id], have = target.tiles[id];
       if (!have) ops.push({ op: 'tile.add', in: into, tile: want });
@@ -1380,12 +1543,19 @@
       ember: { type: 'primitive', source: null, data: { color: [0.95, 0.45, 0.25], emissive: 0.2 } },
       'checker hull': { type: 'primitive', source: null, data: { color: [0.78, 0.82, 0.92], pattern: 'checker', scale: 0.4 } },
       'painted: height gradient': { type: 'generated', source: null, data: { color: [0.6, 0.6, 0.7], paint: { vars: { low: 0.15, span: 4 }, color: [['+', 0.2, ['/', ['var', 'y'], ['var', 'span']]], ['+', ['var', 'low'], ['/', ['var', 'y'], ['*', 2, ['var', 'span']]]], ['-', 0.95, ['/', ['var', 'y'], ['var', 'span']]]] } } },
+      'painted: ground': { type: 'generated', source: null, data: { color: [0.5, 0.5, 0.55], paint: { vars: { grass: 0.62 }, color: [
+        ['if', ['>', ['var', 'up'], ['var', 'grass']], 0.24, 0.42], ['if', ['>', ['var', 'up'], ['var', 'grass']], 0.6, 0.38], ['if', ['>', ['var', 'up'], ['var', 'grass']], 0.3, 0.46]] } } },
       'painted: rings': { type: 'generated', source: null, data: { color: [0.7, 0.7, 0.8], paint: { vars: { ring: 0.45 }, color: [['if', ['<', ['%', ['+', ['*', ['var', 'y'], 1], 100], ['var', 'ring']], ['*', 0.5, ['var', 'ring']]], 0.95, 0.35], 0.55, ['if', ['<', ['%', ['+', ['*', ['var', 'y'], 1], 100], ['var', 'ring']], ['*', 0.5, ['var', 'ring']]], 0.4, 0.9]] } } },
     },
     behavior: {
       still: { type: 'none', data: {} },
       spin: { type: 'scripted', data: { ops: [{ op: 'spin', axis: 'y', rate: 0.6 }] } },
       hover: { type: 'scripted', data: { ops: [{ op: 'bob', amp: 0.18, rate: 1.4 }, { op: 'spin', axis: 'y', rate: 0.5 }, { op: 'pulse', amp: 0.35, rate: 2 }] } },
+      'written: figure eight': { type: 'scripted', data: { motion: { vars: { reach: 2.2, rise: 0.5, rate: 0.7 },
+        pos: [['*', ['var', 'reach'], ['sin', ['*', ['var', 'rate'], ['t']]]], ['*', ['var', 'rise'], ['sin', ['*', ['*', 2, ['var', 'rate']], ['t']]]], ['*', ['var', 'reach'], ['sin', ['*', ['*', 2, ['var', 'rate']], ['t']]]]],
+        rot: [0, ['*', ['var', 'rate'], ['t']], 0] } } },
+      'written: breathe': { type: 'scripted', data: { motion: { vars: { depth: 0.35, rate: 1.1 },
+        pos: [0, ['*', ['var', 'depth'], ['sin', ['*', ['var', 'rate'], ['t']]]], 0], glow: ['*', 0.5, ['+', 0.5, ['*', 0.5, ['sin', ['*', ['var', 'rate'], ['t']]]]]] } } },
       pulse: { type: 'scripted', data: { ops: [{ op: 'pulse', amp: 0.5, rate: 3 }] } },
     },
   };
@@ -1450,10 +1620,10 @@
     clone, canonical, sha256, hashOf, ihash,
     createTile, validateTile, contentHash, findSocket,
     evalExpr, getVar, readVars, rekeyVars, paramValue, relTile, getAt, activeTile, isAwake, capOf, capStatus, grantsOf, sleepingReport, pendingWakes, splitPath, resolveTile, containerAt, countTiles, depthOf, leaves,
-    createWorld, validateWorld, structHash, bodyOf, bodyHash, instancesOf, defDrift, applyStructOp, applyEvent, diffUnits, unitValue, rootsOf, childrenOf, parentEdgeOf,
-    reconstruct, exportWorld, importWorld, createWorkspace, record, cloneBody, editCandidate, planMerge, commitPlan, rollback, exportWorkspace, importWorkspace,
+    createWorld, validateWorld, structHash, BUILTIN_WORDS, bodyOf, bodyHash, instancesOf, defDrift, applyStructOp, applyEvent, diffUnits, unitValue, rootsOf, childrenOf, parentEdgeOf,
+    reconstruct, exportWorld, importWorld, exportWords, importWords, exportKit, importKit, needsOf, createWorkspace, record, cloneBody, editCandidate, planMerge, commitPlan, rollback, exportWorkspace, importWorkspace,
     weakestEvidence, ingestMaterialOffer, materialFromOffer, createRegistry, dataUrlBytes,
-    compileMesh, compileMeshData, renderAsset, renderReceipt, compilePanel, vnodeToHTML, compileWebsite, toText, parseText, fromText,
+    compileMesh, compileMeshData, renderAsset, renderReceipt, compilePanel, compileView, vnodeToHTML, compileWebsite, toText, parseText, fromText,
     seedWorld, act,
   };
 });

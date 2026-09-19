@@ -1,0 +1,8840 @@
+{
+ "format": "morphtile-conformance",
+ "version": "0.4",
+ "engine": "0.3",
+ "generated": "2026-09-19",
+ "note": "Each case gives a world (and events or ops) and what a correct implementation must produce. Geometry hashes are over coordinates rounded to six decimals. Nothing here depends on trigonometry, so results are comparable across languages.",
+ "cases": [
+  {
+   "name": "seed-world",
+   "note": "The world the workshop starts from: structure, validity and every tile’s content hash.",
+   "world": {
+    "kind": "morphtile-world",
+    "version": "0.1",
+    "name": "Skyhold",
+    "tiles": {
+     "mt_island": {
+      "id": "mt_island",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Floating island",
+      "facets": {
+       "mesh": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "generator": "terrain",
+         "radius": 5.5,
+         "height": 1.6,
+         "plateau": 1,
+         "depth": 4,
+         "seed": 3
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.25,
+          0.58,
+          0.36
+         ]
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "none",
+        "data": {}
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "top",
+          "kind": "attach",
+          "pos": [
+           0,
+           1,
+           0
+          ]
+         },
+         {
+          "id": "dock",
+          "kind": "attach",
+          "pos": [
+           1.25,
+           1,
+           0.75
+          ]
+         }
+        ],
+        "bridges": [],
+        "place": [
+         0,
+         0,
+         0
+        ]
+       }
+      },
+      "form_hints": [
+       "world",
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "15e1720596d1c1dd674496aa049e789cbeb7b8a68175e31e0c6801e956a97cf2"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      },
+      "params": [
+       {
+        "id": "seed",
+        "label": "Terrain seed",
+        "type": "number",
+        "min": 1,
+        "max": 60,
+        "step": 1,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "mesh",
+          "at": "data.seed"
+         }
+        ]
+       },
+       {
+        "id": "height",
+        "label": "Hill height",
+        "type": "number",
+        "min": 0.4,
+        "max": 3,
+        "step": 0.1,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "mesh",
+          "at": "data.height"
+         }
+        ]
+       }
+      ]
+     },
+     "mt_tower": {
+      "id": "mt_tower",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Beacon tower",
+      "facets": {
+       "mesh": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "generator": "tower",
+         "levels": 3,
+         "radius": 0.6,
+         "seed": 4
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.62,
+          0.66,
+          0.78
+         ],
+         "glow": [
+          0.35,
+          0.65,
+          1
+         ],
+         "emissive": [
+          "*",
+          [
+           "var",
+           "beacon"
+          ],
+          0.45
+         ]
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "beacon": 0
+         },
+         "rules": [
+          {
+           "on": "toggle",
+           "do": [
+            {
+             "set": [
+              "beacon",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "beacon"
+               ]
+              ]
+             ]
+            },
+            {
+             "emit": "lit"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "base",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roof",
+          "kind": "attach",
+          "pos": [
+           0,
+           4.9,
+           0
+          ]
+         },
+         {
+          "id": "toggle",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "toggle",
+          "label": "Toggle beacon"
+         },
+         {
+          "id": "lit",
+          "kind": "signal",
+          "dir": "out",
+          "signal": "lit"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "6e88a69722baaa968316c10768c236c4856bc252702d3ee69b22a3b71bd7e03e"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      },
+      "params": [
+       {
+        "id": "levels",
+        "label": "Levels",
+        "type": "number",
+        "min": 1,
+        "max": 7,
+        "step": 1,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "mesh",
+          "at": "data.levels"
+         },
+         {
+          "tile": "",
+          "facet": "connect",
+          "at": "sockets.1.pos.1",
+          "expr": [
+           "+",
+           [
+            "*",
+            [
+             "var",
+             "value"
+            ],
+            1.1
+           ],
+           1.6
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     "mt_core": {
+      "id": "mt_core",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Matter core",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "box",
+         "size": [
+          0.9,
+          0.9,
+          0.9
+         ],
+         "rot": [
+          0.6,
+          0,
+          0.6
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.5,
+          0.36,
+          1
+         ],
+         "emissive": 0.25,
+         "pattern": "checker",
+         "scale": 0.3
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "bob",
+           "amp": 0.18,
+           "rate": 1.4
+          },
+          {
+           "op": "spin",
+           "axis": "y",
+           "rate": 0.5
+          },
+          {
+           "op": "pulse",
+           "amp": 0.35,
+           "rate": 2
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "energy": {
+           "accrue": {
+            "rate": 1,
+            "cap": 21600
+           },
+           "base": 0
+          },
+          "stored": 0
+         },
+         "rules": [
+          {
+           "on": "surge",
+           "do": [
+            {
+             "set": [
+              "stored",
+              [
+               "+",
+               [
+                "var",
+                "stored"
+               ],
+               [
+                "floor",
+                [
+                 "var",
+                 "energy"
+                ]
+               ]
+              ]
+             ]
+            },
+            {
+             "set": [
+              "energy",
+              0
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "mount",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "surge",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "surge",
+          "label": "Harvest energy"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "10284b181009dbc62019b999ece3b22968432429e193a2e5f960181bc630f10d"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_switch": {
+      "id": "mt_switch",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Dock switch",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "parts": [
+          {
+           "shape": "cylinder",
+           "size": [
+            0.5,
+            0.5,
+            0.5
+           ],
+           "pos": [
+            0,
+            0.25,
+            0
+           ]
+          },
+          {
+           "shape": "sphere",
+           "size": [
+            0.34,
+            0.34,
+            0.34
+           ],
+           "pos": [
+            0,
+            0.6,
+            0
+           ],
+           "color": [
+            1,
+            0.55,
+            0.3
+           ]
+          }
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.3,
+          0.6,
+          1
+         ],
+         "emissive": 0.15
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "presses": 0
+         },
+         "rules": [
+          {
+           "on": "press",
+           "do": [
+            {
+             "set": [
+              "presses",
+              [
+               "+",
+               [
+                "var",
+                "presses"
+               ],
+               1
+              ]
+             ]
+            },
+            {
+             "emit": "pressed"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "foot",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "press",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "press",
+          "label": "Press"
+         },
+         {
+          "id": "pressed",
+          "kind": "signal",
+          "dir": "out",
+          "signal": "pressed"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset",
+       "ui_panel"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "b62209b69c03f2cb9a4856222b00d635e3b58bdfc1875a7d15e952276840dd95"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_rover": {
+      "id": "mt_rover",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Sky rover",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "parts": [
+          {
+           "shape": "box",
+           "size": [
+            1.5,
+            0.4,
+            2.6
+           ],
+           "pos": [
+            0,
+            0.35,
+            0
+           ]
+          },
+          {
+           "shape": "wedge",
+           "size": [
+            1.5,
+            0.35,
+            0.9
+           ],
+           "pos": [
+            0,
+            0.72,
+            0.75
+           ]
+          },
+          {
+           "shape": "box",
+           "size": [
+            1.2,
+            0.4,
+            1.1
+           ],
+           "pos": [
+            0,
+            0.75,
+            -0.25
+           ],
+           "color": [
+            0.2,
+            0.5,
+            1
+           ]
+          }
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.78,
+          0.82,
+          0.92
+         ],
+         "glow": [
+          0.3,
+          0.6,
+          1
+         ],
+         "emissive": [
+          "*",
+          [
+           "var",
+           "moving"
+          ],
+          0.25
+         ]
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "orbit",
+           "radius": 7.6,
+           "rate": 0.22,
+           "by": [
+            "var",
+            "odometer"
+           ]
+          },
+          {
+           "op": "bob",
+           "amp": 0.07,
+           "rate": 2
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "moving": 0,
+          "odometer": {
+           "accrue": {
+            "rate": [
+             "var",
+             "moving"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "drive",
+           "do": [
+            {
+             "set": [
+              "odometer",
+              [
+               "var",
+               "odometer"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "moving",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "moving"
+               ]
+              ]
+             ]
+            },
+            {
+             "emit": "rolling"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "w_fl",
+          "kind": "attach",
+          "pos": [
+           -0.95,
+           0.05,
+           0.85
+          ]
+         },
+         {
+          "id": "w_fr",
+          "kind": "attach",
+          "pos": [
+           0.95,
+           0.05,
+           0.85
+          ]
+         },
+         {
+          "id": "w_rl",
+          "kind": "attach",
+          "pos": [
+           -0.95,
+           0.05,
+           -0.85
+          ]
+         },
+         {
+          "id": "w_rr",
+          "kind": "attach",
+          "pos": [
+           0.95,
+           0.05,
+           -0.85
+          ]
+         },
+         {
+          "id": "drive",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "drive",
+          "label": "Drive / stop"
+         },
+         {
+          "id": "rolling",
+          "kind": "signal",
+          "dir": "out",
+          "signal": "rolling"
+         }
+        ],
+        "bridges": [],
+        "place": [
+         0,
+         0.4,
+         0
+        ]
+       }
+      },
+      "form_hints": [
+       "vehicle",
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "770b124ee01effeb8ac3dfedf1b1a49b6d5bbc3eb12fd0126e8ebfaa5ab54bb9"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      },
+      "params": [
+       {
+        "id": "orbit",
+        "label": "Orbit radius",
+        "type": "number",
+        "min": 6,
+        "max": 14,
+        "step": 0.2,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "behavior",
+          "at": "data.ops.0.radius"
+         }
+        ]
+       }
+      ]
+     },
+     "mt_wheel_fl": {
+      "id": "mt_wheel_fl",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel FL",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "8670db9a11143c896f476421d69687e1e57d128db32c56344e2dbd9d4ff34b23"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_wheel_fr": {
+      "id": "mt_wheel_fr",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel FR",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "5595c1771aaed8bf2500ba7c2f881293b45e8811d86f37b729627887d1b2c6e7"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_wheel_rl": {
+      "id": "mt_wheel_rl",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel RL",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "5c02b9a3834a9b7554e17e158c0a406a551f6251dfbe3524f016b8f89450eaf6"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_wheel_rr": {
+      "id": "mt_wheel_rr",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel RR",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "9a4b0f4c6f50335ffa53705581af046da8cceee83d03bdf71a1d662a3cf55c69"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     }
+    },
+    "edges": {
+     "a_tower": {
+      "id": "a_tower",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_island",
+       "socket": "top"
+      },
+      "to": {
+       "tile": "mt_tower",
+       "socket": "base"
+      }
+     },
+     "a_core": {
+      "id": "a_core",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_tower",
+       "socket": "roof"
+      },
+      "to": {
+       "tile": "mt_core",
+       "socket": "mount"
+      }
+     },
+     "a_switch": {
+      "id": "a_switch",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_island",
+       "socket": "dock"
+      },
+      "to": {
+       "tile": "mt_switch",
+       "socket": "foot"
+      }
+     },
+     "s_switch": {
+      "id": "s_switch",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_switch",
+       "socket": "pressed"
+      },
+      "to": {
+       "tile": "mt_tower",
+       "socket": "toggle"
+      }
+     },
+     "s_lit": {
+      "id": "s_lit",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_tower",
+       "socket": "lit"
+      },
+      "to": {
+       "tile": "mt_core",
+       "socket": "surge"
+      }
+     },
+     "a_wheel_fl": {
+      "id": "a_wheel_fl",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_fl"
+      },
+      "to": {
+       "tile": "mt_wheel_fl",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_fl": {
+      "id": "s_wheel_fl",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_fl",
+       "socket": "roll"
+      }
+     },
+     "a_wheel_fr": {
+      "id": "a_wheel_fr",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_fr"
+      },
+      "to": {
+       "tile": "mt_wheel_fr",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_fr": {
+      "id": "s_wheel_fr",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_fr",
+       "socket": "roll"
+      }
+     },
+     "a_wheel_rl": {
+      "id": "a_wheel_rl",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_rl"
+      },
+      "to": {
+       "tile": "mt_wheel_rl",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_rl": {
+      "id": "s_wheel_rl",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_rl",
+       "socket": "roll"
+      }
+     },
+     "a_wheel_rr": {
+      "id": "a_wheel_rr",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_rr"
+      },
+      "to": {
+       "tile": "mt_wheel_rr",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_rr": {
+      "id": "s_wheel_rr",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_rr",
+       "socket": "roll"
+      }
+     }
+    },
+    "vars": {},
+    "defs": {},
+    "time": 0
+   },
+   "expect": {
+    "valid": true,
+    "struct_hash": "a5174ef8764e2b29098991ad87454a4e2e718f1386b2ca84592865fa037e0ccb",
+    "tiles": 9,
+    "roots": [
+     "mt_island",
+     "mt_rover"
+    ],
+    "content": [
+     {
+      "id": "mt_core",
+      "sha256": "10284b181009dbc62019b999ece3b22968432429e193a2e5f960181bc630f10d"
+     },
+     {
+      "id": "mt_island",
+      "sha256": "15e1720596d1c1dd674496aa049e789cbeb7b8a68175e31e0c6801e956a97cf2"
+     },
+     {
+      "id": "mt_rover",
+      "sha256": "770b124ee01effeb8ac3dfedf1b1a49b6d5bbc3eb12fd0126e8ebfaa5ab54bb9"
+     },
+     {
+      "id": "mt_switch",
+      "sha256": "b62209b69c03f2cb9a4856222b00d635e3b58bdfc1875a7d15e952276840dd95"
+     },
+     {
+      "id": "mt_tower",
+      "sha256": "6e88a69722baaa968316c10768c236c4856bc252702d3ee69b22a3b71bd7e03e"
+     },
+     {
+      "id": "mt_wheel_fl",
+      "sha256": "8670db9a11143c896f476421d69687e1e57d128db32c56344e2dbd9d4ff34b23"
+     },
+     {
+      "id": "mt_wheel_fr",
+      "sha256": "5595c1771aaed8bf2500ba7c2f881293b45e8811d86f37b729627887d1b2c6e7"
+     },
+     {
+      "id": "mt_wheel_rl",
+      "sha256": "5c02b9a3834a9b7554e17e158c0a406a551f6251dfbe3524f016b8f89450eaf6"
+     },
+     {
+      "id": "mt_wheel_rr",
+      "sha256": "9a4b0f4c6f50335ffa53705581af046da8cceee83d03bdf71a1d662a3cf55c69"
+     }
+    ]
+   }
+  },
+  {
+   "name": "signals-and-state",
+   "note": "A signal travelling the graph, and closed-form state after six offline hours.",
+   "world": {
+    "kind": "morphtile-world",
+    "version": "0.1",
+    "name": "Skyhold",
+    "tiles": {
+     "mt_island": {
+      "id": "mt_island",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Floating island",
+      "facets": {
+       "mesh": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "generator": "terrain",
+         "radius": 5.5,
+         "height": 1.6,
+         "plateau": 1,
+         "depth": 4,
+         "seed": 3
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.25,
+          0.58,
+          0.36
+         ]
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "none",
+        "data": {}
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "top",
+          "kind": "attach",
+          "pos": [
+           0,
+           1,
+           0
+          ]
+         },
+         {
+          "id": "dock",
+          "kind": "attach",
+          "pos": [
+           1.25,
+           1,
+           0.75
+          ]
+         }
+        ],
+        "bridges": [],
+        "place": [
+         0,
+         0,
+         0
+        ]
+       }
+      },
+      "form_hints": [
+       "world",
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "15e1720596d1c1dd674496aa049e789cbeb7b8a68175e31e0c6801e956a97cf2"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      },
+      "params": [
+       {
+        "id": "seed",
+        "label": "Terrain seed",
+        "type": "number",
+        "min": 1,
+        "max": 60,
+        "step": 1,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "mesh",
+          "at": "data.seed"
+         }
+        ]
+       },
+       {
+        "id": "height",
+        "label": "Hill height",
+        "type": "number",
+        "min": 0.4,
+        "max": 3,
+        "step": 0.1,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "mesh",
+          "at": "data.height"
+         }
+        ]
+       }
+      ]
+     },
+     "mt_tower": {
+      "id": "mt_tower",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Beacon tower",
+      "facets": {
+       "mesh": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "generator": "tower",
+         "levels": 3,
+         "radius": 0.6,
+         "seed": 4
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.62,
+          0.66,
+          0.78
+         ],
+         "glow": [
+          0.35,
+          0.65,
+          1
+         ],
+         "emissive": [
+          "*",
+          [
+           "var",
+           "beacon"
+          ],
+          0.45
+         ]
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "beacon": 0
+         },
+         "rules": [
+          {
+           "on": "toggle",
+           "do": [
+            {
+             "set": [
+              "beacon",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "beacon"
+               ]
+              ]
+             ]
+            },
+            {
+             "emit": "lit"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "base",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roof",
+          "kind": "attach",
+          "pos": [
+           0,
+           4.9,
+           0
+          ]
+         },
+         {
+          "id": "toggle",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "toggle",
+          "label": "Toggle beacon"
+         },
+         {
+          "id": "lit",
+          "kind": "signal",
+          "dir": "out",
+          "signal": "lit"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "6e88a69722baaa968316c10768c236c4856bc252702d3ee69b22a3b71bd7e03e"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      },
+      "params": [
+       {
+        "id": "levels",
+        "label": "Levels",
+        "type": "number",
+        "min": 1,
+        "max": 7,
+        "step": 1,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "mesh",
+          "at": "data.levels"
+         },
+         {
+          "tile": "",
+          "facet": "connect",
+          "at": "sockets.1.pos.1",
+          "expr": [
+           "+",
+           [
+            "*",
+            [
+             "var",
+             "value"
+            ],
+            1.1
+           ],
+           1.6
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     "mt_core": {
+      "id": "mt_core",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Matter core",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "box",
+         "size": [
+          0.9,
+          0.9,
+          0.9
+         ],
+         "rot": [
+          0.6,
+          0,
+          0.6
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.5,
+          0.36,
+          1
+         ],
+         "emissive": 0.25,
+         "pattern": "checker",
+         "scale": 0.3
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "bob",
+           "amp": 0.18,
+           "rate": 1.4
+          },
+          {
+           "op": "spin",
+           "axis": "y",
+           "rate": 0.5
+          },
+          {
+           "op": "pulse",
+           "amp": 0.35,
+           "rate": 2
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "energy": {
+           "accrue": {
+            "rate": 1,
+            "cap": 21600
+           },
+           "base": 0
+          },
+          "stored": 0
+         },
+         "rules": [
+          {
+           "on": "surge",
+           "do": [
+            {
+             "set": [
+              "stored",
+              [
+               "+",
+               [
+                "var",
+                "stored"
+               ],
+               [
+                "floor",
+                [
+                 "var",
+                 "energy"
+                ]
+               ]
+              ]
+             ]
+            },
+            {
+             "set": [
+              "energy",
+              0
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "mount",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "surge",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "surge",
+          "label": "Harvest energy"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "10284b181009dbc62019b999ece3b22968432429e193a2e5f960181bc630f10d"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_switch": {
+      "id": "mt_switch",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Dock switch",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "parts": [
+          {
+           "shape": "cylinder",
+           "size": [
+            0.5,
+            0.5,
+            0.5
+           ],
+           "pos": [
+            0,
+            0.25,
+            0
+           ]
+          },
+          {
+           "shape": "sphere",
+           "size": [
+            0.34,
+            0.34,
+            0.34
+           ],
+           "pos": [
+            0,
+            0.6,
+            0
+           ],
+           "color": [
+            1,
+            0.55,
+            0.3
+           ]
+          }
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.3,
+          0.6,
+          1
+         ],
+         "emissive": 0.15
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "presses": 0
+         },
+         "rules": [
+          {
+           "on": "press",
+           "do": [
+            {
+             "set": [
+              "presses",
+              [
+               "+",
+               [
+                "var",
+                "presses"
+               ],
+               1
+              ]
+             ]
+            },
+            {
+             "emit": "pressed"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "foot",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "press",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "press",
+          "label": "Press"
+         },
+         {
+          "id": "pressed",
+          "kind": "signal",
+          "dir": "out",
+          "signal": "pressed"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset",
+       "ui_panel"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "b62209b69c03f2cb9a4856222b00d635e3b58bdfc1875a7d15e952276840dd95"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_rover": {
+      "id": "mt_rover",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Sky rover",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "parts": [
+          {
+           "shape": "box",
+           "size": [
+            1.5,
+            0.4,
+            2.6
+           ],
+           "pos": [
+            0,
+            0.35,
+            0
+           ]
+          },
+          {
+           "shape": "wedge",
+           "size": [
+            1.5,
+            0.35,
+            0.9
+           ],
+           "pos": [
+            0,
+            0.72,
+            0.75
+           ]
+          },
+          {
+           "shape": "box",
+           "size": [
+            1.2,
+            0.4,
+            1.1
+           ],
+           "pos": [
+            0,
+            0.75,
+            -0.25
+           ],
+           "color": [
+            0.2,
+            0.5,
+            1
+           ]
+          }
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.78,
+          0.82,
+          0.92
+         ],
+         "glow": [
+          0.3,
+          0.6,
+          1
+         ],
+         "emissive": [
+          "*",
+          [
+           "var",
+           "moving"
+          ],
+          0.25
+         ]
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "orbit",
+           "radius": 7.6,
+           "rate": 0.22,
+           "by": [
+            "var",
+            "odometer"
+           ]
+          },
+          {
+           "op": "bob",
+           "amp": 0.07,
+           "rate": 2
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "moving": 0,
+          "odometer": {
+           "accrue": {
+            "rate": [
+             "var",
+             "moving"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "drive",
+           "do": [
+            {
+             "set": [
+              "odometer",
+              [
+               "var",
+               "odometer"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "moving",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "moving"
+               ]
+              ]
+             ]
+            },
+            {
+             "emit": "rolling"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "w_fl",
+          "kind": "attach",
+          "pos": [
+           -0.95,
+           0.05,
+           0.85
+          ]
+         },
+         {
+          "id": "w_fr",
+          "kind": "attach",
+          "pos": [
+           0.95,
+           0.05,
+           0.85
+          ]
+         },
+         {
+          "id": "w_rl",
+          "kind": "attach",
+          "pos": [
+           -0.95,
+           0.05,
+           -0.85
+          ]
+         },
+         {
+          "id": "w_rr",
+          "kind": "attach",
+          "pos": [
+           0.95,
+           0.05,
+           -0.85
+          ]
+         },
+         {
+          "id": "drive",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "drive",
+          "label": "Drive / stop"
+         },
+         {
+          "id": "rolling",
+          "kind": "signal",
+          "dir": "out",
+          "signal": "rolling"
+         }
+        ],
+        "bridges": [],
+        "place": [
+         0,
+         0.4,
+         0
+        ]
+       }
+      },
+      "form_hints": [
+       "vehicle",
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "770b124ee01effeb8ac3dfedf1b1a49b6d5bbc3eb12fd0126e8ebfaa5ab54bb9"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      },
+      "params": [
+       {
+        "id": "orbit",
+        "label": "Orbit radius",
+        "type": "number",
+        "min": 6,
+        "max": 14,
+        "step": 0.2,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "behavior",
+          "at": "data.ops.0.radius"
+         }
+        ]
+       }
+      ]
+     },
+     "mt_wheel_fl": {
+      "id": "mt_wheel_fl",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel FL",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "8670db9a11143c896f476421d69687e1e57d128db32c56344e2dbd9d4ff34b23"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_wheel_fr": {
+      "id": "mt_wheel_fr",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel FR",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "5595c1771aaed8bf2500ba7c2f881293b45e8811d86f37b729627887d1b2c6e7"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_wheel_rl": {
+      "id": "mt_wheel_rl",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel RL",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "5c02b9a3834a9b7554e17e158c0a406a551f6251dfbe3524f016b8f89450eaf6"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_wheel_rr": {
+      "id": "mt_wheel_rr",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel RR",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "9a4b0f4c6f50335ffa53705581af046da8cceee83d03bdf71a1d662a3cf55c69"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     }
+    },
+    "edges": {
+     "a_tower": {
+      "id": "a_tower",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_island",
+       "socket": "top"
+      },
+      "to": {
+       "tile": "mt_tower",
+       "socket": "base"
+      }
+     },
+     "a_core": {
+      "id": "a_core",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_tower",
+       "socket": "roof"
+      },
+      "to": {
+       "tile": "mt_core",
+       "socket": "mount"
+      }
+     },
+     "a_switch": {
+      "id": "a_switch",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_island",
+       "socket": "dock"
+      },
+      "to": {
+       "tile": "mt_switch",
+       "socket": "foot"
+      }
+     },
+     "s_switch": {
+      "id": "s_switch",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_switch",
+       "socket": "pressed"
+      },
+      "to": {
+       "tile": "mt_tower",
+       "socket": "toggle"
+      }
+     },
+     "s_lit": {
+      "id": "s_lit",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_tower",
+       "socket": "lit"
+      },
+      "to": {
+       "tile": "mt_core",
+       "socket": "surge"
+      }
+     },
+     "a_wheel_fl": {
+      "id": "a_wheel_fl",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_fl"
+      },
+      "to": {
+       "tile": "mt_wheel_fl",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_fl": {
+      "id": "s_wheel_fl",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_fl",
+       "socket": "roll"
+      }
+     },
+     "a_wheel_fr": {
+      "id": "a_wheel_fr",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_fr"
+      },
+      "to": {
+       "tile": "mt_wheel_fr",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_fr": {
+      "id": "s_wheel_fr",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_fr",
+       "socket": "roll"
+      }
+     },
+     "a_wheel_rl": {
+      "id": "a_wheel_rl",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_rl"
+      },
+      "to": {
+       "tile": "mt_wheel_rl",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_rl": {
+      "id": "s_wheel_rl",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_rl",
+       "socket": "roll"
+      }
+     },
+     "a_wheel_rr": {
+      "id": "a_wheel_rr",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_rr"
+      },
+      "to": {
+       "tile": "mt_wheel_rr",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_rr": {
+      "id": "s_wheel_rr",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_rr",
+       "socket": "roll"
+      }
+     }
+    },
+    "vars": {},
+    "defs": {},
+    "time": 0
+   },
+   "events": [
+    {
+     "type": "signal",
+     "tile": "mt_switch",
+     "name": "press"
+    },
+    {
+     "type": "tick",
+     "t": 21600
+    },
+    {
+     "type": "signal",
+     "tile": "mt_rover",
+     "name": "drive"
+    },
+    {
+     "type": "tick",
+     "t": 21660
+    }
+   ],
+   "expect": {
+    "vars": {
+     "mt_switch": {
+      "presses": 1
+     },
+     "mt_tower": {
+      "beacon": 1
+     },
+     "mt_core": {
+      "energy": {
+       "base": 0,
+       "t0": 0
+      }
+     },
+     "mt_rover": {
+      "odometer": {
+       "base": 0,
+       "t0": 21600
+      },
+      "moving": 1
+     },
+     "mt_wheel_fl": {
+      "turns": {
+       "base": 0,
+       "t0": 21600
+      },
+      "rolling": 1
+     },
+     "mt_wheel_fr": {
+      "turns": {
+       "base": 0,
+       "t0": 21600
+      },
+      "rolling": 1
+     },
+     "mt_wheel_rl": {
+      "turns": {
+       "base": 0,
+       "t0": 21600
+      },
+      "rolling": 1
+     },
+     "mt_wheel_rr": {
+      "turns": {
+       "base": 0,
+       "t0": 21600
+      },
+      "rolling": 1
+     }
+    },
+    "time": 21660,
+    "world_hash": "e0937172a530e3b03b28911fac5dc636f2d75c9e3ec14ab08f3971831b76aa84",
+    "simulation_steps": 0,
+    "read": {
+     "mt_core.stored": 0,
+     "mt_wheel_rr.turns": 60
+    }
+   }
+  },
+  {
+   "name": "depth-collapse",
+   "note": "Collapsing tiles into one and expanding again must be exactly reversible, state included.",
+   "world": {
+    "kind": "morphtile-world",
+    "version": "0.1",
+    "name": "Skyhold",
+    "tiles": {
+     "mt_island": {
+      "id": "mt_island",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Floating island",
+      "facets": {
+       "mesh": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "generator": "terrain",
+         "radius": 5.5,
+         "height": 1.6,
+         "plateau": 1,
+         "depth": 4,
+         "seed": 3
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.25,
+          0.58,
+          0.36
+         ]
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "none",
+        "data": {}
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "top",
+          "kind": "attach",
+          "pos": [
+           0,
+           1,
+           0
+          ]
+         },
+         {
+          "id": "dock",
+          "kind": "attach",
+          "pos": [
+           1.25,
+           1,
+           0.75
+          ]
+         }
+        ],
+        "bridges": [],
+        "place": [
+         0,
+         0,
+         0
+        ]
+       }
+      },
+      "form_hints": [
+       "world",
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "15e1720596d1c1dd674496aa049e789cbeb7b8a68175e31e0c6801e956a97cf2"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      },
+      "params": [
+       {
+        "id": "seed",
+        "label": "Terrain seed",
+        "type": "number",
+        "min": 1,
+        "max": 60,
+        "step": 1,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "mesh",
+          "at": "data.seed"
+         }
+        ]
+       },
+       {
+        "id": "height",
+        "label": "Hill height",
+        "type": "number",
+        "min": 0.4,
+        "max": 3,
+        "step": 0.1,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "mesh",
+          "at": "data.height"
+         }
+        ]
+       }
+      ]
+     },
+     "mt_tower": {
+      "id": "mt_tower",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Beacon tower",
+      "facets": {
+       "mesh": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "generator": "tower",
+         "levels": 3,
+         "radius": 0.6,
+         "seed": 4
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.62,
+          0.66,
+          0.78
+         ],
+         "glow": [
+          0.35,
+          0.65,
+          1
+         ],
+         "emissive": [
+          "*",
+          [
+           "var",
+           "beacon"
+          ],
+          0.45
+         ]
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "beacon": 0
+         },
+         "rules": [
+          {
+           "on": "toggle",
+           "do": [
+            {
+             "set": [
+              "beacon",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "beacon"
+               ]
+              ]
+             ]
+            },
+            {
+             "emit": "lit"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "base",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roof",
+          "kind": "attach",
+          "pos": [
+           0,
+           4.9,
+           0
+          ]
+         },
+         {
+          "id": "toggle",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "toggle",
+          "label": "Toggle beacon"
+         },
+         {
+          "id": "lit",
+          "kind": "signal",
+          "dir": "out",
+          "signal": "lit"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "6e88a69722baaa968316c10768c236c4856bc252702d3ee69b22a3b71bd7e03e"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      },
+      "params": [
+       {
+        "id": "levels",
+        "label": "Levels",
+        "type": "number",
+        "min": 1,
+        "max": 7,
+        "step": 1,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "mesh",
+          "at": "data.levels"
+         },
+         {
+          "tile": "",
+          "facet": "connect",
+          "at": "sockets.1.pos.1",
+          "expr": [
+           "+",
+           [
+            "*",
+            [
+             "var",
+             "value"
+            ],
+            1.1
+           ],
+           1.6
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     "mt_core": {
+      "id": "mt_core",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Matter core",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "box",
+         "size": [
+          0.9,
+          0.9,
+          0.9
+         ],
+         "rot": [
+          0.6,
+          0,
+          0.6
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.5,
+          0.36,
+          1
+         ],
+         "emissive": 0.25,
+         "pattern": "checker",
+         "scale": 0.3
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "bob",
+           "amp": 0.18,
+           "rate": 1.4
+          },
+          {
+           "op": "spin",
+           "axis": "y",
+           "rate": 0.5
+          },
+          {
+           "op": "pulse",
+           "amp": 0.35,
+           "rate": 2
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "energy": {
+           "accrue": {
+            "rate": 1,
+            "cap": 21600
+           },
+           "base": 0
+          },
+          "stored": 0
+         },
+         "rules": [
+          {
+           "on": "surge",
+           "do": [
+            {
+             "set": [
+              "stored",
+              [
+               "+",
+               [
+                "var",
+                "stored"
+               ],
+               [
+                "floor",
+                [
+                 "var",
+                 "energy"
+                ]
+               ]
+              ]
+             ]
+            },
+            {
+             "set": [
+              "energy",
+              0
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "mount",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "surge",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "surge",
+          "label": "Harvest energy"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "10284b181009dbc62019b999ece3b22968432429e193a2e5f960181bc630f10d"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_switch": {
+      "id": "mt_switch",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Dock switch",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "parts": [
+          {
+           "shape": "cylinder",
+           "size": [
+            0.5,
+            0.5,
+            0.5
+           ],
+           "pos": [
+            0,
+            0.25,
+            0
+           ]
+          },
+          {
+           "shape": "sphere",
+           "size": [
+            0.34,
+            0.34,
+            0.34
+           ],
+           "pos": [
+            0,
+            0.6,
+            0
+           ],
+           "color": [
+            1,
+            0.55,
+            0.3
+           ]
+          }
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.3,
+          0.6,
+          1
+         ],
+         "emissive": 0.15
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "presses": 0
+         },
+         "rules": [
+          {
+           "on": "press",
+           "do": [
+            {
+             "set": [
+              "presses",
+              [
+               "+",
+               [
+                "var",
+                "presses"
+               ],
+               1
+              ]
+             ]
+            },
+            {
+             "emit": "pressed"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "foot",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "press",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "press",
+          "label": "Press"
+         },
+         {
+          "id": "pressed",
+          "kind": "signal",
+          "dir": "out",
+          "signal": "pressed"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset",
+       "ui_panel"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "b62209b69c03f2cb9a4856222b00d635e3b58bdfc1875a7d15e952276840dd95"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_rover": {
+      "id": "mt_rover",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Sky rover",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "parts": [
+          {
+           "shape": "box",
+           "size": [
+            1.5,
+            0.4,
+            2.6
+           ],
+           "pos": [
+            0,
+            0.35,
+            0
+           ]
+          },
+          {
+           "shape": "wedge",
+           "size": [
+            1.5,
+            0.35,
+            0.9
+           ],
+           "pos": [
+            0,
+            0.72,
+            0.75
+           ]
+          },
+          {
+           "shape": "box",
+           "size": [
+            1.2,
+            0.4,
+            1.1
+           ],
+           "pos": [
+            0,
+            0.75,
+            -0.25
+           ],
+           "color": [
+            0.2,
+            0.5,
+            1
+           ]
+          }
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.78,
+          0.82,
+          0.92
+         ],
+         "glow": [
+          0.3,
+          0.6,
+          1
+         ],
+         "emissive": [
+          "*",
+          [
+           "var",
+           "moving"
+          ],
+          0.25
+         ]
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "orbit",
+           "radius": 7.6,
+           "rate": 0.22,
+           "by": [
+            "var",
+            "odometer"
+           ]
+          },
+          {
+           "op": "bob",
+           "amp": 0.07,
+           "rate": 2
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "moving": 0,
+          "odometer": {
+           "accrue": {
+            "rate": [
+             "var",
+             "moving"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "drive",
+           "do": [
+            {
+             "set": [
+              "odometer",
+              [
+               "var",
+               "odometer"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "moving",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "moving"
+               ]
+              ]
+             ]
+            },
+            {
+             "emit": "rolling"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "w_fl",
+          "kind": "attach",
+          "pos": [
+           -0.95,
+           0.05,
+           0.85
+          ]
+         },
+         {
+          "id": "w_fr",
+          "kind": "attach",
+          "pos": [
+           0.95,
+           0.05,
+           0.85
+          ]
+         },
+         {
+          "id": "w_rl",
+          "kind": "attach",
+          "pos": [
+           -0.95,
+           0.05,
+           -0.85
+          ]
+         },
+         {
+          "id": "w_rr",
+          "kind": "attach",
+          "pos": [
+           0.95,
+           0.05,
+           -0.85
+          ]
+         },
+         {
+          "id": "drive",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "drive",
+          "label": "Drive / stop"
+         },
+         {
+          "id": "rolling",
+          "kind": "signal",
+          "dir": "out",
+          "signal": "rolling"
+         }
+        ],
+        "bridges": [],
+        "place": [
+         0,
+         0.4,
+         0
+        ]
+       }
+      },
+      "form_hints": [
+       "vehicle",
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "770b124ee01effeb8ac3dfedf1b1a49b6d5bbc3eb12fd0126e8ebfaa5ab54bb9"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      },
+      "params": [
+       {
+        "id": "orbit",
+        "label": "Orbit radius",
+        "type": "number",
+        "min": 6,
+        "max": 14,
+        "step": 0.2,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "behavior",
+          "at": "data.ops.0.radius"
+         }
+        ]
+       }
+      ]
+     },
+     "mt_wheel_fl": {
+      "id": "mt_wheel_fl",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel FL",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "8670db9a11143c896f476421d69687e1e57d128db32c56344e2dbd9d4ff34b23"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_wheel_fr": {
+      "id": "mt_wheel_fr",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel FR",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "5595c1771aaed8bf2500ba7c2f881293b45e8811d86f37b729627887d1b2c6e7"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_wheel_rl": {
+      "id": "mt_wheel_rl",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel RL",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "5c02b9a3834a9b7554e17e158c0a406a551f6251dfbe3524f016b8f89450eaf6"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_wheel_rr": {
+      "id": "mt_wheel_rr",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel RR",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "9a4b0f4c6f50335ffa53705581af046da8cceee83d03bdf71a1d662a3cf55c69"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     }
+    },
+    "edges": {
+     "a_tower": {
+      "id": "a_tower",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_island",
+       "socket": "top"
+      },
+      "to": {
+       "tile": "mt_tower",
+       "socket": "base"
+      }
+     },
+     "a_core": {
+      "id": "a_core",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_tower",
+       "socket": "roof"
+      },
+      "to": {
+       "tile": "mt_core",
+       "socket": "mount"
+      }
+     },
+     "a_switch": {
+      "id": "a_switch",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_island",
+       "socket": "dock"
+      },
+      "to": {
+       "tile": "mt_switch",
+       "socket": "foot"
+      }
+     },
+     "s_switch": {
+      "id": "s_switch",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_switch",
+       "socket": "pressed"
+      },
+      "to": {
+       "tile": "mt_tower",
+       "socket": "toggle"
+      }
+     },
+     "s_lit": {
+      "id": "s_lit",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_tower",
+       "socket": "lit"
+      },
+      "to": {
+       "tile": "mt_core",
+       "socket": "surge"
+      }
+     },
+     "a_wheel_fl": {
+      "id": "a_wheel_fl",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_fl"
+      },
+      "to": {
+       "tile": "mt_wheel_fl",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_fl": {
+      "id": "s_wheel_fl",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_fl",
+       "socket": "roll"
+      }
+     },
+     "a_wheel_fr": {
+      "id": "a_wheel_fr",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_fr"
+      },
+      "to": {
+       "tile": "mt_wheel_fr",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_fr": {
+      "id": "s_wheel_fr",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_fr",
+       "socket": "roll"
+      }
+     },
+     "a_wheel_rl": {
+      "id": "a_wheel_rl",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_rl"
+      },
+      "to": {
+       "tile": "mt_wheel_rl",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_rl": {
+      "id": "s_wheel_rl",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_rl",
+       "socket": "roll"
+      }
+     },
+     "a_wheel_rr": {
+      "id": "a_wheel_rr",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_rr"
+      },
+      "to": {
+       "tile": "mt_wheel_rr",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_rr": {
+      "id": "s_wheel_rr",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_rr",
+       "socket": "roll"
+      }
+     }
+    },
+    "vars": {
+     "mt_switch": {
+      "presses": 1
+     },
+     "mt_tower": {
+      "beacon": 1
+     },
+     "mt_core": {
+      "energy": {
+       "base": 0,
+       "t0": 0
+      }
+     }
+    },
+    "defs": {},
+    "time": 40
+   },
+   "ops": [
+    {
+     "op": "tile.collapse",
+     "ids": [
+      "mt_tower",
+      "mt_core"
+     ],
+     "id": "mt_asm",
+     "name": "Beacon assembly"
+    }
+   ],
+   "expect": {
+    "after_collapse": {
+     "struct_hash": "3c15aada13b5eb2b5dc585428a0c45e2a360035961e8c2aea7ae2f13b8928e48",
+     "tiles": 10,
+     "beacon_at": "mt_asm/mt_tower",
+     "beacon": 1
+    },
+    "after_expand": {
+     "struct_hash": "a5174ef8764e2b29098991ad87454a4e2e718f1386b2ca84592865fa037e0ccb",
+     "vars": {
+      "mt_core": {
+       "energy": {
+        "base": 0,
+        "t0": 0
+       }
+      },
+      "mt_switch": {
+       "presses": 1
+      },
+      "mt_tower": {
+       "beacon": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "recipe-shapes",
+   "note": "Shapes described as matter: the geometry a recipe must produce, point for point.",
+   "world": {
+    "kind": "morphtile-world",
+    "version": "0.1",
+    "name": "Recipes",
+    "tiles": {
+     "mt_spiral": {
+      "id": "mt_spiral",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "spiral",
+      "facets": {
+       "mesh": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "generator": "recipe",
+         "vars": {
+          "rungs": 14,
+          "turn": 0.55,
+          "lift": 0.26,
+          "reach": 1.1
+         },
+         "parts": [
+          {
+           "repeat": [
+            "var",
+            "rungs"
+           ],
+           "as": "i",
+           "body": [
+            {
+             "shape": "box",
+             "size": [
+              0.55,
+              0.12,
+              0.22
+             ],
+             "pos": [
+              [
+               "*",
+               [
+                "var",
+                "reach"
+               ],
+               [
+                "+",
+                1,
+                [
+                 "*",
+                 0.02,
+                 [
+                  "var",
+                  "i"
+                 ]
+                ]
+               ]
+              ],
+              [
+               "*",
+               [
+                "var",
+                "lift"
+               ],
+               [
+                "var",
+                "i"
+               ]
+              ],
+              0
+             ],
+             "rot": [
+              0,
+              [
+               "*",
+               [
+                "var",
+                "turn"
+               ],
+               [
+                "var",
+                "i"
+               ]
+              ],
+              0
+             ]
+            },
+            {
+             "shape": "cylinder",
+             "size": [
+              0.16,
+              [
+               "var",
+               "lift"
+              ],
+              0.16
+             ],
+             "pos": [
+              0,
+              [
+               "*",
+               [
+                "var",
+                "lift"
+               ],
+               [
+                "var",
+                "i"
+               ]
+              ],
+              0
+             ],
+             "color": [
+              0.55,
+              0.6,
+              0.85
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.55,
+          0.62,
+          0.9
+         ]
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "none",
+        "data": {}
+       },
+       "connect": {
+        "sockets": [],
+        "bridges": [],
+        "place": [
+         0,
+         0,
+         0
+        ]
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "human",
+       "bridges": [],
+       "sha256": "ecad5181b71dd38424cf179c163a662fa54772e6a307bba50dd410e1f6bcecfc"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_lattice": {
+      "id": "mt_lattice",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "lattice",
+      "facets": {
+       "mesh": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "generator": "recipe",
+         "vars": {
+          "n": 4,
+          "gap": 0.55
+         },
+         "parts": [
+          {
+           "repeat": [
+            "var",
+            "n"
+           ],
+           "as": "x",
+           "body": [
+            {
+             "repeat": [
+              "var",
+              "n"
+             ],
+             "as": "y",
+             "body": [
+              {
+               "repeat": [
+                "var",
+                "n"
+               ],
+               "as": "z",
+               "body": [
+                {
+                 "when": [
+                  "or",
+                  [
+                   "or",
+                   [
+                    "==",
+                    [
+                     "var",
+                     "x"
+                    ],
+                    0
+                   ],
+                   [
+                    "==",
+                    [
+                     "var",
+                     "y"
+                    ],
+                    0
+                   ]
+                  ],
+                  [
+                   "==",
+                   [
+                    "var",
+                    "z"
+                   ],
+                   0
+                  ]
+                 ],
+                 "shape": "box",
+                 "size": [
+                  0.2,
+                  0.2,
+                  0.2
+                 ],
+                 "pos": [
+                  [
+                   "*",
+                   [
+                    "var",
+                    "gap"
+                   ],
+                   [
+                    "var",
+                    "x"
+                   ]
+                  ],
+                  [
+                   "*",
+                   [
+                    "var",
+                    "gap"
+                   ],
+                   [
+                    "var",
+                    "y"
+                   ]
+                  ],
+                  [
+                   "*",
+                   [
+                    "var",
+                    "gap"
+                   ],
+                   [
+                    "var",
+                    "z"
+                   ]
+                  ]
+                 ]
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.55,
+          0.62,
+          0.9
+         ]
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "none",
+        "data": {}
+       },
+       "connect": {
+        "sockets": [],
+        "bridges": [],
+        "place": [
+         0,
+         0,
+         0
+        ]
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "human",
+       "bridges": [],
+       "sha256": "1c899d5ce54d89c1b77a5b2cd61dcb7c6f42c25e6697423460dea84079fde16a"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_tower": {
+      "id": "mt_tower",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "tower",
+      "facets": {
+       "mesh": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "generator": "tower",
+         "levels": 3,
+         "radius": 0.6,
+         "seed": 4
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.55,
+          0.62,
+          0.9
+         ]
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "none",
+        "data": {}
+       },
+       "connect": {
+        "sockets": [],
+        "bridges": [],
+        "place": [
+         0,
+         0,
+         0
+        ]
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "human",
+       "bridges": [],
+       "sha256": "50e4259b2189f861d29008cb25166c4e82154e303fb83a38513db4ca03a1a192"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_island": {
+      "id": "mt_island",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "island",
+      "facets": {
+       "mesh": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "generator": "terrain",
+         "radius": 5.5,
+         "height": 1.6,
+         "plateau": 1,
+         "depth": 4,
+         "seed": 3
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.55,
+          0.62,
+          0.9
+         ]
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "none",
+        "data": {}
+       },
+       "connect": {
+        "sockets": [],
+        "bridges": [],
+        "place": [
+         0,
+         0,
+         0
+        ]
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "human",
+       "bridges": [],
+       "sha256": "359139056ae386da893a403bf21030f83c88be9852d8ae68084566a3b61b1dd4"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     }
+    },
+    "edges": {},
+    "vars": {},
+    "defs": {},
+    "time": 0
+   },
+   "expect": {
+    "geometry": [
+     {
+      "id": "mt_island",
+      "parts": null,
+      "sha256": "f7e9a1380eaa23860903ec0df186860a216fe3ab560cf329042e7a955e7350ae"
+     },
+     {
+      "id": "mt_lattice",
+      "parts": 37,
+      "sha256": "c81766624d81c761abbb375ca8c437f5149a0d06bd701abecdb9ce19471eb64d"
+     },
+     {
+      "id": "mt_spiral",
+      "parts": 28,
+      "sha256": "d6b661b2580528c5b7e674f4be0f625e824343b288058212faa8fa87d5f5ffe0"
+     },
+     {
+      "id": "mt_tower",
+      "parts": null,
+      "sha256": "7fa7296794f51829886b1e2776c35afbfc39349082aaa1ce7923d28efdd423ad"
+     }
+    ]
+   }
+  },
+  {
+   "name": "composed-and-painted",
+   "note": "A shape made of another shape, at two settings, painted by position and by surface direction.",
+   "world": {
+    "kind": "morphtile-world",
+    "version": "0.1",
+    "name": "Composed",
+    "tiles": {
+     "mt_row": {
+      "id": "mt_row",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Row",
+      "facets": {
+       "mesh": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "generator": "recipe",
+         "vars": {
+          "gap": 3
+         },
+         "parts": [
+          {
+           "use": "def_s",
+           "pos": [
+            0,
+            0,
+            0
+           ],
+           "with": {
+            "rungs": 6
+           }
+          },
+          {
+           "use": "def_s",
+           "pos": [
+            [
+             "*",
+             2,
+             [
+              "ease",
+              [
+               "var",
+               "gap"
+              ]
+             ]
+            ],
+            0,
+            0
+           ],
+           "with": {
+            "rungs": 9
+           }
+          }
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.55,
+          0.62,
+          0.9
+         ]
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "none",
+        "data": {}
+       },
+       "connect": {
+        "sockets": [],
+        "bridges": [],
+        "place": [
+         0,
+         0,
+         0
+        ]
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "human",
+       "bridges": [],
+       "sha256": "04e5c7fbabc116a1b2e9fc5dbca7bc4dc30a4534bb9c3abba0b9e758a1b62f0a"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_ground": {
+      "id": "mt_ground",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Ground",
+      "facets": {
+       "mesh": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "generator": "terrain",
+         "radius": 5.5,
+         "height": 1.6,
+         "plateau": 1,
+         "depth": 4,
+         "seed": 3
+        }
+       },
+       "material": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "color": [
+          0.5,
+          0.5,
+          0.55
+         ],
+         "paint": {
+          "vars": {
+           "grass": 0.62
+          },
+          "color": [
+           [
+            "if",
+            [
+             ">",
+             [
+              "var",
+              "up"
+             ],
+             [
+              "var",
+              "grass"
+             ]
+            ],
+            0.24,
+            0.42
+           ],
+           [
+            "if",
+            [
+             ">",
+             [
+              "var",
+              "up"
+             ],
+             [
+              "var",
+              "grass"
+             ]
+            ],
+            0.6,
+            0.38
+           ],
+           [
+            "if",
+            [
+             ">",
+             [
+              "var",
+              "up"
+             ],
+             [
+              "var",
+              "grass"
+             ]
+            ],
+            0.3,
+            0.46
+           ]
+          ]
+         }
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "none",
+        "data": {}
+       },
+       "connect": {
+        "sockets": [],
+        "bridges": [],
+        "place": [
+         0,
+         0,
+         0
+        ]
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "human",
+       "bridges": [],
+       "sha256": "89a45641c383f5cfb3dc294335fcba385508aa499c131fd09b14ba7e59ee5ebe"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_grad": {
+      "id": "mt_grad",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Gradient",
+      "facets": {
+       "mesh": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "generator": "tower",
+         "levels": 3,
+         "radius": 0.6,
+         "seed": 4
+        }
+       },
+       "material": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "color": [
+          0.6,
+          0.6,
+          0.7
+         ],
+         "paint": {
+          "vars": {
+           "low": 0.15,
+           "span": 4
+          },
+          "color": [
+           [
+            "+",
+            0.2,
+            [
+             "/",
+             [
+              "var",
+              "y"
+             ],
+             [
+              "var",
+              "span"
+             ]
+            ]
+           ],
+           [
+            "+",
+            [
+             "var",
+             "low"
+            ],
+            [
+             "/",
+             [
+              "var",
+              "y"
+             ],
+             [
+              "*",
+              2,
+              [
+               "var",
+               "span"
+              ]
+             ]
+            ]
+           ],
+           [
+            "-",
+            0.95,
+            [
+             "/",
+             [
+              "var",
+              "y"
+             ],
+             [
+              "var",
+              "span"
+             ]
+            ]
+           ]
+          ]
+         }
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "none",
+        "data": {}
+       },
+       "connect": {
+        "sockets": [],
+        "bridges": [],
+        "place": [
+         0,
+         0,
+         0
+        ]
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "human",
+       "bridges": [],
+       "sha256": "3ee78b382f31678aa443bf5efe0bf03316c0c5cdc1eedca4e9aba7b880870d3b"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     }
+    },
+    "edges": {},
+    "vars": {},
+    "defs": {
+     "def_s": {
+      "id": "def_s",
+      "name": "Spiral",
+      "body": {
+       "facets": {
+        "mesh": {
+         "type": "generated",
+         "source": null,
+         "data": {
+          "generator": "recipe",
+          "vars": {
+           "rungs": 14,
+           "turn": 0.55,
+           "lift": 0.26,
+           "reach": 1.1
+          },
+          "parts": [
+           {
+            "repeat": [
+             "var",
+             "rungs"
+            ],
+            "as": "i",
+            "body": [
+             {
+              "shape": "box",
+              "size": [
+               0.55,
+               0.12,
+               0.22
+              ],
+              "pos": [
+               [
+                "*",
+                [
+                 "var",
+                 "reach"
+                ],
+                [
+                 "+",
+                 1,
+                 [
+                  "*",
+                  0.02,
+                  [
+                   "var",
+                   "i"
+                  ]
+                 ]
+                ]
+               ],
+               [
+                "*",
+                [
+                 "var",
+                 "lift"
+                ],
+                [
+                 "var",
+                 "i"
+                ]
+               ],
+               0
+              ],
+              "rot": [
+               0,
+               [
+                "*",
+                [
+                 "var",
+                 "turn"
+                ],
+                [
+                 "var",
+                 "i"
+                ]
+               ],
+               0
+              ]
+             },
+             {
+              "shape": "cylinder",
+              "size": [
+               0.16,
+               [
+                "var",
+                "lift"
+               ],
+               0.16
+              ],
+              "pos": [
+               0,
+               [
+                "*",
+                [
+                 "var",
+                 "lift"
+                ],
+                [
+                 "var",
+                 "i"
+                ]
+               ],
+               0
+              ],
+              "color": [
+               0.55,
+               0.6,
+               0.85
+              ]
+             }
+            ]
+           }
+          ]
+         }
+        },
+        "material": {
+         "type": "primitive",
+         "source": null,
+         "data": {
+          "color": [
+           0.7,
+           0.7,
+           0.9
+          ]
+         }
+        }
+       }
+      }
+     }
+    },
+    "time": 0,
+    "words": {
+     "ease": {
+      "name": "ease",
+      "args": [
+       "x"
+      ],
+      "body": [
+       "*",
+       [
+        "var",
+        "x"
+       ],
+       [
+        "var",
+        "x"
+       ]
+      ]
+     }
+    }
+   },
+   "expect": {
+    "geometry": [
+     {
+      "id": "mt_grad",
+      "parts": null,
+      "sha256": "3a21f38eabd5885654cf228c127a20f13dcf614197ae889bd89ab4a1fd9e5425"
+     },
+     {
+      "id": "mt_ground",
+      "parts": null,
+      "sha256": "644e6b5369f356f4ba88b058e7d853f6ce6d7f660a02da31c25bdd119da46063"
+     },
+     {
+      "id": "mt_row",
+      "parts": 30,
+      "sha256": "65b377eb139637ff664b8d0cf275ed59fe058df2137ec0e01777e7c3a5bc80ae"
+     }
+    ]
+   }
+  },
+  {
+   "name": "sleeping-capability",
+   "note": "A capability asleep in a node costs nothing; waking it changes state, never matter.",
+   "world": {
+    "kind": "morphtile-world",
+    "version": "0.1",
+    "name": "Skyhold",
+    "tiles": {
+     "mt_island": {
+      "id": "mt_island",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Floating island",
+      "facets": {
+       "mesh": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "generator": "terrain",
+         "radius": 5.5,
+         "height": 1.6,
+         "plateau": 1,
+         "depth": 4,
+         "seed": 3
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.25,
+          0.58,
+          0.36
+         ]
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "none",
+        "data": {}
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "top",
+          "kind": "attach",
+          "pos": [
+           0,
+           1,
+           0
+          ]
+         },
+         {
+          "id": "dock",
+          "kind": "attach",
+          "pos": [
+           1.25,
+           1,
+           0.75
+          ]
+         }
+        ],
+        "bridges": [],
+        "place": [
+         0,
+         0,
+         0
+        ]
+       }
+      },
+      "form_hints": [
+       "world",
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "15e1720596d1c1dd674496aa049e789cbeb7b8a68175e31e0c6801e956a97cf2"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      },
+      "params": [
+       {
+        "id": "seed",
+        "label": "Terrain seed",
+        "type": "number",
+        "min": 1,
+        "max": 60,
+        "step": 1,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "mesh",
+          "at": "data.seed"
+         }
+        ]
+       },
+       {
+        "id": "height",
+        "label": "Hill height",
+        "type": "number",
+        "min": 0.4,
+        "max": 3,
+        "step": 0.1,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "mesh",
+          "at": "data.height"
+         }
+        ]
+       }
+      ]
+     },
+     "mt_tower": {
+      "id": "mt_tower",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Beacon tower",
+      "facets": {
+       "mesh": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "generator": "tower",
+         "levels": 3,
+         "radius": 0.6,
+         "seed": 4
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.62,
+          0.66,
+          0.78
+         ],
+         "glow": [
+          0.35,
+          0.65,
+          1
+         ],
+         "emissive": [
+          "*",
+          [
+           "var",
+           "beacon"
+          ],
+          0.45
+         ]
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "beacon": 0
+         },
+         "rules": [
+          {
+           "on": "toggle",
+           "do": [
+            {
+             "set": [
+              "beacon",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "beacon"
+               ]
+              ]
+             ]
+            },
+            {
+             "emit": "lit"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "base",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roof",
+          "kind": "attach",
+          "pos": [
+           0,
+           4.9,
+           0
+          ]
+         },
+         {
+          "id": "toggle",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "toggle",
+          "label": "Toggle beacon"
+         },
+         {
+          "id": "lit",
+          "kind": "signal",
+          "dir": "out",
+          "signal": "lit"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "6e88a69722baaa968316c10768c236c4856bc252702d3ee69b22a3b71bd7e03e"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      },
+      "params": [
+       {
+        "id": "levels",
+        "label": "Levels",
+        "type": "number",
+        "min": 1,
+        "max": 7,
+        "step": 1,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "mesh",
+          "at": "data.levels"
+         },
+         {
+          "tile": "",
+          "facet": "connect",
+          "at": "sockets.1.pos.1",
+          "expr": [
+           "+",
+           [
+            "*",
+            [
+             "var",
+             "value"
+            ],
+            1.1
+           ],
+           1.6
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     "mt_core": {
+      "id": "mt_core",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Matter core",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "box",
+         "size": [
+          0.9,
+          0.9,
+          0.9
+         ],
+         "rot": [
+          0.6,
+          0,
+          0.6
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.5,
+          0.36,
+          1
+         ],
+         "emissive": 0.25,
+         "pattern": "checker",
+         "scale": 0.3
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "bob",
+           "amp": 0.18,
+           "rate": 1.4
+          },
+          {
+           "op": "spin",
+           "axis": "y",
+           "rate": 0.5
+          },
+          {
+           "op": "pulse",
+           "amp": 0.35,
+           "rate": 2
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "energy": {
+           "accrue": {
+            "rate": 1,
+            "cap": 21600
+           },
+           "base": 0
+          },
+          "stored": 0
+         },
+         "rules": [
+          {
+           "on": "surge",
+           "do": [
+            {
+             "set": [
+              "stored",
+              [
+               "+",
+               [
+                "var",
+                "stored"
+               ],
+               [
+                "floor",
+                [
+                 "var",
+                 "energy"
+                ]
+               ]
+              ]
+             ]
+            },
+            {
+             "set": [
+              "energy",
+              0
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "mount",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "surge",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "surge",
+          "label": "Harvest energy"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "10284b181009dbc62019b999ece3b22968432429e193a2e5f960181bc630f10d"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_switch": {
+      "id": "mt_switch",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Dock switch",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "parts": [
+          {
+           "shape": "cylinder",
+           "size": [
+            0.5,
+            0.5,
+            0.5
+           ],
+           "pos": [
+            0,
+            0.25,
+            0
+           ]
+          },
+          {
+           "shape": "sphere",
+           "size": [
+            0.34,
+            0.34,
+            0.34
+           ],
+           "pos": [
+            0,
+            0.6,
+            0
+           ],
+           "color": [
+            1,
+            0.55,
+            0.3
+           ]
+          }
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.3,
+          0.6,
+          1
+         ],
+         "emissive": 0.15
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "presses": 0
+         },
+         "rules": [
+          {
+           "on": "press",
+           "do": [
+            {
+             "set": [
+              "presses",
+              [
+               "+",
+               [
+                "var",
+                "presses"
+               ],
+               1
+              ]
+             ]
+            },
+            {
+             "emit": "pressed"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "foot",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "press",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "press",
+          "label": "Press"
+         },
+         {
+          "id": "pressed",
+          "kind": "signal",
+          "dir": "out",
+          "signal": "pressed"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset",
+       "ui_panel"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "878ffaeec62bcd404a5af8b864b57a6b485c750713b72cc984d1d0428c820f65"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      },
+      "capabilities": [
+       {
+        "id": "bay",
+        "name": "Bay",
+        "wake": {
+         "on": "signal",
+         "name": "open"
+        },
+        "grants": {
+         "sockets": [
+          {
+           "id": "open",
+           "kind": "signal",
+           "dir": "in",
+           "signal": "open"
+          }
+         ],
+         "interior": {
+          "ports": [],
+          "edges": {},
+          "tiles": {
+           "mt_arm": {
+            "id": "mt_arm",
+            "kind": "morphtile",
+            "version": "0.1",
+            "name": "Arm",
+            "facets": {
+             "mesh": {
+              "type": "primitive",
+              "source": null,
+              "data": {
+               "shape": "cylinder",
+               "size": [
+                0.3,
+                1.4,
+                0.3
+               ]
+              }
+             },
+             "material": {
+              "type": "primitive",
+              "source": null,
+              "data": {
+               "color": [
+                0.55,
+                0.62,
+                0.9
+               ]
+              }
+             },
+             "behavior": {
+              "type": "none",
+              "data": {}
+             },
+             "logic": {
+              "type": "none",
+              "data": {}
+             },
+             "connect": {
+              "sockets": [],
+              "bridges": [],
+              "place": [
+               0,
+               0,
+               0
+              ]
+             }
+            },
+            "form_hints": [
+             "game_asset"
+            ],
+            "provenance": {
+             "created_by": "human",
+             "bridges": [],
+             "sha256": "dd958abf6463db134f39c1ddffb65f94e0f4227bb526982ef28e48e6aa5a97ef"
+            },
+            "state": {
+             "version": 1,
+             "mutable": true,
+             "last_transform": null
+            }
+           }
+          }
+         }
+        }
+       }
+      ]
+     },
+     "mt_rover": {
+      "id": "mt_rover",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Sky rover",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "parts": [
+          {
+           "shape": "box",
+           "size": [
+            1.5,
+            0.4,
+            2.6
+           ],
+           "pos": [
+            0,
+            0.35,
+            0
+           ]
+          },
+          {
+           "shape": "wedge",
+           "size": [
+            1.5,
+            0.35,
+            0.9
+           ],
+           "pos": [
+            0,
+            0.72,
+            0.75
+           ]
+          },
+          {
+           "shape": "box",
+           "size": [
+            1.2,
+            0.4,
+            1.1
+           ],
+           "pos": [
+            0,
+            0.75,
+            -0.25
+           ],
+           "color": [
+            0.2,
+            0.5,
+            1
+           ]
+          }
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.78,
+          0.82,
+          0.92
+         ],
+         "glow": [
+          0.3,
+          0.6,
+          1
+         ],
+         "emissive": [
+          "*",
+          [
+           "var",
+           "moving"
+          ],
+          0.25
+         ]
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "orbit",
+           "radius": 7.6,
+           "rate": 0.22,
+           "by": [
+            "var",
+            "odometer"
+           ]
+          },
+          {
+           "op": "bob",
+           "amp": 0.07,
+           "rate": 2
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "moving": 0,
+          "odometer": {
+           "accrue": {
+            "rate": [
+             "var",
+             "moving"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "drive",
+           "do": [
+            {
+             "set": [
+              "odometer",
+              [
+               "var",
+               "odometer"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "moving",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "moving"
+               ]
+              ]
+             ]
+            },
+            {
+             "emit": "rolling"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "w_fl",
+          "kind": "attach",
+          "pos": [
+           -0.95,
+           0.05,
+           0.85
+          ]
+         },
+         {
+          "id": "w_fr",
+          "kind": "attach",
+          "pos": [
+           0.95,
+           0.05,
+           0.85
+          ]
+         },
+         {
+          "id": "w_rl",
+          "kind": "attach",
+          "pos": [
+           -0.95,
+           0.05,
+           -0.85
+          ]
+         },
+         {
+          "id": "w_rr",
+          "kind": "attach",
+          "pos": [
+           0.95,
+           0.05,
+           -0.85
+          ]
+         },
+         {
+          "id": "drive",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "drive",
+          "label": "Drive / stop"
+         },
+         {
+          "id": "rolling",
+          "kind": "signal",
+          "dir": "out",
+          "signal": "rolling"
+         }
+        ],
+        "bridges": [],
+        "place": [
+         0,
+         0.4,
+         0
+        ]
+       }
+      },
+      "form_hints": [
+       "vehicle",
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "770b124ee01effeb8ac3dfedf1b1a49b6d5bbc3eb12fd0126e8ebfaa5ab54bb9"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      },
+      "params": [
+       {
+        "id": "orbit",
+        "label": "Orbit radius",
+        "type": "number",
+        "min": 6,
+        "max": 14,
+        "step": 0.2,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "behavior",
+          "at": "data.ops.0.radius"
+         }
+        ]
+       }
+      ]
+     },
+     "mt_wheel_fl": {
+      "id": "mt_wheel_fl",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel FL",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "8670db9a11143c896f476421d69687e1e57d128db32c56344e2dbd9d4ff34b23"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_wheel_fr": {
+      "id": "mt_wheel_fr",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel FR",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "5595c1771aaed8bf2500ba7c2f881293b45e8811d86f37b729627887d1b2c6e7"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_wheel_rl": {
+      "id": "mt_wheel_rl",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel RL",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "5c02b9a3834a9b7554e17e158c0a406a551f6251dfbe3524f016b8f89450eaf6"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_wheel_rr": {
+      "id": "mt_wheel_rr",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel RR",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "9a4b0f4c6f50335ffa53705581af046da8cceee83d03bdf71a1d662a3cf55c69"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     }
+    },
+    "edges": {
+     "a_tower": {
+      "id": "a_tower",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_island",
+       "socket": "top"
+      },
+      "to": {
+       "tile": "mt_tower",
+       "socket": "base"
+      }
+     },
+     "a_core": {
+      "id": "a_core",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_tower",
+       "socket": "roof"
+      },
+      "to": {
+       "tile": "mt_core",
+       "socket": "mount"
+      }
+     },
+     "a_switch": {
+      "id": "a_switch",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_island",
+       "socket": "dock"
+      },
+      "to": {
+       "tile": "mt_switch",
+       "socket": "foot"
+      }
+     },
+     "s_switch": {
+      "id": "s_switch",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_switch",
+       "socket": "pressed"
+      },
+      "to": {
+       "tile": "mt_tower",
+       "socket": "toggle"
+      }
+     },
+     "s_lit": {
+      "id": "s_lit",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_tower",
+       "socket": "lit"
+      },
+      "to": {
+       "tile": "mt_core",
+       "socket": "surge"
+      }
+     },
+     "a_wheel_fl": {
+      "id": "a_wheel_fl",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_fl"
+      },
+      "to": {
+       "tile": "mt_wheel_fl",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_fl": {
+      "id": "s_wheel_fl",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_fl",
+       "socket": "roll"
+      }
+     },
+     "a_wheel_fr": {
+      "id": "a_wheel_fr",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_fr"
+      },
+      "to": {
+       "tile": "mt_wheel_fr",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_fr": {
+      "id": "s_wheel_fr",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_fr",
+       "socket": "roll"
+      }
+     },
+     "a_wheel_rl": {
+      "id": "a_wheel_rl",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_rl"
+      },
+      "to": {
+       "tile": "mt_wheel_rl",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_rl": {
+      "id": "s_wheel_rl",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_rl",
+       "socket": "roll"
+      }
+     },
+     "a_wheel_rr": {
+      "id": "a_wheel_rr",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_rr"
+      },
+      "to": {
+       "tile": "mt_wheel_rr",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_rr": {
+      "id": "s_wheel_rr",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_rr",
+       "socket": "roll"
+      }
+     }
+    },
+    "vars": {},
+    "defs": {},
+    "time": 0
+   },
+   "events": [
+    {
+     "type": "signal",
+     "tile": "mt_switch",
+     "name": "open"
+    }
+   ],
+   "expect": {
+    "asleep": {
+     "tiles": 9,
+     "matter_hash": "4124b49a9e080af3cb72d479b8ab83f7115d5e15e32f11ca55d0967d3c53b795"
+    },
+    "awake": {
+     "tiles": 10,
+     "matter_hash": "4124b49a9e080af3cb72d479b8ab83f7115d5e15e32f11ca55d0967d3c53b795",
+     "awake_state": {
+      "mt_switch": {
+       "bay": true
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "text-round-trip",
+   "note": "Writing a world out as text and reading it back must change nothing.",
+   "world": {
+    "kind": "morphtile-world",
+    "version": "0.1",
+    "name": "Skyhold",
+    "tiles": {
+     "mt_island": {
+      "id": "mt_island",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Floating island",
+      "facets": {
+       "mesh": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "generator": "terrain",
+         "radius": 5.5,
+         "height": 1.6,
+         "plateau": 1,
+         "depth": 4,
+         "seed": 3
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.25,
+          0.58,
+          0.36
+         ]
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "none",
+        "data": {}
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "top",
+          "kind": "attach",
+          "pos": [
+           0,
+           1,
+           0
+          ]
+         },
+         {
+          "id": "dock",
+          "kind": "attach",
+          "pos": [
+           1.25,
+           1,
+           0.75
+          ]
+         }
+        ],
+        "bridges": [],
+        "place": [
+         0,
+         0,
+         0
+        ]
+       }
+      },
+      "form_hints": [
+       "world",
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "15e1720596d1c1dd674496aa049e789cbeb7b8a68175e31e0c6801e956a97cf2"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      },
+      "params": [
+       {
+        "id": "seed",
+        "label": "Terrain seed",
+        "type": "number",
+        "min": 1,
+        "max": 60,
+        "step": 1,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "mesh",
+          "at": "data.seed"
+         }
+        ]
+       },
+       {
+        "id": "height",
+        "label": "Hill height",
+        "type": "number",
+        "min": 0.4,
+        "max": 3,
+        "step": 0.1,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "mesh",
+          "at": "data.height"
+         }
+        ]
+       }
+      ]
+     },
+     "mt_tower": {
+      "id": "mt_tower",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Beacon tower",
+      "facets": {
+       "mesh": {
+        "type": "generated",
+        "source": null,
+        "data": {
+         "generator": "tower",
+         "levels": 3,
+         "radius": 0.6,
+         "seed": 4
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.62,
+          0.66,
+          0.78
+         ],
+         "glow": [
+          0.35,
+          0.65,
+          1
+         ],
+         "emissive": [
+          "*",
+          [
+           "var",
+           "beacon"
+          ],
+          0.45
+         ]
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "beacon": 0
+         },
+         "rules": [
+          {
+           "on": "toggle",
+           "do": [
+            {
+             "set": [
+              "beacon",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "beacon"
+               ]
+              ]
+             ]
+            },
+            {
+             "emit": "lit"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "base",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roof",
+          "kind": "attach",
+          "pos": [
+           0,
+           4.9,
+           0
+          ]
+         },
+         {
+          "id": "toggle",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "toggle",
+          "label": "Toggle beacon"
+         },
+         {
+          "id": "lit",
+          "kind": "signal",
+          "dir": "out",
+          "signal": "lit"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "6e88a69722baaa968316c10768c236c4856bc252702d3ee69b22a3b71bd7e03e"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      },
+      "params": [
+       {
+        "id": "levels",
+        "label": "Levels",
+        "type": "number",
+        "min": 1,
+        "max": 7,
+        "step": 1,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "mesh",
+          "at": "data.levels"
+         },
+         {
+          "tile": "",
+          "facet": "connect",
+          "at": "sockets.1.pos.1",
+          "expr": [
+           "+",
+           [
+            "*",
+            [
+             "var",
+             "value"
+            ],
+            1.1
+           ],
+           1.6
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     "mt_core": {
+      "id": "mt_core",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Matter core",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "box",
+         "size": [
+          0.9,
+          0.9,
+          0.9
+         ],
+         "rot": [
+          0.6,
+          0,
+          0.6
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.5,
+          0.36,
+          1
+         ],
+         "emissive": 0.25,
+         "pattern": "checker",
+         "scale": 0.3
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "bob",
+           "amp": 0.18,
+           "rate": 1.4
+          },
+          {
+           "op": "spin",
+           "axis": "y",
+           "rate": 0.5
+          },
+          {
+           "op": "pulse",
+           "amp": 0.35,
+           "rate": 2
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "energy": {
+           "accrue": {
+            "rate": 1,
+            "cap": 21600
+           },
+           "base": 0
+          },
+          "stored": 0
+         },
+         "rules": [
+          {
+           "on": "surge",
+           "do": [
+            {
+             "set": [
+              "stored",
+              [
+               "+",
+               [
+                "var",
+                "stored"
+               ],
+               [
+                "floor",
+                [
+                 "var",
+                 "energy"
+                ]
+               ]
+              ]
+             ]
+            },
+            {
+             "set": [
+              "energy",
+              0
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "mount",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "surge",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "surge",
+          "label": "Harvest energy"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "10284b181009dbc62019b999ece3b22968432429e193a2e5f960181bc630f10d"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_switch": {
+      "id": "mt_switch",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Dock switch",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "parts": [
+          {
+           "shape": "cylinder",
+           "size": [
+            0.5,
+            0.5,
+            0.5
+           ],
+           "pos": [
+            0,
+            0.25,
+            0
+           ]
+          },
+          {
+           "shape": "sphere",
+           "size": [
+            0.34,
+            0.34,
+            0.34
+           ],
+           "pos": [
+            0,
+            0.6,
+            0
+           ],
+           "color": [
+            1,
+            0.55,
+            0.3
+           ]
+          }
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.3,
+          0.6,
+          1
+         ],
+         "emissive": 0.15
+        }
+       },
+       "behavior": {
+        "type": "none",
+        "data": {}
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "presses": 0
+         },
+         "rules": [
+          {
+           "on": "press",
+           "do": [
+            {
+             "set": [
+              "presses",
+              [
+               "+",
+               [
+                "var",
+                "presses"
+               ],
+               1
+              ]
+             ]
+            },
+            {
+             "emit": "pressed"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "foot",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "press",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "press",
+          "label": "Press"
+         },
+         {
+          "id": "pressed",
+          "kind": "signal",
+          "dir": "out",
+          "signal": "pressed"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset",
+       "ui_panel"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "b62209b69c03f2cb9a4856222b00d635e3b58bdfc1875a7d15e952276840dd95"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_rover": {
+      "id": "mt_rover",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Sky rover",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "parts": [
+          {
+           "shape": "box",
+           "size": [
+            1.5,
+            0.4,
+            2.6
+           ],
+           "pos": [
+            0,
+            0.35,
+            0
+           ]
+          },
+          {
+           "shape": "wedge",
+           "size": [
+            1.5,
+            0.35,
+            0.9
+           ],
+           "pos": [
+            0,
+            0.72,
+            0.75
+           ]
+          },
+          {
+           "shape": "box",
+           "size": [
+            1.2,
+            0.4,
+            1.1
+           ],
+           "pos": [
+            0,
+            0.75,
+            -0.25
+           ],
+           "color": [
+            0.2,
+            0.5,
+            1
+           ]
+          }
+         ]
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.78,
+          0.82,
+          0.92
+         ],
+         "glow": [
+          0.3,
+          0.6,
+          1
+         ],
+         "emissive": [
+          "*",
+          [
+           "var",
+           "moving"
+          ],
+          0.25
+         ]
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "orbit",
+           "radius": 7.6,
+           "rate": 0.22,
+           "by": [
+            "var",
+            "odometer"
+           ]
+          },
+          {
+           "op": "bob",
+           "amp": 0.07,
+           "rate": 2
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "moving": 0,
+          "odometer": {
+           "accrue": {
+            "rate": [
+             "var",
+             "moving"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "drive",
+           "do": [
+            {
+             "set": [
+              "odometer",
+              [
+               "var",
+               "odometer"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "moving",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "moving"
+               ]
+              ]
+             ]
+            },
+            {
+             "emit": "rolling"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "w_fl",
+          "kind": "attach",
+          "pos": [
+           -0.95,
+           0.05,
+           0.85
+          ]
+         },
+         {
+          "id": "w_fr",
+          "kind": "attach",
+          "pos": [
+           0.95,
+           0.05,
+           0.85
+          ]
+         },
+         {
+          "id": "w_rl",
+          "kind": "attach",
+          "pos": [
+           -0.95,
+           0.05,
+           -0.85
+          ]
+         },
+         {
+          "id": "w_rr",
+          "kind": "attach",
+          "pos": [
+           0.95,
+           0.05,
+           -0.85
+          ]
+         },
+         {
+          "id": "drive",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "drive",
+          "label": "Drive / stop"
+         },
+         {
+          "id": "rolling",
+          "kind": "signal",
+          "dir": "out",
+          "signal": "rolling"
+         }
+        ],
+        "bridges": [],
+        "place": [
+         0,
+         0.4,
+         0
+        ]
+       }
+      },
+      "form_hints": [
+       "vehicle",
+       "game_asset",
+       "ui_panel",
+       "website"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "770b124ee01effeb8ac3dfedf1b1a49b6d5bbc3eb12fd0126e8ebfaa5ab54bb9"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      },
+      "params": [
+       {
+        "id": "orbit",
+        "label": "Orbit radius",
+        "type": "number",
+        "min": 6,
+        "max": 14,
+        "step": 0.2,
+        "binds": [
+         {
+          "tile": "",
+          "facet": "behavior",
+          "at": "data.ops.0.radius"
+         }
+        ]
+       }
+      ]
+     },
+     "mt_wheel_fl": {
+      "id": "mt_wheel_fl",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel FL",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "8670db9a11143c896f476421d69687e1e57d128db32c56344e2dbd9d4ff34b23"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_wheel_fr": {
+      "id": "mt_wheel_fr",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel FR",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "5595c1771aaed8bf2500ba7c2f881293b45e8811d86f37b729627887d1b2c6e7"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_wheel_rl": {
+      "id": "mt_wheel_rl",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel RL",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "5c02b9a3834a9b7554e17e158c0a406a551f6251dfbe3524f016b8f89450eaf6"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     },
+     "mt_wheel_rr": {
+      "id": "mt_wheel_rr",
+      "kind": "morphtile",
+      "version": "0.1",
+      "name": "Wheel RR",
+      "facets": {
+       "mesh": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "shape": "cylinder",
+         "size": [
+          0.7,
+          0.3,
+          0.7
+         ],
+         "rot": [
+          0,
+          0,
+          1.5707963267948966
+         ],
+         "segments": 12
+        }
+       },
+       "material": {
+        "type": "primitive",
+        "source": null,
+        "data": {
+         "color": [
+          0.16,
+          0.18,
+          0.3
+         ],
+         "pattern": "stripes",
+         "scale": 0.17
+        }
+       },
+       "behavior": {
+        "type": "scripted",
+        "data": {
+         "ops": [
+          {
+           "op": "spin",
+           "axis": "x",
+           "rate": 3,
+           "by": [
+            "var",
+            "turns"
+           ]
+          }
+         ]
+        }
+       },
+       "logic": {
+        "type": "rule",
+        "data": {
+         "vars": {
+          "rolling": 0,
+          "turns": {
+           "accrue": {
+            "rate": [
+             "var",
+             "rolling"
+            ]
+           },
+           "base": 0
+          }
+         },
+         "rules": [
+          {
+           "on": "roll",
+           "do": [
+            {
+             "set": [
+              "turns",
+              [
+               "var",
+               "turns"
+              ]
+             ]
+            },
+            {
+             "set": [
+              "rolling",
+              [
+               "-",
+               1,
+               [
+                "var",
+                "rolling"
+               ]
+              ]
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       },
+       "connect": {
+        "sockets": [
+         {
+          "id": "hub",
+          "kind": "attach",
+          "pos": [
+           0,
+           0,
+           0
+          ]
+         },
+         {
+          "id": "roll",
+          "kind": "signal",
+          "dir": "in",
+          "signal": "roll"
+         }
+        ],
+        "bridges": []
+       }
+      },
+      "form_hints": [
+       "game_asset"
+      ],
+      "provenance": {
+       "created_by": "ai:fable",
+       "bridges": [],
+       "sha256": "9a4b0f4c6f50335ffa53705581af046da8cceee83d03bdf71a1d662a3cf55c69"
+      },
+      "state": {
+       "version": 1,
+       "mutable": true,
+       "last_transform": null
+      }
+     }
+    },
+    "edges": {
+     "a_tower": {
+      "id": "a_tower",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_island",
+       "socket": "top"
+      },
+      "to": {
+       "tile": "mt_tower",
+       "socket": "base"
+      }
+     },
+     "a_core": {
+      "id": "a_core",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_tower",
+       "socket": "roof"
+      },
+      "to": {
+       "tile": "mt_core",
+       "socket": "mount"
+      }
+     },
+     "a_switch": {
+      "id": "a_switch",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_island",
+       "socket": "dock"
+      },
+      "to": {
+       "tile": "mt_switch",
+       "socket": "foot"
+      }
+     },
+     "s_switch": {
+      "id": "s_switch",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_switch",
+       "socket": "pressed"
+      },
+      "to": {
+       "tile": "mt_tower",
+       "socket": "toggle"
+      }
+     },
+     "s_lit": {
+      "id": "s_lit",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_tower",
+       "socket": "lit"
+      },
+      "to": {
+       "tile": "mt_core",
+       "socket": "surge"
+      }
+     },
+     "a_wheel_fl": {
+      "id": "a_wheel_fl",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_fl"
+      },
+      "to": {
+       "tile": "mt_wheel_fl",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_fl": {
+      "id": "s_wheel_fl",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_fl",
+       "socket": "roll"
+      }
+     },
+     "a_wheel_fr": {
+      "id": "a_wheel_fr",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_fr"
+      },
+      "to": {
+       "tile": "mt_wheel_fr",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_fr": {
+      "id": "s_wheel_fr",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_fr",
+       "socket": "roll"
+      }
+     },
+     "a_wheel_rl": {
+      "id": "a_wheel_rl",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_rl"
+      },
+      "to": {
+       "tile": "mt_wheel_rl",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_rl": {
+      "id": "s_wheel_rl",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_rl",
+       "socket": "roll"
+      }
+     },
+     "a_wheel_rr": {
+      "id": "a_wheel_rr",
+      "kind": "attach",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "w_rr"
+      },
+      "to": {
+       "tile": "mt_wheel_rr",
+       "socket": "hub"
+      }
+     },
+     "s_wheel_rr": {
+      "id": "s_wheel_rr",
+      "kind": "signal",
+      "from": {
+       "tile": "mt_rover",
+       "socket": "rolling"
+      },
+      "to": {
+       "tile": "mt_wheel_rr",
+       "socket": "roll"
+      }
+     }
+    },
+    "vars": {},
+    "defs": {},
+    "time": 0
+   },
+   "text": "world \"Skyhold\"\ntile mt_core \"Matter core\" as game_asset ui_panel website\n  mesh primitive {\"rot\": [0.6,0,0.6], \"shape\": \"box\", \"size\": [0.9,0.9,0.9]}\n  material primitive {\"color\": [0.5,0.36,1], \"emissive\": 0.25, \"pattern\": \"checker\", \"scale\": 0.3}\n  behavior scripted {\"ops\": [{\"amp\": 0.18, \"op\": \"bob\", \"rate\": 1.4},{\"axis\": \"y\", \"op\": \"spin\", \"rate\": 0.5},{\"amp\": 0.35, \"op\": \"pulse\", \"rate\": 2}]}\n  logic rule {\"rules\": [{\"do\": [{\"set\": [\"stored\",[\"+\",[\"var\", \"stored\"],[\"floor\",[\"var\", \"energy\"]]]]},{\"set\": [\"energy\",0]}], \"on\": \"surge\"}], \"vars\": {\"energy\": {\"accrue\": {\"cap\": 21600, \"rate\": 1}, \"base\": 0}, \"stored\": 0}}\n  socket mount attach at 0 0 0\n  socket surge signal in \"Harvest energy\"\ntile mt_island \"Floating island\" as world game_asset ui_panel website\n  mesh generated {\"depth\": 4, \"generator\": \"terrain\", \"height\": 1.6, \"plateau\": 1, \"radius\": 5.5, \"seed\": 3}\n  material primitive {\"color\": [0.25,0.58,0.36]}\n  socket top attach at 0 1 0\n  socket dock attach at 1.25 1 0.75\n  control seed {\"binds\": [{\"at\": \"data.seed\", \"facet\": \"mesh\", \"tile\": \"\"}], \"id\": \"seed\", \"label\": \"Terrain seed\", \"max\": 60, \"min\": 1, \"step\": 1, \"type\": \"number\"}\n  control height {\"binds\": [{\"at\": \"data.height\", \"facet\": \"mesh\", \"tile\": \"\"}], \"id\": \"height\", \"label\": \"Hill height\", \"max\": 3, \"min\": 0.4, \"step\": 0.1, \"type\": \"number\"}\ntile mt_rover \"Sky rover\" as vehicle game_asset ui_panel website\n  at 0 0.4 0\n  mesh primitive {\"parts\": [{\"pos\": [0,0.35,0], \"shape\": \"box\", \"size\": [1.5,0.4,2.6]},{\"pos\": [0,0.72,0.75], \"shape\": \"wedge\", \"size\": [1.5,0.35,0.9]},{\"color\": [0.2,0.5,1], \"pos\": [0,0.75,-0.25], \"shape\": \"box\", \"size\": [1.2,0.4,1.1]}]}\n  material primitive {\"color\": [0.78,0.82,0.92], \"emissive\": [\"*\",[\"var\", \"moving\"],0.25], \"glow\": [0.3,0.6,1]}\n  behavior scripted {\"ops\": [{\"by\": [\"var\", \"odometer\"], \"op\": \"orbit\", \"radius\": 7.6, \"rate\": 0.22},{\"amp\": 0.07, \"op\": \"bob\", \"rate\": 2}]}\n  logic rule {\"rules\": [{\"do\": [{\"set\": [\"odometer\",[\"var\", \"odometer\"]]},{\"set\": [\"moving\",[\"-\",1,[\"var\", \"moving\"]]]},{\"emit\": \"rolling\"}], \"on\": \"drive\"}], \"vars\": {\"moving\": 0, \"odometer\": {\"accrue\": {\"rate\": [\"var\", \"moving\"]}, \"base\": 0}}}\n  socket w_fl attach at -0.95 0.05 0.85\n  socket w_fr attach at 0.95 0.05 0.85\n  socket w_rl attach at -0.95 0.05 -0.85\n  socket w_rr attach at 0.95 0.05 -0.85\n  socket drive signal in \"Drive / stop\"\n  socket rolling signal out\n  control orbit {\"binds\": [{\"at\": \"data.ops.0.radius\", \"facet\": \"behavior\", \"tile\": \"\"}], \"id\": \"orbit\", \"label\": \"Orbit radius\", \"max\": 14, \"min\": 6, \"step\": 0.2, \"type\": \"number\"}\ntile mt_switch \"Dock switch\" as game_asset ui_panel\n  mesh primitive {\"parts\": [{\"pos\": [0,0.25,0], \"shape\": \"cylinder\", \"size\": [0.5,0.5,0.5]},{\"color\": [1,0.55,0.3], \"pos\": [0,0.6,0], \"shape\": \"sphere\", \"size\": [0.34,0.34,0.34]}]}\n  material primitive {\"color\": [0.3,0.6,1], \"emissive\": 0.15}\n  logic rule {\"rules\": [{\"do\": [{\"set\": [\"presses\",[\"+\",[\"var\", \"presses\"],1]]},{\"emit\": \"pressed\"}], \"on\": \"press\"}], \"vars\": {\"presses\": 0}}\n  socket foot attach at 0 0 0\n  socket press signal in \"Press\"\n  socket pressed signal out\ntile mt_tower \"Beacon tower\" as game_asset ui_panel website\n  mesh generated {\"generator\": \"tower\", \"levels\": 3, \"radius\": 0.6, \"seed\": 4}\n  material primitive {\"color\": [0.62,0.66,0.78], \"emissive\": [\"*\",[\"var\", \"beacon\"],0.45], \"glow\": [0.35,0.65,1]}\n  logic rule {\"rules\": [{\"do\": [{\"set\": [\"beacon\",[\"-\",1,[\"var\", \"beacon\"]]]},{\"emit\": \"lit\"}], \"on\": \"toggle\"}], \"vars\": {\"beacon\": 0}}\n  socket base attach at 0 0 0\n  socket roof attach at 0 4.9 0\n  socket toggle signal in \"Toggle beacon\"\n  socket lit signal out\n  control levels {\"binds\": [{\"at\": \"data.levels\", \"facet\": \"mesh\", \"tile\": \"\"},{\"at\": \"sockets.1.pos.1\", \"expr\": [\"+\",[\"*\",[\"var\", \"value\"],1.1],1.6], \"facet\": \"connect\", \"tile\": \"\"}], \"id\": \"levels\", \"label\": \"Levels\", \"max\": 7, \"min\": 1, \"step\": 1, \"type\": \"number\"}\ntile mt_wheel_fl \"Wheel FL\" as game_asset\n  mesh primitive {\"rot\": [0,0,1.5707963267948966], \"segments\": 12, \"shape\": \"cylinder\", \"size\": [0.7,0.3,0.7]}\n  material primitive {\"color\": [0.16,0.18,0.3], \"pattern\": \"stripes\", \"scale\": 0.17}\n  behavior scripted {\"ops\": [{\"axis\": \"x\", \"by\": [\"var\", \"turns\"], \"op\": \"spin\", \"rate\": 3}]}\n  logic rule {\"rules\": [{\"do\": [{\"set\": [\"turns\",[\"var\", \"turns\"]]},{\"set\": [\"rolling\",[\"-\",1,[\"var\", \"rolling\"]]]}], \"on\": \"roll\"}], \"vars\": {\"rolling\": 0, \"turns\": {\"accrue\": {\"rate\": [\"var\", \"rolling\"]}, \"base\": 0}}}\n  socket hub attach at 0 0 0\n  socket roll signal in\ntile mt_wheel_fr \"Wheel FR\" as game_asset\n  mesh primitive {\"rot\": [0,0,1.5707963267948966], \"segments\": 12, \"shape\": \"cylinder\", \"size\": [0.7,0.3,0.7]}\n  material primitive {\"color\": [0.16,0.18,0.3], \"pattern\": \"stripes\", \"scale\": 0.17}\n  behavior scripted {\"ops\": [{\"axis\": \"x\", \"by\": [\"var\", \"turns\"], \"op\": \"spin\", \"rate\": 3}]}\n  logic rule {\"rules\": [{\"do\": [{\"set\": [\"turns\",[\"var\", \"turns\"]]},{\"set\": [\"rolling\",[\"-\",1,[\"var\", \"rolling\"]]]}], \"on\": \"roll\"}], \"vars\": {\"rolling\": 0, \"turns\": {\"accrue\": {\"rate\": [\"var\", \"rolling\"]}, \"base\": 0}}}\n  socket hub attach at 0 0 0\n  socket roll signal in\ntile mt_wheel_rl \"Wheel RL\" as game_asset\n  mesh primitive {\"rot\": [0,0,1.5707963267948966], \"segments\": 12, \"shape\": \"cylinder\", \"size\": [0.7,0.3,0.7]}\n  material primitive {\"color\": [0.16,0.18,0.3], \"pattern\": \"stripes\", \"scale\": 0.17}\n  behavior scripted {\"ops\": [{\"axis\": \"x\", \"by\": [\"var\", \"turns\"], \"op\": \"spin\", \"rate\": 3}]}\n  logic rule {\"rules\": [{\"do\": [{\"set\": [\"turns\",[\"var\", \"turns\"]]},{\"set\": [\"rolling\",[\"-\",1,[\"var\", \"rolling\"]]]}], \"on\": \"roll\"}], \"vars\": {\"rolling\": 0, \"turns\": {\"accrue\": {\"rate\": [\"var\", \"rolling\"]}, \"base\": 0}}}\n  socket hub attach at 0 0 0\n  socket roll signal in\ntile mt_wheel_rr \"Wheel RR\" as game_asset\n  mesh primitive {\"rot\": [0,0,1.5707963267948966], \"segments\": 12, \"shape\": \"cylinder\", \"size\": [0.7,0.3,0.7]}\n  material primitive {\"color\": [0.16,0.18,0.3], \"pattern\": \"stripes\", \"scale\": 0.17}\n  behavior scripted {\"ops\": [{\"axis\": \"x\", \"by\": [\"var\", \"turns\"], \"op\": \"spin\", \"rate\": 3}]}\n  logic rule {\"rules\": [{\"do\": [{\"set\": [\"turns\",[\"var\", \"turns\"]]},{\"set\": [\"rolling\",[\"-\",1,[\"var\", \"rolling\"]]]}], \"on\": \"roll\"}], \"vars\": {\"rolling\": 0, \"turns\": {\"accrue\": {\"rate\": [\"var\", \"rolling\"]}, \"base\": 0}}}\n  socket hub attach at 0 0 0\n  socket roll signal in\nwire a_core attach mt_tower.roof -> mt_core.mount\nwire a_switch attach mt_island.dock -> mt_switch.foot\nwire a_tower attach mt_island.top -> mt_tower.base\nwire a_wheel_fl attach mt_rover.w_fl -> mt_wheel_fl.hub\nwire a_wheel_fr attach mt_rover.w_fr -> mt_wheel_fr.hub\nwire a_wheel_rl attach mt_rover.w_rl -> mt_wheel_rl.hub\nwire a_wheel_rr attach mt_rover.w_rr -> mt_wheel_rr.hub\nwire s_lit signal mt_tower.lit -> mt_core.surge\nwire s_switch signal mt_switch.pressed -> mt_tower.toggle\nwire s_wheel_fl signal mt_rover.rolling -> mt_wheel_fl.roll\nwire s_wheel_fr signal mt_rover.rolling -> mt_wheel_fr.roll\nwire s_wheel_rl signal mt_rover.rolling -> mt_wheel_rl.roll\nwire s_wheel_rr signal mt_rover.rolling -> mt_wheel_rr.roll\n",
+   "expect": {
+    "ops_on_read_back": 0,
+    "struct_hash": "a5174ef8764e2b29098991ad87454a4e2e718f1386b2ca84592865fa037e0ccb"
+   }
+  }
+ ]
+}

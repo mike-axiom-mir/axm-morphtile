@@ -1,11 +1,11 @@
-# axm-morphtile — MorphTile / AxioMatter v0.3
+# axm-morphtile — MorphTile / AxioMatter v0.4
 
 Software as matter. One tile schema (mesh, material, behavior, logic, connect) that is
 **read as different forms** — a 3D world, a working interface, a static website — from the
 same JSON. Its own small world with the door open: it depends on nothing (not UC, not any
 fabric repo, not a CDN, not npm) and anything may bridge in or out.
 
-    npm test          # 74 behavioral and licence-contract tests, Node >= 18, zero dependencies
+    npm test          # 101 behavioral and licence-contract tests (including the published conformance vectors), Node >= 18, zero dependencies
     npm run build     # -> dist/axiomatter-workshop.html  (one file, opens on a phone)
     npm run shot      # -> evidence/world.png rendered by the built-in rasterizer
 
@@ -41,8 +41,14 @@ See [`LICENSE`](LICENSE),
 | `workshop/template.html` | Phone-first workshop UI. `tools/build.js` inlines core + fixtures into `dist/`. |
 | `test/run.js` | Behavioral tests. Each test name states the claim it proves. |
 | `bridges/fixtures/` | Byte copies of real `axm-material-offer` packets from `axm-material-surface-fabric`, with `SOURCE.json` pinning repo + commit + sha256. |
+| `docs/FORMAT.md` | The format on its own terms — enough to implement or consume MorphTile without reading the engine. |
+| `conformance/vectors.json` | Worlds plus the answers any correct implementation must produce. `npm run conformance` regenerates them. |
 | `docs/PRINCIPLES.md` | **Read this first.** Mike's three founding principles and exactly how the code and tests hold to them. |
 | `docs/LICENSING.md` | The no-lock boundary between the MorphTile engine and portable Creator Output. |
+| `test/views.js` | Worlds carrying their own interface: written, composed, and still addressing the real matter. |
+| `test/kits.js` | Kits: a tile carrying the shapes and words it needs, verified, never half-arriving. |
+| `test/words.js` | A world teaching itself new words, and the guards that keep that safe. |
+| `test/motion.js` | Motion written as expressions of time and of the tile's own state. |
 | `test/recipes.js` | Shapes invented inside the world, driven by controls, stopped safely when they run away. |
 | `test/sleeping.js` | Capabilities that sleep in a node until needed: zero cost, waking, sleeping again, 1000 loaded nodes. |
 | `test/instances.js` | Definitions and instances: shared bodies, one-change propagation, visible drift, detaching. |
@@ -81,9 +87,13 @@ A recipe part can also be `{use: <definition>}` — another invented shape, fold
 is, and everything built from it changes. A shape cannot be made of itself, a missing part shows amber, and depth and budget are
 shared across the whole chain.
 
-Colour works the same way: `paint` is three expressions of where you are on the shape, so a gradient or a set of rings is written
+Colour works the same way: `paint` is three expressions of where you are on the shape and which way that surface faces, so a gradient or a set of rings is written
 rather than chosen. And `{use: <def>, with: {rungs: 6}}` compiles one definition at different settings in the same recipe without
 changing the definition.
+
+Motion works the same way: `pos`, `rot` and `glow` as expressions of the clock, of named numbers, and of the tile's own values —
+so a door can slide because something became true, not because time passed. Shape, appearance, motion and logic are now all
+written in the same little language; no facet's vocabulary is the engine's list any more — and a world can teach itself new words (`word.define`), usable in all four at once, so even the language is not fixed — and a vocabulary can travel to another world as a hash-verified pack that never silently overwrites what is already there.
 
 **The world activates itself.** A capability can name a shared definition instead of carrying a copy, so a node holds a *name* and
 builds the thing only when it wakes. Asking the world what it wants woken — by nearness, by a value crossing a line, or at a moment —
@@ -108,9 +118,19 @@ Writing the whole world out and reading it back produces **zero changes**. Editi
 Text has no privileges the other surfaces lack: it proposes ops that go through the same clone → plan → commit path, it is
 refused with a line number if it is wrong, and it never overwrites what it cannot express.
 
+**A tile takes what it needs with it.** A kit gathers the definitions a tile names — at any depth — and the words its expressions
+are written in, hash-verified. Dropped into a fresh world it renders the same geometry. If something it needs is already taken by
+different content, *nothing* is applied: a tile never arrives half-built unless you say so. And without its kit, the same tile
+arrives honest — it names what it is missing and shows amber.
+
 **Nothing is trapped.** Any tile goes on a shelf or out as a `.json` file. The whole workspace saves as one file carrying a claim of
 what replaying it must produce — reopening it replays from genesis and checks that claim, holding anything that does not match. A
 world exports on its own for handing to another system. No server, no account, no lock-in anywhere in the stack.
+
+**Presentation is matter too.** A tile can carry its own `view`: a title, text, readouts, meters, buttons, its own controls,
+conditions, repeats, and `{tile: …}` to present other tiles. It is written in the same little language as everything else, and
+every control it places addresses the real tile — so a world-authored interface is a surface over the matter, never a lesser copy.
+The card the interpreter draws is only what a tile gets when it hasn't said otherwise.
 
 **Forms are interpreters.** `renderAsset` (game_asset / vehicle / world), `compilePanel`
 (ui_panel) and `compileWebsite` (website) all read the same world. The Beacon tower is a lit
