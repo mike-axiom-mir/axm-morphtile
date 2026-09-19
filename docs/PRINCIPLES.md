@@ -39,6 +39,8 @@ With shape, appearance and motion all describable in the same little language (a
 | **A tile takes what it needs** | `exportKit` reads the matter and gathers the definitions a tile names (at any depth, recursively) and the words its expressions are written in; `importKit` brings them into another world hash-verified. A conflict means nothing is applied at all, so a tile never arrives half-built — unless partial or overwrite is stated plainly. Without its kit, the same tile arrives honest: it says what it is missing and shows amber. | a kit gathers what the tile needs; the kit works somewhere else; without its kit the tile arrives honest |
 | **A vocabulary can travel** | `exportWords` / `importWords`: words leave one world as a pack and join another, hash-verified. The same name with a different body is a reported conflict, never a silent overwrite; a pack cannot smuggle in a word the engine owns; an identical word is simply already there. | a vocabulary can travel |
 | **Presentation is matter too** | `tile.view`: a tile carries its own interface — title, text, readouts, meters, buttons, controls, conditions, repeats, and `{tile: …}` to present another tile. Written in the same little language. Every control it places addresses the **real** path, so a world-authored interface is a surface over the matter, never a lesser copy of it. The engine's card is only what a tile gets when it hasn't said otherwise. | a tile can carry its own interface; a written interface still addresses the real matter; interfaces compose |
+| **One anchor, no walls** | The world root is the identity frame; root tiles, interior roots and attachment sockets resolve recursively. `importKit` can choose a new top-level position/rotation while descendant local matter remains byte-identical. | old worlds imply the identity root; moving a root frame moves every descendant; a portable nested kit accepts a new destination anchor |
+| **Placement is matter, personal view is not** | `tile.presentation` declares docked/floating/spatial placement. `resolvePresentation` may layer an allowed session override without writing it back. Missing spatial anchors and unsupported modes HOLD. | session movement stays outside canonical matter; world and tile anchors resolve against real frames |
 | **Motion is matter too** | `behavior.data.motion`: `pos`, `rot` and `glow` as expressions of `["t"]`, named numbers and the tile's own values — so movement follows what is *true*, not only what time it is. Written motion adds to the ready-made moves rather than replacing them, and an unreadable one is inert. | a motion no one coded; written motion can read the tile's own state; a motion it cannot read is inert |
 | **Appearance is matter too** | `material.data.paint`: three expressions of `x, y, z`, the surface's own direction (`nx, ny, nz`, and `up` for how much it faces the sky) and named numbers, evaluated per piece of the shape. Colour becomes a function, not a swatch — gradients, rings, anything sayable in the same little language. A painting it cannot read is inert: the shape keeps its own colours and nothing breaks. | appearance is matter too |
 | **One shape, many settings** | `{use: <def>, with: {…}}` — the same definition compiled at different numbers in the same recipe, leaving the definition untouched. A shape with no numbers to set says so (`HOLD_SETTINGS_NOT_ACCEPTED`) rather than pretending. | one definition, used at different settings |
@@ -60,21 +62,23 @@ Rules this repo follows, and a reviewer should reject changes that break them:
 3. **The interface is the world's to decide.** A tile's `view` replaces the engine's card without gaining any power the
    card lacks: it cannot write, it cannot reach a tile that is not there (it says so instead), and a view that presents
    itself is stopped rather than spun. Freedom of presentation, under the same rules as everything else.
-3. **Simple is a lens, not a copy.** A closed shell is simple because the view stops descending, not because a reduced model
+4. **Placement and session remain distinct.** `tile.presentation` is portable canonical matter. A user's temporary dock,
+   float or position override is host/session state and leaves the world hash unchanged until deliberately committed.
+5. **Simple is a lens, not a copy.** A closed shell is simple because the view stops descending, not because a reduced model
    was made. `opts.open` is view state owned by the host and never written into matter.
-4. **Stand-ins are declared.** A shell's mesh may be swapped from "its contents" to a primitive: a derived view ("present only
+6. **Stand-ins are declared.** A shell's mesh may be swapped from "its contents" to a primitive: a derived view ("present only
    what matters"). The interior hash is unchanged and still reachable and drivable. Test: stand-in mesh.
-5. **One door.** Human taps, AI ops, scripts and (later) the glove all call `act(ws, op, by)`. There is no privileged or
+7. **One door.** Human taps, AI ops, scripts and (later) the glove all call `act(ws, op, by)`. There is no privileged or
    reduced API for any caller. Test: human and AI runs give identical state and pixels.
-6. **Reachability.** Every tile at every depth that declares a form is reachable in that form. Test: opened panel shows exactly
+8. **Reachability.** Every tile at every depth that declares a form is reachable in that form. Test: opened panel shows exactly
    the ui_panel tiles `leaves()` finds.
-7. **Text is a surface, not a source.** `toText` only reads; `fromText` only *proposes ops*, which go through the same
+9. **Text is a surface, not a source.** `toText` only reads; `fromText` only *proposes ops*, which go through the same
    clone → plan → commit path as a tap. A round trip of the whole world produces **zero ops** — depth, controls, ports and
    bridges included. Editing one word yields exactly one merge unit. Anything the notation cannot express (state, provenance,
    history) is carried across from the tile already there, never overwritten, at every depth. Bad text is refused with a line
    number before anything is applied. Tests: `test/text.js`.
 
-8. **Simple never caps capability.** A control is one more surface over the matter, so the matter stays editable by every other route
+10. **Simple never caps capability.** A control is one more surface over the matter, so the matter stays editable by every other route
    at the same time (dormancy, above, is how that is enforced rather than locking the matter to fit the control).
 
 Known places where principle 2 is still weak — see STATUS.md: the website form is read-only, and there is no code surface yet.

@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AxioMatter Workshop — MorphTile v0.3</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono&display=swap">
+<title>AxioMatter Workshop — MorphTile v0.4</title>
 <style>
 :root{--void:#05070f;--deep:#0b1226;--panel:#0f1830;--line:#25345f;--ion:#5aa2ff;--violet:#9a7bff;--ice:#e6efff;--dim:#8fa0c8;--hold:#ffb454;--ok:#5fe3c0;--bad:#ff7a8a;
  --display:"Michroma","Eurostile","Trebuchet MS",sans-serif;--body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
@@ -54,6 +53,9 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
 .mt-panel.is-lit{box-shadow:0 0 0 1px var(--glow),0 0 22px -4px var(--glow)}
 .mt-panel header{display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}.mt-panel h3{margin:0;font:600 .95rem var(--body)}.mt-kind,.mt-behavior{font-size:.78rem;color:var(--dim);margin:0}
 .mt-panel.is-view{border-top-width:6px}.v-holder{flex:1 1 12rem;display:grid;gap:.6rem}
+.mt-presentation-tag{margin:0;font:11px var(--mono);color:var(--dim);border:1px solid var(--line);border-radius:99px;padding:.12rem .42rem;justify-self:start}.mt-presentation-tag.is-hold{color:var(--hold);border-color:var(--hold)}
+.mt-p-docked{flex-basis:min(100%,var(--p-width,20rem));min-height:min(60vh,var(--p-height,0px))}.mt-dock-left{order:-10}.mt-dock-right{order:10}.mt-dock-top{order:-20;flex-basis:100%}.mt-dock-bottom{order:20;flex-basis:100%}
+.mt-p-floating{position:relative;translate:clamp(-40px,var(--p-x,0px),40px) clamp(-20px,var(--p-y,0px),20px);box-shadow:0 10px 30px rgba(0,0,0,.22)}.mt-p-fullscreen{flex-basis:100%;min-height:55vh}.mt-p-embedded{flex-basis:min(100%,var(--p-width,14rem))}.mt-p-world,.mt-p-tile{border-style:dotted}.is-presentation-held{border-color:var(--hold)!important}
 .v-text{margin:0;font-size:.9rem}.v-text.is-strong{font-weight:600;font-size:1rem}.v-label{font-size:.75rem;color:var(--dim)}
 .v-value{display:flex;align-items:baseline;gap:.5rem}.v-value b{font:1.3rem var(--mono)}
 .v-meter{display:grid;gap:.2rem}.v-bar{height:.55rem;border:1px solid var(--tile);border-radius:99px;overflow:hidden}.v-bar i{display:block;height:100%;background:var(--tile)}
@@ -76,7 +78,7 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
 <body>
 <div class="shell">
   <header class="top">
-    <h1 class="mark">AXIOMATTER<small>MorphTile workshop v0.3 — one substrate, read as many forms</small></h1>
+    <h1 class="mark">AXIOMATTER<small>MorphTile workshop v0.4 — one substrate, read as many forms</small></h1>
     <div class="meta" id="meta"></div>
   </header>
   <div class="strip" id="strip" hidden></div>
@@ -111,7 +113,7 @@ const LOGIC = {
 };
 const LOGIC_SOCKETS = { toggle: [['toggle', 'in'], ['changed', 'out']], counter: [['press', 'in'], ['pressed', 'out']], battery: [['drain', 'in'], ['drained', 'out']] };
 
-let ws, ui = { form: 'world', tab: 'tiles', sel: 'mt_tower', cand: null, plan: null, cam: { yaw: 0.7, pitch: 0.3, dist: 19 }, playing: !matchMedia('(prefers-reduced-motion: reduce)').matches, anchor: performance.now(), rebuilt: null, offers: {}, door: null, facetEdit: 'material', open: {}, scope: '', picks: {}, autoSettle: true, within: 0, settled: null };
+let ws, ui = { form: 'world', tab: 'tiles', sel: 'mt_tower', cand: null, plan: null, cam: { yaw: 0.7, pitch: 0.3, dist: 19 }, playing: !matchMedia('(prefers-reduced-motion: reduce)').matches, anchor: performance.now(), rebuilt: null, offers: {}, door: null, facetEdit: 'material', open: {}, presentations: {}, scope: '', picks: {}, autoSettle: true, within: 0, settled: null };
 function load() { try { const raw = localStorage.getItem(KEY); if (raw) return MT.importWorkspace(JSON.parse(raw)); } catch (e) { toast('Saved workspace could not be replayed, starting from genesis. ' + e.message, true); } return MT.createWorkspace(MT.seedWorld()); }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(MT.exportWorkspace(ws))); } catch (e) {} }
 ws = load();
@@ -175,10 +177,10 @@ function renderStage() {
     drawWorld();
     const s = lastFrame.stats; $('stageNote').textContent = s.tiles + ' tiles, ' + s.tris + ' triangles, drawn by MorphTile’s own rasterizer. ' + (s.out_of_range ? s.out_of_range + ' more are held but out of range. ' : '') + (ui.settled ? ui.settled + '. ' : '') + (s.skipped.length ? s.skipped.length + ' tiles are not declared for spatial forms. ' : '') + (s.sleeping ? s.sleeping + ' capabilit' + (s.sleeping === 1 ? 'y is' : 'ies are') + ' asleep in this world, costing nothing. ' : '') + (s.holds.length ? s.holds.length + ' facet(s) on hold, shown in amber.' : 'Drag to orbit, tap a tile to select it.');
   } else if (ui.form === 'panel') {
-    const p = MT.compilePanel(w, { t: now(), open: ui.open }), box = el('div', { class: 'scroll' }, mount(p.root)); st.append(box);
+    const p = MT.compilePanel(w, { t: now(), open: ui.open, session_presentations: ui.presentations }), box = el('div', { class: 'scroll' }, mount(p.root)); st.append(box);
     box.scrollTop = ui.panelScroll || 0; box.addEventListener('scroll', () => (ui.panelScroll = box.scrollTop));
     box.addEventListener('click', (e) => { const n = e.target.closest('[data-tile]'); if (n) { ui.sel = n.dataset.tile; ui.scope = MT.splitPath(ui.sel)[0]; renderTabs(); renderPane(); } });
-    $('stageNote').textContent = 'The same tiles and wires, read as an interface. Buttons are signal inputs; nesting follows attach wires; Open shows what a tile holds. ' + (p.skipped.length ? p.skipped.length + ' tiles do not declare ui_panel.' : '');
+    $('stageNote').textContent = 'The same tiles and wires, read as an interface. Presentation placement is world matter; temporary user adjustments stay in this session. Buttons are signal inputs; nesting follows attach wires. ' + (p.skipped.length ? p.skipped.length + ' tiles do not declare ui_panel.' : '');
   } else if (ui.form === 'text') {
     const scoped = ui.scope, source = MT.toText(w, scoped ? { path: scoped } : undefined);
     if (ui.textDraft == null || ui.textFor !== scoped + '|' + MT.structHash(w)) { ui.textDraft = source; ui.textFor = scoped + '|' + MT.structHash(w); }
@@ -238,7 +240,20 @@ function paneTiles(w) {
         const vt = el('textarea', { class: 'code', value: JSON.stringify(start, null, 1), spellcheck: false, 'aria-label': 'Interface JSON' });
         return [el('p', { class: 'note', text: 'body is a list of: {"text"}, {"value":"<a value of this tile>"}, {"meter":<expr>,"min","max"}, {"button":"<signal>"}, {"control":"<control id>"}, {"tile":"<another tile>"}, {"row":[…]}, {"repeat":<expr>,"as":"i","body":[…]}, each optionally with {"when":<expr>}.' }), vt,
           el('div', { class: 'acts' }, el('button', { class: 'go', text: t.view ? 'Apply interface' : 'Give it this interface', onclick: () => { let v; try { v = JSON.parse(vt.value); } catch (e) { return toast('That is not valid JSON: ' + e.message, true); } if (edit({ op: 'view.set', id: sel, view: v })) { ui.form = 'panel'; renderAll(); } } }),
-            t.view ? el('button', { class: 'warn', text: 'Back to the default card', onclick: () => edit({ op: 'view.set', id: sel, view: null }) }) : null)]; })())));
+            t.view ? el('button', { class: 'warn', text: 'Back to the default card', onclick: () => edit({ op: 'view.set', id: sel, view: null }) }) : null)]; })()),
+      el('details', { open: !!t.presentation }, el('summary', { text: t.presentation ? 'Place this interface' : 'Choose where this interface belongs' }), (function () {
+        const start = t.presentation || { mode: 'docked', dock: 'right', preferred_size: [360, 480], preferred_position: [0, 0], user_adjustable: true };
+        const pt = el('textarea', { class: 'code', value: JSON.stringify(start, null, 1), spellcheck: false, 'aria-label': 'Presentation placement JSON' });
+        const session = () => (ui.presentations[sel] = ui.presentations[sel] || {});
+        return [el('p', { class: 'note', text: 'Modes: screen, docked, floating, fullscreen, embedded, world or tile. World/tile anchors resolve through the same spatial frames as game matter. Temporary movement below stays in this session unless you explicitly apply the JSON.' }), pt,
+          el('div', { class: 'acts' },
+            el('button', { class: 'go', text: t.presentation ? 'Apply placement' : 'Make placement matter', onclick: () => { let p; try { p = JSON.parse(pt.value); } catch (e) { return toast('That is not valid JSON: ' + e.message, true); } const bad = MT.presentationError(p); if (bad) return toast(bad, true); if (edit({ op: 'presentation.set', id: sel, presentation: p })) { ui.form = 'panel'; renderAll(); } } }),
+            t.presentation ? el('button', { class: 'warn', text: 'Use host default', onclick: () => edit({ op: 'presentation.set', id: sel, presentation: null }) }) : null),
+          start.user_adjustable ? el('div', { class: 'acts' },
+            el('button', { text: 'Session dock left', onclick: () => { Object.assign(session(), { mode: 'docked', dock: 'left' }); ui.form = 'panel'; renderStage(); } }),
+            el('button', { text: 'Session dock right', onclick: () => { Object.assign(session(), { mode: 'docked', dock: 'right' }); ui.form = 'panel'; renderStage(); } }),
+            el('button', { text: 'Session float', onclick: () => { Object.assign(session(), { mode: 'floating', preferred_position: [18, 10] }); ui.form = 'panel'; renderStage(); } }),
+            el('button', { text: 'Reset session view', onclick: () => { delete ui.presentations[sel]; ui.form = 'panel'; renderStage(); } })) : null]; })())));
     const mo = (t.facets.behavior.data || {}).motion;
     if (mo) out.push(el('div', { class: 'card' }, el('h4', { text: 'Motion' }),
       el('p', { class: 'note', text: 'This movement is not one of the ready-made moves \u2014 it is written here as expressions of time and of this tile\u2019s own numbers.' }),
@@ -463,11 +478,11 @@ function paneTime() {
     el('div', { class: 'card' }, el('h4', { text: 'Files' }), el('p', { class: 'note', text: 'A workspace file carries its whole history and a claim of what replaying it must produce; opening one replays it and checks that claim. A world file is just the world as it stands now.' }),
       el('div', { class: 'acts' },
         el('button', { class: 'go', text: 'Save workspace file', onclick: () => download('morphtile-workspace-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(MT.exportWorkspace(ws), null, 1)) }),
-        el('button', { text: 'Open workspace file', onclick: () => openFile('.json', (obj) => { if (!obj || !obj.ledger) return toast('That is not a workspace file.', true); let next; try { next = MT.importWorkspace(obj); } catch (e) { return toast('That file could not be replayed: ' + e.message, true); } ws = next; ui.cand = ui.plan = ui.rebuilt = null; ui.sel = ''; ui.scope = ''; ui.open = {}; const c = ws.import_check || {}; toast(c.status === 'VERIFIED' ? 'Replayed and verified against its own claim.' : c.status === 'HOLD_REPLAY_MISMATCH' ? 'HELD: replaying this file does not produce what it claims. Loaded anyway, treat it as unverified.' : 'Loaded. This file carries no claim to check against.', c.status === 'HOLD_REPLAY_MISMATCH'); changed(); }) }),
+        el('button', { text: 'Open workspace file', onclick: () => openFile('.json', (obj) => { if (!obj || !obj.ledger) return toast('That is not a workspace file.', true); let next; try { next = MT.importWorkspace(obj); } catch (e) { return toast('That file could not be replayed: ' + e.message, true); } ws = next; ui.cand = ui.plan = ui.rebuilt = null; ui.sel = ''; ui.scope = ''; ui.open = {}; ui.presentations = {}; const c = ws.import_check || {}; toast(c.status === 'VERIFIED' ? 'Replayed and verified against its own claim.' : c.status === 'HOLD_REPLAY_MISMATCH' ? 'HELD: replaying this file does not produce what it claims. Loaded anyway, treat it as unverified.' : 'Loaded. This file carries no claim to check against.', c.status === 'HOLD_REPLAY_MISMATCH'); changed(); }) }),
         el('button', { text: 'Save world file', onclick: () => download('morphtile-world-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(MT.exportWorld(ws.live), null, 1)) }),
-        el('button', { text: 'Open world file', onclick: () => openFile('.json', (obj) => { const r = MT.importWorld(obj); if (!r.ok) return toast(r.status + (r.errors ? ': ' + r.errors.slice(0, 2).join('; ') : r.observed ? ' (claimed ' + String(r.claimed).slice(0, 10) + ', got ' + r.observed.slice(0, 10) + ')' : ''), true); ws = MT.createWorkspace(r.world); ui.cand = ui.plan = ui.rebuilt = null; ui.sel = ''; ui.scope = ''; ui.open = {}; toast(r.status === 'VERIFIED' ? 'World verified and opened as a fresh genesis.' : 'World opened, unverified (it carried no claim).'); changed(); }) })),
+        el('button', { text: 'Open world file', onclick: () => openFile('.json', (obj) => { const r = MT.importWorld(obj); if (!r.ok) return toast(r.status + (r.errors ? ': ' + r.errors.slice(0, 2).join('; ') : r.observed ? ' (claimed ' + String(r.claimed).slice(0, 10) + ', got ' + r.observed.slice(0, 10) + ')' : ''), true); ws = MT.createWorkspace(r.world); ui.cand = ui.plan = ui.rebuilt = null; ui.sel = ''; ui.scope = ''; ui.open = {}; ui.presentations = {}; toast(r.status === 'VERIFIED' ? 'World verified and opened as a fresh genesis.' : 'World opened, unverified (it carried no claim).'); changed(); }) })),
       ws.import_check ? el('ul', { class: 'plain' }, el('li', {}, statusTag(ws.import_check.status), el('span', { class: 'tag', text: ws.import_check.evidence }), el('span', { text: 'this workspace came from a file' }))) : null),
-    el('div', { class: 'card' }, el('h4', { text: 'Workspace' }), el('div', { class: 'acts' }, el('button', { class: 'warn', text: 'Reset to genesis world', onclick: () => { try { localStorage.removeItem(KEY); } catch (e) {} ws = MT.createWorkspace(MT.seedWorld()); ui.cand = ui.plan = ui.rebuilt = null; ui.sel = 'mt_tower'; ui.scope = ''; ui.open = {}; changed(); } })))];
+    el('div', { class: 'card' }, el('h4', { text: 'Workspace' }), el('div', { class: 'acts' }, el('button', { class: 'warn', text: 'Reset to genesis world', onclick: () => { try { localStorage.removeItem(KEY); } catch (e) {} ws = MT.createWorkspace(MT.seedWorld()); ui.cand = ui.plan = ui.rebuilt = null; ui.sel = 'mt_tower'; ui.scope = ''; ui.open = {}; ui.presentations = {}; changed(); } })))];
 }
 function hashColor(hex) { const h = hex.replace('sha256:', ''); return [0, 2, 4].map((i) => 0.25 + (parseInt(h.slice(i, i + 2), 16) / 255) * 0.7); }
 function paneBridges(w) {

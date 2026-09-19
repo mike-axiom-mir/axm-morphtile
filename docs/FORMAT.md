@@ -11,14 +11,14 @@ proving, `conformance/vectors.json` gives worlds and the answers a correct imple
 { "id": "mt_tower", "kind": "morphtile", "version": "0.1", "name": "Beacon tower",
   "form_hints": ["game_asset", "ui_panel", "website"],
   "facets": { "mesh": {...}, "material": {...}, "behavior": {...}, "logic": {...}, "connect": {...} },
-  "params": [...], "capabilities": [...], "view": {...}, "interior": {...},
+  "params": [...], "capabilities": [...], "view": {...}, "presentation": {...}, "interior": {...},
   "provenance": { "created_by": "human", "bridges": [], "sha256": "…" },
   "state": { "version": 1, "mutable": true, "last_transform": null } }
 ```
 
 - `id` is `[A-Za-z0-9_-]+` and unique within its container. A tile is addressed by **path**: `mt_a/mt_b/mt_c`.
 - `form_hints` say what a tile may be *read as*, never what it is. An interpreter draws only the tiles that name its form.
-- `provenance.sha256` is `sha256(canonical(id, kind, version, name, facets, form_hints, interior, params, capabilities, view))`.
+- `provenance.sha256` is `sha256(canonical(id, kind, version, name, facets, form_hints, interior, params, capabilities, view, presentation))`.
 - `canonical(v)` is JSON with object keys sorted, `undefined` dropped, no whitespace. Every hash in this format uses it.
 - `state` is history, not shape. It is never part of a shared body (§6) and never carried by text (§8).
 
@@ -28,7 +28,7 @@ proving, `conformance/vectors.json` gives worlds and the answers a correct imple
   `pattern` (`checker`|`stripes`|`noise`) + `scale`, `glow`, and `paint` (§4).
 - **behavior** `{type: "none"|"scripted"|"reference", data}` — `data.ops` (ready-made moves) and/or `data.motion` (§4).
 - **logic** `{type: "none"|"rule"|"reference", data}` — `data.vars` and `data.rules` (§3).
-- **connect** `{sockets: [...], bridges: [...], place: [x,y,z]}`.
+- **connect** `{sockets: [...], bridges: [...], place: [x,y,z], rotation: [rx,ry,rz]}`. Rotation is optional and defaults to identity.
 
 ### Sockets and wires
 A socket is `{id, kind: "attach"|"signal", pos}` or `{id, kind: "signal", dir: "in"|"out", signal, label}`.
@@ -39,11 +39,14 @@ cycles are invalid. Signal wires run `out → in`.
 ## 2. A world, and containers
 ```json
 { "kind": "morphtile-world", "version": "0.1", "name": "Skyhold",
+  "spatial_root": {"origin":[0,0,0], "rotation":[0,0,0]},
   "tiles": {...}, "edges": {...}, "vars": {...}, "awake": {...}, "defs": {...}, "words": {...}, "time": 0 }
 ```
 A tile may hold a whole graph in `interior: {tiles, edges, ports}`. The world and every interior are the same kind
 of container. A **port** `{id, tile, socket}` exposes an inner socket on the shell, unchanged in both directions.
-`structHash = sha256(canonical(tiles, edges, defs, words))`.
+`spatial_root` is always the identity frame. Old worlds may omit it and resolve identically. Content is placed through
+tile-local frames, so a world root never implies terrain, borders or a visible object. `structHash` includes
+`spatial_root` only when the file explicitly carries it, preserving verification of old files that omitted the field.
 
 ## 3. The expression language
 An expression is a literal or `[op, ...args]`. 26 built-in words:
@@ -78,6 +81,13 @@ Only mutations are stored (`world.vars[path][name]`); untouched values are deriv
 A view is read-only and produces controls addressed to the real tile path; embedding is capped at depth 6 and a view
 that presents itself is refused. A tile without a view gets the interpreter's default card.
 
+`presentation = {mode, dock?, anchor?, preferred_size?, preferred_position?, user_adjustable?}` declares where that
+view belongs. `mode` is `screen|docked|floating|fullscreen|embedded|world|tile`; `dock` is
+`left|right|top|bottom`. `world` resolves to the canonical root; `tile` resolves the named tile's real spatial frame.
+The canonical descriptor travels with the tile. A host may apply a per-user/session override only when
+`user_adjustable` is true; that resolved override is never written into shared matter unless submitted through an
+explicit `presentation.set` edit. Missing anchors and unsupported host modes are visible HOLDs.
+
 ## 5. Holds
 Anything unresolved or unverifiable is a **hold**, never a guess: `HOLD_SOURCE_INCOMPLETE`,
 `HOLD_HASH_MISMATCH`, `HOLD_DEFINITION_NOT_HERE`, `HOLD_RECIPE_OVER_BUDGET`, `HOLD_RECIPE_TOO_DEEP`,
@@ -86,8 +96,8 @@ Evidence classes, weakest-link first: `inferred_candidate_not_tested` < `structu
 `declared_contract_match_not_tested` < `verified_payload_sha256`.
 
 ## 6. Definitions, instances, capabilities
-- `defs[id] = {id, name, body, created_by}` where `body` is `{facets, form_hints, params, interior, capabilities, view}`
-  with every tile's `state` and `provenance` stripped, and no `connect.place`.
+- `defs[id] = {id, name, body, created_by}` where `body` is `{facets, form_hints, params, interior, capabilities, view, presentation}`
+  with every tile's `state` and `provenance` stripped, and no instance-local `connect.place` or `connect.rotation`.
 - A tile with `provenance.instance_of` is an instance: its body follows that definition, its id, name, place,
   wires and state are its own. Syncing rewrites instances through ordinary edits.
 - `capabilities[]` = `{id, name, wake, grants | grants_ref: {def}}`. Asleep it costs nothing — no geometry, no
@@ -107,7 +117,7 @@ cannot be redefined; recursion stops at depth 12 and yields `null`.
 | `morphtile-words` | a vocabulary | `expect.sha256`; same name, different body → held |
 | `morphtile-conformance` | worlds + required answers | this document's test suite |
 
-Text form (§ the `Text` surface) writes `world`, `word`, `tile`, facet lines, `socket`, `control`, `capability`, `view`,
+Text form (§ the `Text` surface) writes `world`, `word`, `tile`, `at`, `rotate`, facet lines, `socket`, `control`, `capability`, `view`, `presentation`,
 `inside`/`port`/`end`, and `wire`. It never carries state, provenance or history; reading it back produces edits
 only where the matter genuinely differs.
 
@@ -115,6 +125,6 @@ only where the matter genuinely differs.
 Every caller — human, agent, script — goes through `act(workspace, op, by)`:
 `signal`, `tick`, `wake`, `sleep`, `settle`, `clone`, `edit`, `discard`, `plan`, `commit`, `rollback`, `reconstruct`.
 Structural ops (inside `edit`) are `tile.add/remove/replace/meta/stamp/collapse/expand`, `facet.swap`, `edge.add/remove/rewire`,
-`port.add`, `param.add/set/remove`, `cap.add/remove`, `view.set`, `def.create/instance/update/sync/detach/put`, `word.define/remove`,
+`port.add`, `param.add/set/remove`, `cap.add/remove`, `view.set`, `presentation.set`, `frame.set`, `def.create/instance/update/sync/detach/put`, `word.define/remove`,
 `bridge.attach`. Nothing edits a live world directly: edits land on a clone, a plan says what would merge and what is
 held, a commit writes a receipt, and a rollback restores exactly until the world has drifted.
