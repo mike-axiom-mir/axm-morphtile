@@ -10,6 +10,28 @@ MorphTile already has portable worlds, kits and words. This layer does not repla
 
 A later UI can therefore have a small **Remix Bench** separate from creation.
 
+## Permanence: world first, Vault second
+
+A candidate is temporary only until it is committed.
+
+Once a remix, adjustment or experimental block is committed into a world, it is already permanent MorphTile matter in that world. It does **not** need to be saved into the Vault in order to become real or persistent.
+
+The **Lego Vault** has a different job: reuse beyond the current world.
+
+- **World** — owns the exact Lego currently used there, including locally adjusted or experimental combinations.
+- **Vault** — indexes reusable Lego so another place, profile, world or future build can find it again.
+- **Vault atoms** — separated reusable pieces such as form/mesh, skin/material, behavior, logic, capability, interface and parameters.
+- **Vault finished Lego** — portable kits/products assembled from those pieces.
+- **Future blueprints** — reusable build/world arrangements that point at Lego and describe how pieces/worlds are assembled, rather than requiring every use to be rebuilt manually.
+
+Saving something from a world into the Vault is therefore **promotion for reuse**, not the act that makes it permanent.
+
+A useful experimental flow is:
+
+`candidate scratch → adjust/drop/test → commit into world → optionally promote useful pieces or the finished assembly to Vault`
+
+If the result stays only in that world, that is valid. If it is promoted, content addressing and dedup decide whether the Vault gained a genuinely new object or merely another reference/name/provenance record for something it already had.
+
 ## Lego Pack
 
 `morphtile-lego-pack/v0.1` can contain finished or partial Lego side-by-side:
