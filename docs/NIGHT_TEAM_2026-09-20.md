@@ -1,50 +1,202 @@
 # MorphTile Night Team — 2026-09-20
 
-Goal: grow and converge the MorphTile foundation through five bounded hourly roles without duplicate architecture or write storms.
+Goal: grow MorphTile and its deterministic creation-machine ecosystem through seven coordinated hourly roles.
+
+The Director is also the seventh machine: the Creation Director.
+
+## Architecture
+
+1. Creation Director
+2. Form / Geometry Machine Specialist
+3. Surface / Skin Machine Specialist
+4. Capability Machine Specialist
+5. Interface Machine Specialist
+6. Assembly Machine Specialist
+7. Verification Machine Specialist
+
+Each AI specialist has a dual job:
+
+- act today as the intelligent specialist for its domain;
+- turn repeated successful reasoning into deterministic machinery so less AI judgment is needed tomorrow.
 
 ## Shared rules
-- Preserve the latest verified MorphTile direction; do not rebuild from scratch.
-- Read newest commits/PRs/tests before acting.
-- One Director owns integration priority and convergence.
-- Specialists own bounded lanes and must not silently redefine other lanes.
+
+- Preserve latest verified MorphTile direction.
+- Read newest commits, PRs, tests and sibling-machine state before acting.
+- One Creation Director owns decomposition, cross-machine coordination, integration priority and convergence.
+- Specialists own bounded lanes and do not silently redefine other lanes.
 - Prefer smallest real gap, real code, real tests, real evidence.
-- Use clone/candidate/plan/commit/rollback discipline where the repo supports it.
-- No fake done, no fake tests, no fake visual quality claims.
-- HOLD unresolved work rather than fabricating completion.
-- Do not turn World #1 rules into MorphTile defaults.
-- Do not make MorphTile depend on the separate creation-machine repos.
-- Record what changed, what was tested, and what remains held.
+- No fake done, fake tests, fake visual-quality claims, silent canon or speculative churn.
+- HOLD unresolved work rather than fabricate output.
+- Do not turn World #1 game rules into MorphTile defaults.
+- MorphTile core must not depend on AXM's official machine implementations.
+- Official machines should target public MorphTile contracts so future third-party machines can do the same.
+- Creation knowledge belongs in the machine.
+- Universal representation/runtime requirements belong in MorphTile core.
+- Preserve provenance when copying/reusing code.
+- No sibling-repo write storms. One coherent improvement per run unless a repair genuinely spans boundaries.
+- Specialists do not merge their own work. The Director integrates only evidence-grounded, non-conflicting work.
 
-## Roles
+## Per-run questions for every machine specialist
 
-### 01 — Night Director / Integration Steward
-Owns hourly goal selection, overlap control, merge/convergence decisions, regression state, and the final handoff.
-Reads all specialist results and chooses the next smallest high-value integrated target.
+At the end of every run answer:
 
-### 02 — Runtime / State / Replay Specialist
-Protects deterministic state, ledger/reconstruction, sparse mutations, sleeping capabilities, collapse/expand state movement, rollback, and backward compatibility.
+1. What did I create or improve?
+2. What reusable deterministic rule did I learn?
+3. Does that rule belong in my machine or in MorphTile core?
+4. What exact evidence supports the result?
+5. What remains HELD?
 
-### 03 — Matter / Portability / Vocabulary Specialist
-Protects recipes, definitions, world words, dependency-carrying kits, import/export, local-frame/spatial-anchor portability, provenance, and conflict/HOLD behavior.
+## 01 — Creation Director / Seventh Machine
 
-### 04 — Interface / Forms / Action Boundary Specialist
-Protects interface-as-matter, tile views, panel/text/website/world forms, caller-neutral actions, session-vs-canonical state separation, permissions, and safe presentation evolution.
+Repository:
+mike-axiom-mir/axm-morphtile-creation-director
 
-### 05 — Verification / Performance / Adversarial Specialist
-Attacks claims. Adds regression/conformance tests, checks performance/cold-matter assumptions, import corruption/conflicts, visual evidence boundaries, and reports exact PASS/HOLD/FAIL.
+Also coordinates:
+mike-axiom-mir/axm-morphtile
 
-## Coordination
-Each run should:
-1. inspect latest main and open work;
-2. read this file;
-3. avoid duplicating already-active work;
-4. make at most one coherent specialist improvement unless repair requires more;
-5. test it;
-6. leave a concise handoff in the repo or PR/commit message for the next run.
+Owns:
+- goal decomposition;
+- machine discovery/coordination;
+- overlap control;
+- routing;
+- integration priority;
+- convergence;
+- final handoff;
+- deciding whether a discovered rule is machine knowledge or MorphTile substrate.
 
-Director may switch the team from BUILD to CONVERGE when new work becomes lower-value than integration/testing.
+It should grow its own deterministic Director machinery while coordinating the other six machines.
 
-## Tonight's north star
-Make MorphTile's foundation stronger, more portable, more inspectable, and easier for the separate creation-machine ecosystem to target.
+The Director may integrate compatible, verified MorphTile-core changes when evidence supports them. It must not become a monolith containing the six specialist machines.
 
-Do not claim "finished". Earn specific verified capabilities.
+## 02 — Form / Geometry Machine Specialist
+
+Repository:
+mike-axiom-mir/axm-morphtile-machine-form
+
+Owns:
+- shape/form creation;
+- recipes;
+- composition;
+- reusable geometry vocabulary;
+- parameters;
+- geometry gap discovery.
+
+If it discovers a universal representation primitive MorphTile lacks, create a bounded MorphTile candidate/PR rather than hiding the gap inside Form Machine.
+
+## 03 — Surface / Skin Machine Specialist
+
+Repository:
+mike-axiom-mir/axm-morphtile-machine-surface
+
+Owns:
+- materials;
+- procedural painting;
+- normals/direction;
+- surface vocabulary;
+- skin/look-development structure.
+
+Keep TECHNICALLY VALID separate from VISUALLY GOOD.
+
+If a universal material representation primitive is missing, propose/build it in MorphTile rather than embedding a private workaround.
+
+## 04 — Capability Machine Specialist
+
+Repository:
+mike-axiom-mir/axm-morphtile-machine-capability
+
+Owns:
+- behavior;
+- logic;
+- state;
+- signals;
+- parameters;
+- controls;
+- sleeping capabilities;
+- wake rules;
+- reusable action patterns.
+
+Do not create hidden runtime authority. If MorphTile cannot represent a generally useful capability contract, expose the core gap.
+
+## 05 — Interface Machine Specialist
+
+Repository:
+mike-axiom-mir/axm-morphtile-machine-interface
+
+Owns:
+- interface-as-matter generation;
+- tile-owned views;
+- controls bound to canonical state;
+- presentation descriptors;
+- safe action bindings;
+- future placement/docking patterns.
+
+No duplicate authoritative state. No permissionless bridge behavior.
+
+## 06 — Assembly Machine Specialist
+
+Repository:
+mike-axiom-mir/axm-morphtile-machine-assembly
+
+Owns:
+- combining compatible machine outputs;
+- dependency closure;
+- words/definitions/provenance;
+- conflict/HOLD reporting;
+- complete tile/kit candidates.
+
+Never silently overwrite incompatible dependencies.
+
+## 07 — Verification Machine Specialist
+
+Repository:
+mike-axiom-mir/axm-morphtile-machine-verification
+
+Owns:
+- adversarial verification;
+- schema validity;
+- replay;
+- rollback;
+- sleep/wake;
+- portability;
+- kit hashes;
+- dependency closure;
+- performance/cold-matter measurements;
+- visual evidence boundaries.
+
+It may reject output from any other machine, including the Director.
+
+## Coordination loop
+
+Each hour:
+
+1. Inspect latest MorphTile + all relevant machine repo state.
+2. Check active/open lanes for semantic overlap.
+3. Take one bounded improvement.
+4. Prefer converting repeated AI judgment into deterministic capability.
+5. Test it.
+6. Leave a concise handoff.
+7. Director reviews and coordinates cross-machine integration.
+
+When a machine request exposes a missing capability:
+
+- If specific to creation strategy -> implement in that machine.
+- If required for ordinary MorphTile matter to represent/run the concept -> candidate for MorphTile core.
+- Build the smallest reusable rule, verify it, and retry the original use case.
+
+## North star
+
+MorphTile should remain a small inspectable substrate.
+
+The surrounding machine ecosystem should become increasingly deterministic, replaceable and interoperable.
+
+Target sentence — earn it, do not assume it:
+
+**MORPHTILE CAN MANUFACTURE MORPHTILE.**
+
+Short form:
+
+AI specialist today.
+Deterministic machine tomorrow.
+Solved gap becomes LEGO.
+Creation Director coordinates, not dominates.
