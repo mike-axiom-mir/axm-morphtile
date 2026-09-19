@@ -221,7 +221,19 @@ function paneTiles(w) {
     const meshes = Object.assign(t.interior ? { 'its contents': { type: 'interior', source: null, data: {} } } : {}, MT.PRESETS.mesh);
     const ta = el('textarea', { value: JSON.stringify(t.facets[ui.facetEdit], null, 1), spellcheck: false, 'aria-label': 'Facet JSON' });
     const rec = t.facets.mesh.type === 'generated' && t.facets.mesh.data.generator === 'recipe' ? t.facets.mesh.data : null;
-    if (rec) { const built = MT.compileMesh(t);
+    const paint = (t.facets.material.data || {}).paint;
+    if (paint) out.push(el('div', { class: 'card' }, el('h4', { text: 'Painting' }),
+      el('p', { class: 'note', text: 'This colour is not a swatch \u2014 it is written as an expression of where you are on the shape, using x, y, z and these numbers.' }),
+      Object.keys(paint.vars || {}).map((k) => el('div', { class: 'row' }, el('span', { text: k }), el('div', { class: 'acts ctl' },
+        el('input', { type: 'range', min: 0, max: Math.max(1, Math.abs(paint.vars[k]) * 3), step: Math.abs(paint.vars[k]) > 4 ? 1 : 0.05, value: paint.vars[k], 'aria-label': k,
+          oninput: (e) => { const o = e.target.parentNode.querySelector('output'); if (o) o.textContent = e.target.value; },
+          onchange: (e) => { const d = MT.clone(t.facets.material.data); d.paint.vars[k] = Number(e.target.value); swap('material', { type: t.facets.material.type, source: null, data: d }); } }),
+        el('output', { text: String(paint.vars[k]) }),
+        el('button', { text: 'Make a control', onclick: () => edit({ op: 'param.add', id: sel, param: { id: 'paint_' + k, label: k, type: 'number', min: 0, max: Math.max(1, Math.abs(paint.vars[k]) * 3), step: Math.abs(paint.vars[k]) > 4 ? 1 : 0.05, binds: [{ facet: 'material', at: 'data.paint.vars.' + k }] } }) })))),
+      el('details', {}, el('summary', { text: 'Write the painting itself' }), (function () { const pt = el('textarea', { class: 'code', value: JSON.stringify(paint, null, 1), spellcheck: false, 'aria-label': 'Painting JSON' });
+        return [el('p', { class: 'note', text: 'color: three expressions, each giving 0 to 1. [\"var\",\"y\"] is how high this piece sits; anything it cannot read is simply ignored.' }), pt,
+          el('div', { class: 'acts' }, el('button', { class: 'go', text: 'Apply painting', onclick: () => { try { const d = MT.clone(t.facets.material.data); d.paint = JSON.parse(pt.value); swap('material', { type: t.facets.material.type, source: null, data: d }); } catch (e) { toast('That is not valid JSON: ' + e.message, true); } } }))]; })())));
+    if (rec) { const built = MT.compileMesh(t, w);
       out.push(el('div', { class: 'card' }, el('h4', { text: 'Recipe' }),
         el('p', { class: 'note', text: 'This shape is not one the engine ships — it is described here, as matter: loops and expressions over these numbers. Change a number and the shape is different.' }),
         el('div', { class: 'acts' }, el('span', { class: 'tag' + (built.hold ? ' hold' : ' ok'), text: built.hold || built.recipe_parts + ' parts' })),
@@ -231,6 +243,13 @@ function paneTiles(w) {
             onchange: (e) => { const d = MT.clone(rec); d.vars[k] = Number(e.target.value); swap('mesh', { type: 'generated', source: null, data: d }); } }),
           el('output', { text: String(rec.vars[k]) }),
           el('button', { text: 'Make a control', onclick: () => edit({ op: 'param.add', id: sel, param: { id: k, label: k, type: 'number', min: 0, max: Math.max(2, Math.abs(rec.vars[k]) * 3), step: Math.abs(rec.vars[k]) > 4 ? 1 : 0.05, binds: [{ facet: 'mesh', at: 'data.vars.' + k }] } }) })))),
+        (function () { const ds = Object.keys(w.defs || {}).sort(); if (!ds.length) return el('p', { class: 'note', text: 'Make a tile a shared definition and it can become a part of this recipe.' });
+          const pick = el('select', { 'aria-label': 'Shape to build with' }, ds.map((d) => el('option', { value: d, text: w.defs[d].name })));
+          const many = el('input', { type: 'text', value: '3', 'aria-label': 'How many' }), gap = el('input', { type: 'text', value: '3', 'aria-label': 'Spacing' }), setting = el('input', { type: 'text', placeholder: 'e.g. rungs=6', 'aria-label': 'Setting for each use' });
+          return el('div', { class: 'card' }, el('h4', { text: 'Build it out of another shape' }), el('div', { class: 'acts ctl' }, pick, many, gap, el('span', { class: 'tag', text: 'shape · count · spacing' })),
+            el('div', { class: 'acts' }, el('button', { class: 'go', text: 'Add that row to this recipe', onclick: () => { const d = MT.clone(rec); const idx = (d.parts || []).length, use = { use: pick.value, pos: [['*', Number(gap.value) || 2, ['var', 'u' + idx]], 0, 0] };
+              if (setting.value.indexOf('=') > 0) { const kv = setting.value.split('='); use.with = {}; use.with[kv[0].trim()] = Number(kv[1]); }
+              (d.parts = d.parts || []).push({ repeat: Number(many.value) || 1, as: 'u' + idx, body: [use] }); swap('mesh', { type: 'generated', source: null, data: d }); } }))); })(),
         el('details', {}, el('summary', { text: 'Write the recipe itself' }), (function () { const rt = el('textarea', { class: 'code', value: JSON.stringify(rec, null, 1), spellcheck: false, 'aria-label': 'Recipe JSON' });
           return [el('p', { class: 'note', text: 'parts: a list. Each entry is a shape, or {repeat: n, as: "i", body: [...]} to loop, or {when: <test>, ...} to skip. Any number may be an expression such as ["*", ["var", "i"], 0.3].' }), rt,
             el('div', { class: 'acts' }, el('button', { class: 'go', text: 'Apply recipe', onclick: () => { try { swap('mesh', { type: 'generated', source: null, data: JSON.parse(rt.value) }); } catch (e) { toast('That is not valid JSON: ' + e.message, true); } } }))]; })())));

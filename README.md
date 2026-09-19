@@ -5,7 +5,7 @@ Software as matter. One tile schema (mesh, material, behavior, logic, connect) t
 same JSON. Its own small world with the door open: it depends on nothing (not UC, not any
 fabric repo, not a CDN, not npm) and anything may bridge in or out.
 
-    npm test          # 67 behavioral and licence-contract tests, Node >= 18, zero dependencies
+    npm test          # 74 behavioral and licence-contract tests, Node >= 18, zero dependencies
     npm run build     # -> dist/axiomatter-workshop.html  (one file, opens on a phone)
     npm run shot      # -> evidence/world.png rendered by the built-in rasterizer
 
@@ -76,6 +76,14 @@ on its own, and a tile's own rule can wake it (`{"wake": "bay"}`). It sleeps aga
 as matter rather than chosen from a list the engine ships. Four numbers make a spiral staircase; three make a lattice shell. Promote
 any of those numbers to a control and the recipe becomes a family of shapes. A runaway recipe stops at a stated budget and shows
 amber, like any other hold — it never hangs the world.
+
+A recipe part can also be `{use: <definition>}` — another invented shape, folded in and transformed. Change what that definition
+is, and everything built from it changes. A shape cannot be made of itself, a missing part shows amber, and depth and budget are
+shared across the whole chain.
+
+Colour works the same way: `paint` is three expressions of where you are on the shape, so a gradient or a set of rings is written
+rather than chosen. And `{use: <def>, with: {rungs: 6}}` compiles one definition at different settings in the same recipe without
+changing the definition.
 
 **The world activates itself.** A capability can name a shared definition instead of carrying a copy, so a node holds a *name* and
 builds the thing only when it wakes. Asking the world what it wants woken — by nearness, by a value crossing a line, or at a moment —

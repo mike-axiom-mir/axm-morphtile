@@ -1002,8 +1002,10 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
   // language the rest of the world uses. New forms can be invented inside a world without any engine code, and the
   // only limit is a stated budget — exceeded, it says so in amber rather than running away.
   const RECIPE_BUDGET = 4000;
-  function runRecipe(out, data) {
+  function runRecipe(out, data, ctx) {
+    ctx = ctx || {};
     const vars = Object.assign({}, data.vars || {}), budget = Math.min(data.budget || RECIPE_BUDGET, RECIPE_BUDGET);
+    const world = ctx.world || null, seen = ctx.seen || [], depth0 = ctx.depth || 0, spent = ctx.made || 0; // what the rest of the chain has already used
     let made = 0, stopped = null;
     const num = (v, scope, d) => { if (v === undefined) return d; const x = evalExpr(v, { t: 0, get: (n) => (n in scope ? scope[n] : vars[n]) }); return typeof x === 'number' && isFinite(x) ? x : d; };
     const vec = (v, scope, d) => (Array.isArray(v) ? [num(v[0], scope, d[0]), num(v[1], scope, d[1]), num(v[2], scope, d[2])] : d);
@@ -1013,23 +1015,51 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
         if (stopped) return;
         if (n.repeat !== undefined) {
           const count = Math.max(0, Math.floor(num(n.repeat, scope, 0)));
-          if (count > budget) { stopped = 'HOLD_RECIPE_OVER_BUDGET'; return; }
+          if (count + spent > budget) { stopped = 'HOLD_RECIPE_OVER_BUDGET'; return; }
           for (let i = 0; i < count; i++) { const inner = Object.assign({}, scope); inner[n.as || 'i'] = i; inner[(n.as || 'i') + '_of'] = count; inner[(n.as || 'i') + '_at'] = count > 1 ? i / (count - 1) : 0; walk(n.body, inner, depth + 1); if (stopped) return; }
           continue;
         }
         if (n.when !== undefined && !evalExpr(n.when, { t: 0, get: (k) => (k in scope ? scope[k] : vars[k]) })) continue;
         if (n.body) { walk(n.body, scope, depth + 1); continue; }
-        if (++made > budget) { stopped = 'HOLD_RECIPE_OVER_BUDGET'; return; }
+        if (n.use !== undefined) { // a part that is another invented shape: composition, not a special case
+          if (!world) { stopped = 'HOLD_NO_WORLD_TO_LOOK_IN'; return; }
+          const def = (world.defs || {})[n.use];
+          if (!def || !def.body || !def.body.facets) { stopped = 'HOLD_DEFINITION_NOT_HERE'; return; }
+          if (seen.indexOf(n.use) >= 0) { stopped = 'HOLD_RECIPE_USES_ITSELF'; return; }
+          if (depth0 >= 4) { stopped = 'HOLD_RECIPE_TOO_DEEP'; return; }
+          const sub = { P: [], T: [], K: [], hold: null };
+          let subMesh = def.body.facets.mesh;
+          if (n.with) { // the same shape, asked for at different settings: the definition itself is untouched
+            const over = {}; for (const k in n.with) over[k] = num(n.with[k], scope, undefined);
+            if (subMesh.type === 'generated' && subMesh.data && subMesh.data.generator === 'recipe') subMesh = { type: 'generated', source: null, data: Object.assign({}, subMesh.data, { vars: Object.assign({}, subMesh.data.vars, over) }) };
+            else stopped = 'HOLD_SETTINGS_NOT_ACCEPTED';
+            if (stopped) return;
+          }
+          const inner = compileMeshData(subMesh, def.body.facets.material && def.body.facets.material.data, { world, seen: seen.concat(n.use), depth: depth0 + 1, made: spent + made, budget });
+          sub.P = inner.P; sub.T = inner.T; sub.K = inner.K;
+          made += inner.recipe_parts || 1;
+          if (inner.hold) { stopped = inner.hold; return; }
+          if (made + spent > budget) { stopped = 'HOLD_RECIPE_OVER_BUDGET'; return; }
+          const sc = n.scale === undefined ? [1, 1, 1] : (Array.isArray(n.scale) ? vec(n.scale, scope, [1, 1, 1]) : (function (k) { return [k, k, k]; })(num(n.scale, scope, 1)));
+          const R = rotXYZ(vec(n.rot, scope, [0, 0, 0])), P = vec(n.pos, scope, [0, 0, 0]), K = n.color ? vec(n.color, scope, [0.6, 0.6, 0.7]) : null;
+          for (let i = 0; i < sub.T.length; i++) {
+            const o = i * 9;
+            for (let v = 0; v < 3; v++) { const q = mv3(R, [sub.P[o + v * 3] * sc[0], sub.P[o + v * 3 + 1] * sc[1], sub.P[o + v * 3 + 2] * sc[2]]); out.P.push(q[0] + P[0], q[1] + P[1], q[2] + P[2]); }
+            out.T.push(sub.T[i]); out.K.push(K || sub.K[i]);
+          }
+          continue;
+        }
+        if (++made + spent > budget) { stopped = 'HOLD_RECIPE_OVER_BUDGET'; return; }
         addPart(out, { shape: n.shape || 'box', size: vec(n.size, scope, [1, 1, 1]), pos: vec(n.pos, scope, [0, 0, 0]), rot: vec(n.rot, scope, [0, 0, 0]),
           color: n.color ? vec(n.color, scope, [0.6, 0.6, 0.7]) : null, segments: n.segments, taper: n.taper === undefined ? undefined : num(n.taper, scope, 1), sub: n.sub });
       }
     };
     walk(data.parts, {}, 0);
-    if (stopped) { out.hold = stopped; addPart(out, { shape: 'box', size: [1, 1, 1], color: [1, 0.7, 0.3] }); }
+    if (stopped) { out.hold = stopped; if (!ctx.depth) addPart(out, { shape: 'box', size: [1, 1, 1], color: [1, 0.7, 0.3] }); }
     out.recipe_parts = made;
   }
   const GENERATORS = {
-    recipe(out, d) { runRecipe(out, d); },
+    recipe(out, d, ctx) { runRecipe(out, d, ctx); },
     terrain(out, d) { // floating island: heightfield top, rocky underside, flat plateau in the middle for things to stand on
       const R = d.radius || 5.5, n = d.resolution || 22, H = d.height || 1.6, plateau = d.plateau == null ? 1 : d.plateau, depth = d.depth || 4, seed = d.seed || 1, A = affine();
       const at = (i, j) => {
@@ -1060,16 +1090,28 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
     },
   };
   const meshCache = new Map();
-  function compileMesh(tile) {
-    const mf = tile.facets.mesh, md = tile.facets.material.data || {}, key = canonical([mf, md.pattern, md.scale]);
+  const compileMesh = (tile, world) => compileMeshData(tile.facets.mesh, tile.facets.material.data, world ? { world } : null);
+  function compileMeshData(mf, material, ctx) {
+    const md = material || {}, world = ctx && ctx.world;
+    const key = canonical([mf, md.pattern, md.scale, md.paint, (ctx && ctx.seen) || null, world && mf.type === 'generated' && mf.data && mf.data.generator === 'recipe' ? hashOf(world.defs || {}) : null]);
     if (meshCache.has(key)) return meshCache.get(key);
     const out = { P: [], T: [], K: [], hold: null };
     if (mf.type === 'interior') { /* this tile's geometry is its contents */ }
     else if (mf.type === 'reference') { out.hold = 'HOLD_SOURCE_INCOMPLETE'; addPart(out, { shape: 'box', size: [1, 1, 1], color: [1, 0.7, 0.3] }); }
     else if (mf.type === 'generated') {
       const g = GENERATORS[(mf.data || {}).generator];
-      if (g) g(out, mf.data); else { out.hold = 'HOLD_UNKNOWN_GENERATOR'; addPart(out, { shape: 'box', size: [1, 1, 1], color: [1, 0.7, 0.3] }); }
+      if (g) g(out, mf.data, ctx); else { out.hold = 'HOLD_UNKNOWN_GENERATOR'; addPart(out, { shape: 'box', size: [1, 1, 1], color: [1, 0.7, 0.3] }); }
     } else for (const part of (mf.data && mf.data.parts) || [mf.data || {}]) addPart(out, part);
+    const paint = md.paint; // {vars, color: [expr, expr, expr] over x, y, z, and the tile's own numbers}
+    if (paint && Array.isArray(paint.color)) {
+      const pv = paint.vars || {};
+      for (let i = 0; i < out.T.length; i++) {
+        const o = i * 9, px = (out.P[o] + out.P[o + 3] + out.P[o + 6]) / 3, py = (out.P[o + 1] + out.P[o + 4] + out.P[o + 7]) / 3, pz = (out.P[o + 2] + out.P[o + 5] + out.P[o + 8]) / 3;
+        const ctx2 = { t: 0, get: (k) => (k === 'x' ? px : k === 'y' ? py : k === 'z' ? pz : pv[k]) };
+        const ch = paint.color.map((e) => { const v = evalExpr(e, ctx2); return typeof v === 'number' && isFinite(v) ? Math.max(0, Math.min(1, v)) : null; });
+        if (ch.every((v) => v !== null)) out.K[i] = ch;
+      }
+    }
     const pat = md.pattern, sc = md.scale || 0.5;
     if (pat && pat !== 'none') for (let i = 0; i < out.T.length; i++) {
       const o = i * 9, cx = (out.P[o] + out.P[o + 3] + out.P[o + 6]) / 3, cy = (out.P[o + 1] + out.P[o + 4] + out.P[o + 7]) / 3, cz = (out.P[o + 2] + out.P[o + 5] + out.P[o + 8]) / 3;
@@ -1147,7 +1189,7 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
     list.forEach((entry, index) => {
       const tile = entry.tile, path = entry.path;
       if (!declares(tile, SPATIAL_FORMS)) { stats.skipped.push(path); return; }
-      const mesh = compileMesh(tile), M = tileMatrix(world, path, t, memo), md = tile.facets.material.data || {}, ctx = tileCtx(world, path, t, tile);
+      const mesh = compileMesh(tile, world), M = tileMatrix(world, path, t, memo), md = tile.facets.material.data || {}, ctx = tileCtx(world, path, t, tile);
       if (mesh.hold) stats.holds.push({ tile: path, facet: 'mesh', status: mesh.hold });
       if (md.hold) stats.holds.push({ tile: path, facet: 'material', status: md.hold });
       const lit = sel && (path === sel || path.startsWith(sel + '/'));
@@ -1422,6 +1464,8 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
       'ion blue': { type: 'primitive', source: null, data: { color: [0.3, 0.6, 1], emissive: 0.15 } },
       ember: { type: 'primitive', source: null, data: { color: [0.95, 0.45, 0.25], emissive: 0.2 } },
       'checker hull': { type: 'primitive', source: null, data: { color: [0.78, 0.82, 0.92], pattern: 'checker', scale: 0.4 } },
+      'painted: height gradient': { type: 'generated', source: null, data: { color: [0.6, 0.6, 0.7], paint: { vars: { low: 0.15, span: 4 }, color: [['+', 0.2, ['/', ['var', 'y'], ['var', 'span']]], ['+', ['var', 'low'], ['/', ['var', 'y'], ['*', 2, ['var', 'span']]]], ['-', 0.95, ['/', ['var', 'y'], ['var', 'span']]]] } } },
+      'painted: rings': { type: 'generated', source: null, data: { color: [0.7, 0.7, 0.8], paint: { vars: { ring: 0.45 }, color: [['if', ['<', ['%', ['+', ['*', ['var', 'y'], 1], 100], ['var', 'ring']], ['*', 0.5, ['var', 'ring']]], 0.95, 0.35], 0.55, ['if', ['<', ['%', ['+', ['*', ['var', 'y'], 1], 100], ['var', 'ring']], ['*', 0.5, ['var', 'ring']]], 0.4, 0.9]] } } },
     },
     behavior: {
       still: { type: 'none', data: {} },
@@ -1494,7 +1538,7 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
     createWorld, validateWorld, structHash, bodyOf, bodyHash, instancesOf, defDrift, applyStructOp, applyEvent, diffUnits, unitValue, rootsOf, childrenOf, parentEdgeOf,
     reconstruct, exportWorld, importWorld, createWorkspace, record, cloneBody, editCandidate, planMerge, commitPlan, rollback, exportWorkspace, importWorkspace,
     weakestEvidence, ingestMaterialOffer, materialFromOffer, createRegistry, dataUrlBytes,
-    compileMesh, renderAsset, renderReceipt, compilePanel, vnodeToHTML, compileWebsite, toText, parseText, fromText,
+    compileMesh, compileMeshData, renderAsset, renderReceipt, compilePanel, vnodeToHTML, compileWebsite, toText, parseText, fromText,
     seedWorld, act,
   };
 });
@@ -1636,7 +1680,19 @@ function paneTiles(w) {
     const meshes = Object.assign(t.interior ? { 'its contents': { type: 'interior', source: null, data: {} } } : {}, MT.PRESETS.mesh);
     const ta = el('textarea', { value: JSON.stringify(t.facets[ui.facetEdit], null, 1), spellcheck: false, 'aria-label': 'Facet JSON' });
     const rec = t.facets.mesh.type === 'generated' && t.facets.mesh.data.generator === 'recipe' ? t.facets.mesh.data : null;
-    if (rec) { const built = MT.compileMesh(t);
+    const paint = (t.facets.material.data || {}).paint;
+    if (paint) out.push(el('div', { class: 'card' }, el('h4', { text: 'Painting' }),
+      el('p', { class: 'note', text: 'This colour is not a swatch \u2014 it is written as an expression of where you are on the shape, using x, y, z and these numbers.' }),
+      Object.keys(paint.vars || {}).map((k) => el('div', { class: 'row' }, el('span', { text: k }), el('div', { class: 'acts ctl' },
+        el('input', { type: 'range', min: 0, max: Math.max(1, Math.abs(paint.vars[k]) * 3), step: Math.abs(paint.vars[k]) > 4 ? 1 : 0.05, value: paint.vars[k], 'aria-label': k,
+          oninput: (e) => { const o = e.target.parentNode.querySelector('output'); if (o) o.textContent = e.target.value; },
+          onchange: (e) => { const d = MT.clone(t.facets.material.data); d.paint.vars[k] = Number(e.target.value); swap('material', { type: t.facets.material.type, source: null, data: d }); } }),
+        el('output', { text: String(paint.vars[k]) }),
+        el('button', { text: 'Make a control', onclick: () => edit({ op: 'param.add', id: sel, param: { id: 'paint_' + k, label: k, type: 'number', min: 0, max: Math.max(1, Math.abs(paint.vars[k]) * 3), step: Math.abs(paint.vars[k]) > 4 ? 1 : 0.05, binds: [{ facet: 'material', at: 'data.paint.vars.' + k }] } }) })))),
+      el('details', {}, el('summary', { text: 'Write the painting itself' }), (function () { const pt = el('textarea', { class: 'code', value: JSON.stringify(paint, null, 1), spellcheck: false, 'aria-label': 'Painting JSON' });
+        return [el('p', { class: 'note', text: 'color: three expressions, each giving 0 to 1. [\"var\",\"y\"] is how high this piece sits; anything it cannot read is simply ignored.' }), pt,
+          el('div', { class: 'acts' }, el('button', { class: 'go', text: 'Apply painting', onclick: () => { try { const d = MT.clone(t.facets.material.data); d.paint = JSON.parse(pt.value); swap('material', { type: t.facets.material.type, source: null, data: d }); } catch (e) { toast('That is not valid JSON: ' + e.message, true); } } }))]; })())));
+    if (rec) { const built = MT.compileMesh(t, w);
       out.push(el('div', { class: 'card' }, el('h4', { text: 'Recipe' }),
         el('p', { class: 'note', text: 'This shape is not one the engine ships — it is described here, as matter: loops and expressions over these numbers. Change a number and the shape is different.' }),
         el('div', { class: 'acts' }, el('span', { class: 'tag' + (built.hold ? ' hold' : ' ok'), text: built.hold || built.recipe_parts + ' parts' })),
@@ -1646,6 +1702,13 @@ function paneTiles(w) {
             onchange: (e) => { const d = MT.clone(rec); d.vars[k] = Number(e.target.value); swap('mesh', { type: 'generated', source: null, data: d }); } }),
           el('output', { text: String(rec.vars[k]) }),
           el('button', { text: 'Make a control', onclick: () => edit({ op: 'param.add', id: sel, param: { id: k, label: k, type: 'number', min: 0, max: Math.max(2, Math.abs(rec.vars[k]) * 3), step: Math.abs(rec.vars[k]) > 4 ? 1 : 0.05, binds: [{ facet: 'mesh', at: 'data.vars.' + k }] } }) })))),
+        (function () { const ds = Object.keys(w.defs || {}).sort(); if (!ds.length) return el('p', { class: 'note', text: 'Make a tile a shared definition and it can become a part of this recipe.' });
+          const pick = el('select', { 'aria-label': 'Shape to build with' }, ds.map((d) => el('option', { value: d, text: w.defs[d].name })));
+          const many = el('input', { type: 'text', value: '3', 'aria-label': 'How many' }), gap = el('input', { type: 'text', value: '3', 'aria-label': 'Spacing' }), setting = el('input', { type: 'text', placeholder: 'e.g. rungs=6', 'aria-label': 'Setting for each use' });
+          return el('div', { class: 'card' }, el('h4', { text: 'Build it out of another shape' }), el('div', { class: 'acts ctl' }, pick, many, gap, el('span', { class: 'tag', text: 'shape · count · spacing' })),
+            el('div', { class: 'acts' }, el('button', { class: 'go', text: 'Add that row to this recipe', onclick: () => { const d = MT.clone(rec); const idx = (d.parts || []).length, use = { use: pick.value, pos: [['*', Number(gap.value) || 2, ['var', 'u' + idx]], 0, 0] };
+              if (setting.value.indexOf('=') > 0) { const kv = setting.value.split('='); use.with = {}; use.with[kv[0].trim()] = Number(kv[1]); }
+              (d.parts = d.parts || []).push({ repeat: Number(many.value) || 1, as: 'u' + idx, body: [use] }); swap('mesh', { type: 'generated', source: null, data: d }); } }))); })(),
         el('details', {}, el('summary', { text: 'Write the recipe itself' }), (function () { const rt = el('textarea', { class: 'code', value: JSON.stringify(rec, null, 1), spellcheck: false, 'aria-label': 'Recipe JSON' });
           return [el('p', { class: 'note', text: 'parts: a list. Each entry is a shape, or {repeat: n, as: "i", body: [...]} to loop, or {when: <test>, ...} to skip. Any number may be an expression such as ["*", ["var", "i"], 0.3].' }), rt,
             el('div', { class: 'acts' }, el('button', { class: 'go', text: 'Apply recipe', onclick: () => { try { swap('mesh', { type: 'generated', source: null, data: JSON.parse(rt.value) }); } catch (e) { toast('That is not valid JSON: ' + e.message, true); } } }))]; })())));
