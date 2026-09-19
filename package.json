@@ -1,0 +1,2 @@
+{ "name": "axm-morphtile", "version": "0.3.0", "description": "MorphTile / AxioMatter — software as matter. One tile schema, many forms.", "license": "SEE LICENSE IN LICENSE", "private": true,
+  "scripts": { "test": "node --test test/run.js test/depth.js test/blocks.js test/text.js test/instances.js test/sleeping.js test/licensing.js", "build": "node tools/build.js", "shot": "node tools/shot.js evidence/world.png" } }

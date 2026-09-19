@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AxioMatter Workshop — MorphTile v0.3</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono&display=swap">
+<style>
+:root{--void:#05070f;--deep:#0b1226;--panel:#0f1830;--line:#25345f;--ion:#5aa2ff;--violet:#9a7bff;--ice:#e6efff;--dim:#8fa0c8;--hold:#ffb454;--ok:#5fe3c0;--bad:#ff7a8a;
+ --display:"Michroma","Eurostile","Trebuchet MS",sans-serif;--body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--void:#eef2fb;--deep:#fff;--panel:#f5f7ff;--line:#c9d3ee;--ion:#1f5fd0;--violet:#5b3fd0;--ice:#0c1430;--dim:#4a5a85;--hold:#a35a00;--ok:#0a7a5c;--bad:#b3243a}}
+:root[data-theme="light"]{--void:#eef2fb;--deep:#fff;--panel:#f5f7ff;--line:#c9d3ee;--ion:#1f5fd0;--violet:#5b3fd0;--ice:#0c1430;--dim:#4a5a85;--hold:#a35a00;--ok:#0a7a5c;--bad:#b3243a}
+:root[data-theme="dark"]{--void:#05070f;--deep:#0b1226;--panel:#0f1830;--line:#25345f;--ion:#5aa2ff;--violet:#9a7bff;--ice:#e6efff;--dim:#8fa0c8;--hold:#ffb454;--ok:#5fe3c0;--bad:#ff7a8a}
+*{box-sizing:border-box}[hidden]{display:none!important}html,body{max-width:100%;overflow-x:hidden}.shell>*,.left>*,.right>*,.pane>*{min-width:0}html,body{max-width:100%;overflow-x:hidden}.shell>*,.left>*,.right>*,.pane>*,.card>*{min-width:0}
+body{margin:0;background:var(--void);color:var(--ice);font:15px/1.5 var(--body);-webkit-text-size-adjust:100%}
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:.5rem .8rem;min-height:40px;cursor:pointer}
+button:hover{border-color:var(--ion)}button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--ion);outline-offset:2px}
+button.go{background:var(--ion);border-color:var(--ion);color:var(--void);font-weight:600}button.warn{border-color:var(--hold);color:var(--hold)}button:disabled{opacity:.45;cursor:default}
+select,input[type=text]{background:var(--deep);border:1px solid var(--line);border-radius:6px;padding:.45rem .5rem;min-height:40px;max-width:100%}
+textarea.code{min-height:18rem;white-space:pre;overflow-wrap:normal;overflow-x:auto}
+textarea{width:100%;min-height:9rem;background:var(--deep);border:1px solid var(--line);border-radius:6px;padding:.6rem;font:12.5px/1.5 var(--mono)}
+.shell{max-width:1180px;margin:auto;padding:.9rem .8rem 4rem;display:grid;gap:.9rem}
+.top{display:flex;align-items:baseline;gap:.8rem;flex-wrap:wrap}
+.mark{font:400 1.05rem/1 var(--display);letter-spacing:.14em;margin:0}.mark small{display:block;font:400 .72rem/1.6 var(--body);letter-spacing:.02em;color:var(--dim)}
+.meta{margin-left:auto;font:12px var(--mono);color:var(--dim);text-align:right;overflow-wrap:anywhere;min-width:0}
+.forms{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.forms button{min-width:0;overflow:hidden;text-overflow:ellipsis;border:0;border-radius:0;background:transparent;border-right:1px solid var(--line);padding:.55rem .2rem;font-size:.86rem}.forms button:last-child{border-right:0}
+.forms button[aria-pressed=true]{background:var(--ion);color:var(--void);font-weight:600}
+.stage{background:var(--deep);border:1px solid var(--line);border-radius:8px;overflow:hidden;position:relative;min-height:240px}
+.stage canvas{display:block;width:100%;height:auto;touch-action:none;background:#070b1a}
+.stage .zoom{position:absolute;right:.5rem;bottom:.5rem;display:flex;gap:.3rem}.stage .zoom button{min-height:36px;padding:.2rem .7rem;background:rgba(10,16,36,.8);color:#e6efff;border-color:#25345f}
+.stage .scroll{max-height:70vh;overflow:auto;padding:.7rem}
+.note{font-size:.83rem;color:var(--dim);margin:.3rem 0}
+.strip{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;border:1px solid var(--hold);color:var(--hold);border-radius:8px;padding:.5rem .7rem;font-size:.88rem}.strip span{flex:1 1 12rem}
+.tabs{display:flex;gap:.25rem;overflow-x:auto;border-bottom:1px solid var(--line)}.tabs button{border:0;border-bottom:2px solid transparent;border-radius:0;background:none;color:var(--dim);white-space:nowrap}
+.tabs button[aria-selected=true]{color:var(--ice);border-bottom-color:var(--violet)}
+.pane{display:grid;gap:.8rem;padding-top:.8rem}
+.chips{display:flex;gap:.35rem;flex-wrap:wrap}.chips button{min-height:34px;padding:.2rem .6rem;font-size:.85rem}.chips button[aria-pressed=true]{border-color:var(--violet);box-shadow:inset 0 0 0 1px var(--violet)}
+.row{display:grid;grid-template-columns:6.2rem 1fr;gap:.5rem;align-items:center}.row>label,.row>span:first-child{color:var(--dim);font-size:.85rem}
+.hints{display:flex;flex-wrap:wrap;gap:.2rem .9rem;font-size:.88rem}.hints label{display:flex;gap:.3rem;align-items:center;min-height:32px}
+.card{border:1px solid var(--line);border-radius:8px;padding:.7rem;display:grid;gap:.5rem;background:var(--panel)}
+.card h4{margin:0;font:600 .95rem var(--body)}.acts{display:flex;gap:.4rem;flex-wrap:wrap}
+.tag{font:11.5px var(--mono);padding:.1rem .4rem;border-radius:4px;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+.tag.ok{color:var(--ok);border-color:var(--ok)}.tag.hold{color:var(--hold);border-color:var(--hold)}.tag.bad{color:var(--bad);border-color:var(--bad)}
+ul.plain{list-style:none;margin:0;padding:0;display:grid;gap:.35rem;font-size:.86rem}ul.plain li{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;word-break:break-word}
+pre{margin:0;font:12px/1.5 var(--mono);white-space:pre-wrap;word-break:break-word;max-height:22rem;overflow:auto;background:var(--deep);border:1px solid var(--line);border-radius:6px;padding:.6rem}
+details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;align-items:center}
+.toast{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);background:var(--panel);border:1px solid var(--ion);border-radius:8px;padding:.6rem .9rem;max-width:min(92vw,34rem);font-size:.9rem;z-index:5}
+.toast.err{border-color:var(--bad)}
+/* ui_panel form */
+.mt-panels,.mt-children{display:flex;flex-wrap:wrap;gap:.6rem}.mt-children{margin-top:.2rem}
+.mt-panel{flex:1 1 12rem;border:1px solid var(--tile);border-top-width:4px;background:color-mix(in srgb,var(--tile) 10%,var(--deep));padding:.6rem .7rem;display:grid;gap:.4rem;align-content:start}
+.mt-panel.is-lit{box-shadow:0 0 0 1px var(--glow),0 0 22px -4px var(--glow)}
+.mt-panel header{display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}.mt-panel h3{margin:0;font:600 .95rem var(--body)}.mt-kind,.mt-behavior{font-size:.78rem;color:var(--dim);margin:0}
+.mt-params{display:grid;gap:.3rem}.mt-params label{display:grid;grid-template-columns:1fr auto;gap:.15rem .5rem;font-size:.78rem;color:var(--ice);align-items:center}.mt-params label>span{opacity:.8}.mt-params input[type=range],.mt-params select{grid-column:1/-1;width:100%;accent-color:var(--tile);min-height:34px}.mt-params output{font:12px var(--mono);color:var(--ice)}.mt-params label.is-dormant{color:var(--hold)}
+.ctl{flex-wrap:nowrap;min-width:0}.ctl input[type=range]{flex:1 1 3rem;min-width:0;accent-color:var(--ion)}.ctl select{min-width:0;flex:1 1 4rem}.ctl input[type=text]{width:3.6rem;flex:0 0 auto}.ctl output{font:12px var(--mono);min-width:2.4rem;text-align:right;flex:0 0 auto}.ctl button{flex:0 0 auto;padding:.3rem .5rem;font-size:.8rem;min-height:34px}
+.mt-panel dl{margin:0;display:flex;gap:1rem;flex-wrap:wrap}.mt-panel dt{font-size:.75rem;color:var(--dim)}.mt-panel dd{margin:0;font:1.15rem var(--mono)}
+.mt-inputs{display:flex;gap:.4rem;flex-wrap:wrap}.mt-inputs button{border-color:var(--tile)}
+.mt-wires{list-style:none;margin:0;padding:0;font-size:.78rem;color:var(--dim)}.mt-foreign{flex:1 1 100%;font-size:.78rem;color:var(--dim);border:1px dashed var(--line);border-radius:6px;padding:.3rem .5rem}
+.mt-shell{border-style:double;border-width:4px}.mt-open{min-height:30px;padding:.1rem .6rem;font-size:.8rem;margin-left:auto}.mt-interior{display:flex;flex-wrap:wrap;gap:.6rem;padding:.5rem;border:1px dashed var(--tile);border-radius:6px;background:color-mix(in srgb,var(--void) 55%,transparent)}
+.crumbs{display:flex;flex-wrap:wrap;gap:.3rem;align-items:center;font-size:.88rem}.crumbs button{min-height:32px;padding:.1rem .55rem}.crumbs button:disabled{opacity:1;border-color:var(--violet)}
+.mt-panel.is-hold{border-style:dashed;border-color:var(--hold)}.mt-holdnote{margin:0;color:var(--hold);font-size:.8rem}
+@media (prefers-reduced-motion:no-preference){.mt-panel.is-pulsing{animation:pulse 2.4s ease-in-out infinite}@keyframes pulse{50%{box-shadow:0 0 26px -6px var(--tile)}}}
+@media (min-width:920px){.shell{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:start}.top,.strip{grid-column:1/-1}.left{position:sticky;top:.8rem;display:grid;gap:.9rem}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="top">
+    <h1 class="mark">AXIOMATTER<small>MorphTile workshop v0.3 — one substrate, read as many forms</small></h1>
+    <div class="meta" id="meta"></div>
+  </header>
+  <div class="strip" id="strip" hidden></div>
+  <div class="left">
+    <div class="forms" role="group" aria-label="Read this matter as" id="forms"></div>
+    <div class="stage" id="stage"></div>
+    <p class="note" id="stageNote"></p>
+  </div>
+  <div class="right">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="pane" id="pane"></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden role="status"></div>
+<script>/*__CORE__*/</script>
+<script>
+const FIXTURES = /*__FIXTURES__*/null, SOURCE = /*__SOURCE__*/null;
+(function () {
+'use strict';
+const MT = MorphTile, $ = (id) => document.getElementById(id), KEY = 'morphtile.workspace.v1', SHELF = 'morphtile.shelf.v1';
+// The shelf is a list of whole tiles, kept in this browser. Each entry is the tile itself, so a shelf entry IS matter, not a preview of it.
+function shelfRead() { try { return JSON.parse(localStorage.getItem(SHELF) || '[]'); } catch (e) { return []; } }
+function shelfWrite(list) { try { localStorage.setItem(SHELF, JSON.stringify(list)); return true; } catch (e) { toast('This browser would not save the shelf: ' + e.message, true); return false; } }
+function download(name, text, type) { const blob = new Blob([text], { type: type || 'application/json' }), url = URL.createObjectURL(blob), a = el('a', { href: url, download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000); }
+function openFile(accept, then) { const i = el('input', { type: 'file', accept: accept || '.json,application/json' }); i.addEventListener('change', () => { const f = i.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { try { then(JSON.parse(r.result)); } catch (e) { toast('That file is not valid JSON: ' + e.message, true); } }; r.onerror = () => toast('That file could not be read.', true); r.readAsText(f); }); i.click(); }
+const el = (tag, props, ...kids) => { const n = document.createElement(tag); for (const k in props || {}) { const v = props[k]; if (v == null || v === false) continue; if (k === 'class') n.className = v; else if (k.startsWith('on')) n.addEventListener(k.slice(2), v); else if (k === 'text') n.textContent = v; else if (k in n && k !== 'list') n[k] = v; else n.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat(Infinity)) if (c != null && c !== false) n.append(c.nodeType ? c : document.createTextNode(c)); return n; };
+const LOGIC = {
+  none: { type: 'none', data: {} },
+  toggle: { type: 'rule', data: { vars: { on: 0 }, rules: [{ on: 'toggle', do: [{ set: ['on', ['-', 1, ['var', 'on']]] }, { emit: 'changed' }] }] } },
+  counter: { type: 'rule', data: { vars: { count: 0 }, rules: [{ on: 'press', do: [{ set: ['count', ['+', ['var', 'count'], 1]] }, { emit: 'pressed' }] }] } },
+  battery: { type: 'rule', data: { vars: { charge: { accrue: { rate: 0.5, cap: 100 }, base: 0 } }, rules: [{ on: 'drain', do: [{ set: ['charge', 0] }, { emit: 'drained' }] }] } },
+};
+const LOGIC_SOCKETS = { toggle: [['toggle', 'in'], ['changed', 'out']], counter: [['press', 'in'], ['pressed', 'out']], battery: [['drain', 'in'], ['drained', 'out']] };
+
+let ws, ui = { form: 'world', tab: 'tiles', sel: 'mt_tower', cand: null, plan: null, cam: { yaw: 0.7, pitch: 0.3, dist: 19 }, playing: !matchMedia('(prefers-reduced-motion: reduce)').matches, anchor: performance.now(), rebuilt: null, offers: {}, door: null, facetEdit: 'material', open: {}, scope: '', picks: {}, autoSettle: true, within: 0, settled: null };
+function load() { try { const raw = localStorage.getItem(KEY); if (raw) return MT.importWorkspace(JSON.parse(raw)); } catch (e) { toast('Saved workspace could not be replayed, starting from genesis. ' + e.message, true); } return MT.createWorkspace(MT.seedWorld()); }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(MT.exportWorkspace(ws))); } catch (e) {} }
+ws = load();
+
+const registry = MT.createRegistry();
+registry.advertise({ id: 'form:game_asset', produces: 'game_asset', by: 'morphtile-native', note: 'software rasterizer, deterministic' }); registry.bind('form:game_asset', MT.renderAsset);
+registry.advertise({ id: 'form:ui_panel', produces: 'ui_panel', by: 'morphtile-native', note: 'vnode tree, host mounts it' }); registry.bind('form:ui_panel', MT.compilePanel);
+registry.advertise({ id: 'form:website', produces: 'website', by: 'morphtile-native', note: 'static HTML export' }); registry.bind('form:website', MT.compileWebsite);
+registry.advertise({ id: 'form:glb_export', produces: 'glb', by: 'external:Axm-game-assets', note: 'declared, no local executor yet' });
+registry.advertise({ id: 'uc:asset_package_read', produces: 'mesh', by: 'external:axm-universal-creation', note: 'declared, no local executor yet' });
+
+let toastTimer; function toast(msg, err) { const t = $('toast'); t.textContent = msg; t.className = 'toast' + (err ? ' err' : ''); t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), err ? 6000 : 2600); }
+const now = () => ws.live.time + (ui.playing ? (performance.now() - ui.anchor) / 1000 : 0);
+function syncTime() { const t = now(); if (t > ws.live.time) MT.act(ws, { do: 'tick', to: Math.round(t * 1000) / 1000 }); ui.anchor = performance.now(); }
+function viewWorld() { const c = ui.cand && ws.candidates[ui.cand]; return c ? Object.assign({}, c.world, { vars: MT.rekeyVars(MT.clone(ws.live.vars), c.rekeys), time: ws.live.time }) : ws.live; }
+// A parameter control edits real matter, so it goes through the same clone -> plan -> commit path as every other edit.
+function setParam(tile, id, value) { edit({ op: 'param.set', id: tile, param: id, value }); }
+function signal(tile, name, by) { syncTime(); const r = MT.act(ws, { do: 'signal', tile, name }, by || 'human'); if (!r.ok) toast(r.error, true); changed(); }
+function edit(op) { // every structural edit lands on a disposable clone first
+  if (!ui.cand || !ws.candidates[ui.cand]) ui.cand = MT.act(ws, { do: 'clone', label: 'draft' }, 'human').candidate;
+  const r = MT.act(ws, { do: 'edit', candidate: ui.cand, op }, 'human');
+  if (!r.ok) toast(r.error + (r.errors ? ': ' + r.errors.join('; ') : ''), true);
+  ui.plan = null; changed(); return r.ok;
+}
+function changed() { save(); renderAll(); }
+
+// ---------- stage
+const FORMS = [['world', 'World'], ['panel', 'Panel'], ['text', 'Text'], ['site', 'Website'], ['matter', 'Matter']];
+let canvas, ctx2d, target, image, lastFrame = null, raf = 0;
+function settleWorld() { // ask the world what it wants woken where the viewer is standing, then record it
+  if (!ui.autoSettle) return false;
+  const cam = ui.cam, cp = Math.cos(cam.pitch), tgt = cam.target || [0, 1.4, 0];
+  const from = [tgt[0] + cam.dist * cp * Math.sin(cam.yaw), tgt[1] + cam.dist * Math.sin(cam.pitch), tgt[2] + cam.dist * cp * Math.cos(cam.yaw)];
+  if (!MT.pendingWakes(ws.live, { from, t: now() }).length) return false;
+  syncTime(); const r = MT.act(ws, { do: 'settle', from, t: now() }, 'human');
+  if (r.changes && r.changes.length) { save(); ui.settled = r.changes.length + ' capability change' + (r.changes.length === 1 ? '' : 's') + ' as you moved'; }
+  return true;
+}
+function drawWorld() {
+  if (!canvas) return;
+  settleWorld();
+  lastFrame = MT.renderAsset(viewWorld(), { width: canvas.width, height: canvas.height, t: now(), camera: ui.cam, target, highlight: ui.sel, within: ui.within || undefined });
+  target = lastFrame.target;
+  if (!image || image.width !== canvas.width) image = ctx2d.createImageData(canvas.width, canvas.height);
+  image.data.set(lastFrame.pixels); ctx2d.putImageData(image, 0, 0);
+}
+let lastTick = 0;
+function loop(ts) { raf = requestAnimationFrame(loop); if (ts - lastTick < 33) return; lastTick = ts; if (ui.form === 'world' && ui.playing && !document.hidden) drawWorld(); if (ui.form === 'panel' && ui.playing && ts % 250 < 40) refreshBinds(); }
+function refreshBinds() { const w = viewWorld(), t = now(); document.querySelectorAll('[data-bind]').forEach((n) => { const [id, name] = n.dataset.bind.split('|'); if (MT.resolveTile(w, id)) { const v = MT.getVar(w, id, name, t); n.textContent = typeof v === 'number' ? (Number.isInteger(v) ? v : v.toFixed(1)) : v; } }); }
+function mount(v) { const n = el(v.tag, { class: v.cls, text: v.text }); if (v.style) for (const k in v.style) n.style.setProperty(k, v.style[k]); if (v.attrs) for (const k in v.attrs) n.setAttribute(k, v.attrs[k]); if (v.tile) { n.dataset.tile = v.tile; }
+  if (v.param) { const out = () => n.parentNode && n.parentNode.querySelector('output'); n.addEventListener('input', (e) => { e.stopPropagation(); if (out()) out().textContent = e.target.value; }); n.addEventListener('change', (e) => { e.stopPropagation(); setParam(v.param.tile, v.param.id, e.target.value); }); n.addEventListener('click', (e) => e.stopPropagation()); } if (v.bind) n.dataset.bind = v.bind.tile + '|' + v.bind.name; if (v.on) n.addEventListener('click', (e) => { e.stopPropagation(); signal(v.on.tile, v.on.name); }); if (v.toggle) n.addEventListener('click', (e) => { e.stopPropagation(); ui.open[v.toggle] = !ui.open[v.toggle]; renderStage(); }); for (const c of v.children) n.append(mount(c)); return n; }
+function renderStage() {
+  const st = $('stage'); st.textContent = ''; canvas = null; const w = viewWorld();
+  if (ui.form === 'world') {
+    canvas = el('canvas', { width: 360, height: 300, 'aria-label': 'The world read as game assets. Drag to orbit, tap a tile to select it.' }); ctx2d = canvas.getContext('2d'); st.append(canvas);
+    let drag = null;
+    canvas.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, moved: 0 }; canvas.setPointerCapture(e.pointerId); });
+    canvas.addEventListener('pointermove', (e) => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved += Math.abs(dx) + Math.abs(dy); drag.x = e.clientX; drag.y = e.clientY; ui.cam.yaw -= dx * 0.01; ui.cam.pitch = Math.max(-0.2, Math.min(1.3, ui.cam.pitch + dy * 0.008)); drawWorld(); });
+    canvas.addEventListener('pointerup', (e) => { if (drag && drag.moved < 6 && lastFrame) { const r = canvas.getBoundingClientRect(), id = lastFrame.pick(((e.clientX - r.left) / r.width) * canvas.width, ((e.clientY - r.top) / r.height) * canvas.height); if (id) { ui.sel = id; ui.scope = MT.splitPath(id)[0]; ui.tab = 'tiles'; renderAll(); } } drag = null; });
+    st.append(el('div', { class: 'zoom' }, el('button', { text: '−', 'aria-label': 'Zoom out', onclick: () => { ui.cam.dist = Math.min(40, ui.cam.dist * 1.15); drawWorld(); } }), el('button', { text: '+', 'aria-label': 'Zoom in', onclick: () => { ui.cam.dist = Math.max(6, ui.cam.dist / 1.15); drawWorld(); } })));
+    drawWorld();
+    const s = lastFrame.stats; $('stageNote').textContent = s.tiles + ' tiles, ' + s.tris + ' triangles, drawn by MorphTile’s own rasterizer. ' + (s.out_of_range ? s.out_of_range + ' more are held but out of range. ' : '') + (ui.settled ? ui.settled + '. ' : '') + (s.skipped.length ? s.skipped.length + ' tiles are not declared for spatial forms. ' : '') + (s.sleeping ? s.sleeping + ' capabilit' + (s.sleeping === 1 ? 'y is' : 'ies are') + ' asleep in this world, costing nothing. ' : '') + (s.holds.length ? s.holds.length + ' facet(s) on hold, shown in amber.' : 'Drag to orbit, tap a tile to select it.');
+  } else if (ui.form === 'panel') {
+    const p = MT.compilePanel(w, { t: now(), open: ui.open }), box = el('div', { class: 'scroll' }, mount(p.root)); st.append(box);
+    box.scrollTop = ui.panelScroll || 0; box.addEventListener('scroll', () => (ui.panelScroll = box.scrollTop));
+    box.addEventListener('click', (e) => { const n = e.target.closest('[data-tile]'); if (n) { ui.sel = n.dataset.tile; ui.scope = MT.splitPath(ui.sel)[0]; renderTabs(); renderPane(); } });
+    $('stageNote').textContent = 'The same tiles and wires, read as an interface. Buttons are signal inputs; nesting follows attach wires; Open shows what a tile holds. ' + (p.skipped.length ? p.skipped.length + ' tiles do not declare ui_panel.' : '');
+  } else if (ui.form === 'text') {
+    const scoped = ui.scope, source = MT.toText(w, scoped ? { path: scoped } : undefined);
+    if (ui.textDraft == null || ui.textFor !== scoped + '|' + MT.structHash(w)) { ui.textDraft = source; ui.textFor = scoped + '|' + MT.structHash(w); }
+    const ta = el('textarea', { class: 'code', spellcheck: false, 'aria-label': 'This world as text', value: ui.textDraft, oninput: (e) => { ui.textDraft = e.target.value; const st = $('textState'); if (st) st.textContent = 'edited — not applied yet'; } });
+    const acts = el('div', { class: 'acts' },
+      el('button', { class: 'go', text: 'Apply this text', onclick: () => {
+        const r = MT.fromText(w, ta.value, scoped ? { path: scoped } : undefined);
+        if (!r.ok) return toast(r.error + (r.errors ? ' — ' + r.errors.slice(0, 2).join('; ') : ''), true);
+        if (!r.ops.length) return toast('Nothing to change: the world already says exactly this.');
+        let done = 0; for (const op of r.ops) { if (!edit(op)) return; done++; }
+        ui.textDraft = null; toast(done + ' change' + (done === 1 ? '' : 's') + ' staged on your clone. Commit them in Safety.');
+      } }),
+      el('button', { text: 'Back to what is there', onclick: () => { ui.textDraft = null; renderStage(); } }),
+      el('button', { text: 'Copy', onclick: () => { (navigator.clipboard ? navigator.clipboard.writeText(ta.value) : Promise.reject()).then(() => toast('Copied.'), () => { ta.select(); toast('Select all and copy.'); }); } }),
+      el('button', { text: 'Save as file', onclick: () => download('morphtile' + (scoped ? '-' + scoped.replace(/\//g, '-') : '') + '.txt', ta.value, 'text/plain') }),
+      el('span', { id: 'textState', class: 'tag', text: 'matches the world' }));
+    st.append(el('div', { class: 'scroll' }, ta, acts));
+    $('stageNote').textContent = (scoped ? 'What is inside “' + (MT.resolveTile(w, scoped) || {}).name + '”, as text. ' : 'The whole world as text. ') + 'Edit it and apply: the difference becomes ordinary edits on a clone, and anything text cannot say (history, state, provenance) is kept.';
+  } else if (ui.form === 'site') {
+    const site = MT.compileWebsite(w, { t: now() }), host = el('div', { class: 'scroll' }), sh = host.attachShadow({ mode: 'open' });
+    const style = (/<style>([\s\S]*?)<\/style>/.exec(site.html) || [])[1] || '', body = (/<body>([\s\S]*?)<\/body>/.exec(site.html) || [])[1] || '';
+    sh.innerHTML = '<style>' + style.replace(/body\{/g, '.site{') + '</style><div class="site">' + body + '</div>'; st.append(host);
+    $('stageNote').textContent = 'Static website compiled from the same matter (sha256 ' + site.sha256.slice(0, 12) + '). '; $('stageNote').append(el('button', { text: 'Show page HTML', onclick: () => { ui.form = 'matter'; ui.matterText = site.html; renderAll(); } }));
+  } else {
+    const t = ui.sel ? MT.resolveTile(w, ui.sel) : null; st.append(el('div', { class: 'scroll' }, el('pre', { text: ui.matterText || JSON.stringify(t || w, null, 1) })));
+    $('stageNote').textContent = ui.matterText ? 'Compiled website HTML. Select and copy it.' : 'The selected tile as it is stored: one JSON object, holding everything inside it to full depth. This is the matter; every other tab is a view of it.'; ui.matterText = null;
+  }
+}
+
+// ---------- panes
+const TABS = [['tiles', 'Tiles'], ['wires', 'Wires'], ['safety', 'Safety'], ['time', 'Time'], ['bridges', 'Bridges'], ['door', 'AI door']];
+const presetName = (group, facet) => Object.keys(group).find((k) => MT.canonical(group[k]) === MT.canonical(facet)) || '';
+function presetSelect(group, facet, onpick, extra) { const cur = presetName(group, facet), s = el('select', { onchange: (e) => e.target.value && onpick(e.target.value) }, el('option', { value: '', text: cur ? '' : 'custom (open the matter below)' }), Object.keys(group).map((k) => el('option', { value: k, text: k, selected: k === cur })), extra || []); return s; }
+function go(scope, sel) { ui.scope = scope; ui.sel = sel || ''; ui.picks = {}; renderAll(); }
+function paneTiles(w) {
+  let c = MT.containerAt(w, ui.scope); if (!c) { ui.scope = ''; c = w; }
+  const ids = Object.keys(c.tiles).sort(), P = (id) => (ui.scope ? ui.scope + '/' + id : id);
+  let t = ui.sel ? MT.resolveTile(w, ui.sel) : null;
+  if (!t || MT.splitPath(ui.sel)[0] !== ui.scope) { ui.sel = ids.length ? P(ids[0]) : ''; t = ui.sel ? MT.resolveTile(w, ui.sel) : null; }
+  const parts = ui.scope ? ui.scope.split('/') : [], sel = ui.sel;
+  const out = [el('nav', { class: 'crumbs', 'aria-label': 'Depth' }, el('button', { text: w.name, disabled: !parts.length, onclick: () => go('', parts[0]) }),
+    parts.map((seg, i) => { const p = parts.slice(0, i + 1).join('/'); return [el('span', { text: '›' }), el('button', { text: (MT.resolveTile(w, p) || {}).name || seg, disabled: i === parts.length - 1, onclick: () => go(p, parts.slice(0, i + 2).join('/')) })]; }), parts.length ? el('span', { class: 'tag', text: parts.length + ' deep' }) : null),
+    el('div', { class: 'chips' }, ids.map((id) => el('button', { text: c.tiles[id].name + (c.tiles[id].interior ? ' ▣' : ''), 'aria-pressed': String(P(id) === sel), onclick: () => { ui.sel = P(id); renderAll(); } })), el('button', { class: 'go', text: 'New tile', onclick: newTile }))];
+  if (t) {
+    const hints = el('div', { class: 'hints' }, MT.KNOWN_FORMS.map((f) => el('label', {}, el('input', { type: 'checkbox', checked: t.form_hints.includes(f), onchange: (e) => edit({ op: 'tile.meta', id: sel, form_hints: e.target.checked ? t.form_hints.concat(f) : t.form_hints.filter((x) => x !== f) }) }), f)));
+    const swap = (facet, value) => edit({ op: 'facet.swap', id: sel, facet, value });
+    const setLogic = (k) => { const need = (LOGIC_SOCKETS[k] || []).filter(([s]) => !MT.findSocket(t, s)); if (need.length) { const cc = MT.clone(t.facets.connect); need.forEach(([s, dir]) => cc.sockets.push({ id: s, kind: 'signal', dir, signal: s })); swap('connect', cc); } swap('logic', LOGIC[k]); };
+    const meshes = Object.assign(t.interior ? { 'its contents': { type: 'interior', source: null, data: {} } } : {}, MT.PRESETS.mesh);
+    const ta = el('textarea', { value: JSON.stringify(t.facets[ui.facetEdit], null, 1), spellcheck: false, 'aria-label': 'Facet JSON' });
+    const params = t.params || [];
+    out.push(el('div', { class: 'card' }, el('h4', { text: 'Controls' }),
+      el('p', { class: 'note', text: params.length ? 'Each control writes straight into the matter it points at — its own facets, or a tile inside it at any depth. It stores no value of its own.' : 'No controls yet. A control is a simple surface over something deeper: choose a facet and a place inside it.' }),
+      params.map((pm) => { const val = MT.paramValue(t, pm), dormant = val === undefined;
+        const input = dormant ? el('span', { class: 'tag hold', text: 'dormant — its place is not in the current matter' })
+          : pm.type === 'choice' ? el('select', { 'aria-label': pm.label || pm.id, onchange: (e) => setParam(sel, pm.id, e.target.value) }, pm.options.map((o) => el('option', { value: o.label, text: o.label, selected: MT.canonical(o.value) === MT.canonical(val) })))
+          : el('input', { type: 'range', min: pm.min, max: pm.max, step: pm.step || 1, value: val, 'aria-label': pm.label || pm.id, oninput: (e) => { const o = e.target.parentNode.querySelector('output'); if (o) o.textContent = e.target.value; }, onchange: (e) => setParam(sel, pm.id, e.target.value) });
+        return el('div', { class: 'row' }, el('span', { text: pm.label || pm.id }), el('div', { class: 'acts ctl' }, input, dormant || pm.type === 'choice' ? null : el('output', { text: String(val) }), el('button', { text: 'Remove', onclick: () => edit({ op: 'param.remove', id: sel, param: pm.id }) }))); }),
+      el('details', {}, el('summary', { text: 'Add a control' }), (() => {
+        const inner = [{ v: '', label: 'this tile' }]; if (t.interior) (function walk(it, pre) { for (const k of Object.keys(it.tiles).sort()) { const rel = pre ? pre + '/' + k : k; inner.push({ v: rel, label: it.tiles[k].name }); if (it.tiles[k].interior) walk(it.tiles[k].interior, rel); } })(t.interior, '');
+        const who = el('select', { 'aria-label': 'Acts on' }, inner.map((o) => el('option', { value: o.v, text: o.label })));
+        const facet = el('select', { 'aria-label': 'Facet' }, MT.FACETS.map((f) => el('option', { value: f, text: f })));
+        const at = el('input', { type: 'text', placeholder: 'e.g. data.levels', 'aria-label': 'Place inside that facet' });
+        const label = el('input', { type: 'text', placeholder: 'Control name', 'aria-label': 'Control name' });
+        const lo = el('input', { type: 'text', value: '0', 'aria-label': 'Lowest' }), hi = el('input', { type: 'text', value: '10', 'aria-label': 'Highest' }), step = el('input', { type: 'text', value: '1', 'aria-label': 'Step' });
+        const places = el('div', { class: 'chips' });
+        const refresh = () => { places.textContent = ''; const target = MT.relTile(t, who.value), f = target && target.facets[facet.value]; const found = [];
+          (function walk(o, path, d) { if (!o || typeof o !== 'object' || d > 3) return; for (const k of Object.keys(o)) { const q = path ? path + '.' + k : k, v = o[k]; if (typeof v === 'number') found.push(q); else walk(v, q, d + 1); } })(f, '', 0);
+          found.slice(0, 24).forEach((q) => places.append(el('button', { text: q, onclick: () => { at.value = q; const cur = MT.getAt(f, q); lo.value = String(Math.min(0, cur)); hi.value = String(Math.max(1, Math.abs(cur) * 3 || 10)); } }))); if (!found.length) places.append(el('span', { class: 'note', text: 'No numbers in this facet. Type a place, or use a choice control from the AI door.' })); };
+        who.addEventListener('change', refresh); facet.addEventListener('change', refresh); setTimeout(refresh, 0);
+        return [el('div', { class: 'row' }, el('span', { text: 'Acts on' }), who), el('div', { class: 'row' }, el('span', { text: 'Facet' }), facet), el('p', { class: 'note', text: 'Places you can point at:' }), places,
+          el('div', { class: 'row' }, el('span', { text: 'Place' }), at), el('div', { class: 'row' }, el('span', { text: 'Name' }), label),
+          el('div', { class: 'row' }, el('span', { text: 'Range' }), el('div', { class: 'acts ctl' }, lo, hi, step, el('span', { class: 'tag', text: 'low · high · step' }))),
+          el('div', { class: 'acts' }, el('button', { class: 'go', text: 'Add control', onclick: () => { if (!at.value) return toast('Choose a place for this control to act on.', true); edit({ op: 'param.add', id: sel, param: { id: (label.value || at.value).replace(/[^A-Za-z0-9_]/g, '_').slice(0, 24) || 'p' + params.length, label: label.value || at.value, type: 'number', min: Number(lo.value), max: Number(hi.value), step: Number(step.value) || 1, binds: [{ tile: who.value, facet: facet.value, at: at.value }] } }); } }))];
+      })())));
+    out.push(el('div', { class: 'card' },
+      el('div', { class: 'row' }, el('label', { for: 'nm', text: 'Name' }), el('input', { id: 'nm', type: 'text', value: t.name, onchange: (e) => edit({ op: 'tile.meta', id: sel, name: e.target.value }) })),
+      t.interior ? el('div', { class: 'row' }, el('span', { text: 'Inside' }), el('div', { class: 'acts' }, el('span', { text: MT.countTiles(t.interior) + ' tiles, ' + MT.depthOf(t) + ' deep, ' + t.interior.ports.length + ' ports' }), el('button', { class: 'go', text: 'Open', onclick: () => go(sel) }), el('button', { text: 'Expand back out', onclick: () => { if (edit({ op: 'tile.expand', id: sel })) go(ui.scope); } }))) : null,
+      el('div', { class: 'row' }, el('span', { text: 'Can be read as' }), hints),
+      el('div', { class: 'row' }, el('span', { text: t.interior ? 'Shown as' : 'Mesh' }), presetSelect(meshes, t.facets.mesh, (k) => swap('mesh', meshes[k]))),
+      el('div', { class: 'row' }, el('span', { text: 'Material' }), presetSelect(MT.PRESETS.material, t.facets.material, (k) => swap('material', MT.PRESETS.material[k]))),
+      el('div', { class: 'row' }, el('span', { text: 'Behavior' }), presetSelect(MT.PRESETS.behavior, t.facets.behavior, (k) => swap('behavior', MT.PRESETS.behavior[k]))),
+      el('div', { class: 'row' }, el('span', { text: 'Logic' }), presetSelect(LOGIC, t.facets.logic, setLogic)),
+      el('details', {}, el('summary', { text: 'Open the matter: edit any facet as JSON' }),
+        el('div', { class: 'chips' }, MT.FACETS.map((f) => el('button', { text: f, 'aria-pressed': String(f === ui.facetEdit), onclick: () => { ui.facetEdit = f; renderPane(); document.querySelector('details').open = true; } }))), ta,
+        el('div', { class: 'acts' }, el('button', { text: 'Apply ' + ui.facetEdit + ' JSON', onclick: () => { try { swap(ui.facetEdit, JSON.parse(ta.value)); } catch (e) { toast('That is not valid JSON: ' + e.message, true); } } }))),
+      el('details', {}, el('summary', { text: 'Open the whole tile, to full depth' }), (() => { const whole = el('textarea', { value: JSON.stringify(t, null, 1), spellcheck: false, 'aria-label': 'Whole tile JSON' });
+        return [el('p', { class: 'note', text: 'Everything this tile is and holds, as stored. Edit anything and apply: only what actually changed becomes a merge unit, at whatever depth it sits.' }), whole,
+          el('div', { class: 'acts' }, el('button', { text: 'Apply whole tile', onclick: () => { let obj; try { obj = JSON.parse(whole.value); } catch (e) { return toast('That is not valid JSON: ' + e.message, true); } edit({ op: 'tile.replace', id: sel, tile: obj }); } }), el('button', { text: 'Copy to clipboard', onclick: () => { (navigator.clipboard ? navigator.clipboard.writeText(whole.value) : Promise.reject()).then(() => toast('Copied. Paste it into any world.'), () => { whole.select(); toast('Select all and copy.'); }); } }))]; })()),
+      el('div', { class: 'acts' }, el('span', { class: 'tag', text: sel }), el('span', { class: 'tag', text: 'state v' + t.state.version }), el('span', { class: 'tag', text: 'by ' + t.provenance.created_by }), t.provenance.stamped_from ? el('span', { class: 'tag', text: 'copy of ' + t.provenance.stamped_from.path }) : null, t.provenance.instance_of ? el('span', { class: 'tag ok', text: 'shared definition' }) : null, t.provenance.bridges.map((b) => el('span', { class: 'tag ' + (b.status === 'BOUND' ? 'ok' : 'hold'), text: b.status + ' ' + b.evidence })),
+        el('button', { text: 'Make a copy', onclick: () => { const r = edit({ op: 'tile.stamp', id: sel, offset: [2.2, 0, 1.4], by: 'human' }); if (r) toast('Copied. The copy is its own tile with its own state.'); } }),
+        el('button', { class: 'warn', text: 'Remove tile', onclick: () => edit({ op: 'tile.remove', id: sel }) }))));
+  } else out.push(el('p', { class: 'note', text: 'Nothing here yet. Add a tile.' }));
+  ui.picks = ui.picks || {};
+  const nameIn = el('input', { type: 'text', value: ui.collapseName || '', placeholder: 'Name for the new tile', 'aria-label': 'Name for the collapsed tile', onchange: (e) => (ui.collapseName = e.target.value) });
+  if (t) { const caps = t.capabilities || [];
+    out.push(el('div', { class: 'card' }, el('h4', { text: 'Sleeping capabilities' }),
+      el('p', { class: 'note', text: caps.length ? 'Carried by this tile and costing nothing until something calls for it. Waking is state, not a rewrite: the matter is unchanged either way.' : 'A tile can carry whole worlds of capability that stay inert — no geometry, no rules, no state — until they are needed. Add one below.' }),
+      caps.length ? el('ul', { class: 'plain' }, caps.map((cp) => { const awake = MT.isAwake(w, sel, cp.id);
+        return el('li', {}, el('b', { text: cp.name || cp.id }), el('span', { class: 'tag ' + (awake ? 'ok' : ''), text: awake ? 'awake' : 'asleep' }),
+          el('span', { class: 'tag', text: !cp.wake || cp.wake.on === 'manual' ? 'wakes when asked' : cp.wake.on === 'signal' ? 'wakes on that signal' : cp.wake.on === 'near' ? 'wakes within ' + (cp.wake.within || 8) : cp.wake.on === 'time' ? 'wakes at ' + (cp.wake.after || 0) + 's' : 'wakes when ' + cp.wake.var + (cp.wake.over !== undefined ? ' passes ' + cp.wake.over : ' drops below ' + cp.wake.under) }),
+          (function () { const st = MT.capStatus(w, sel, cp); return st.status === 'INLINE' ? null : el('span', { class: 'tag ' + (st.status === 'RESOLVED' ? 'ok' : 'hold'), text: st.status === 'RESOLVED' ? 'brings ' + st.from : st.status }); })(),
+          el('button', { class: awake ? '' : 'go', text: awake ? 'Let it sleep' : 'Wake it', onclick: () => { syncTime(); const r = MT.act(ws, { do: awake ? 'sleep' : 'wake', tile: sel, capability: cp.id }, 'human'); if (!r.ok) toast(r.error, true); changed(); } }),
+          awake ? el('button', { class: 'warn', text: 'Sleep and let its state go', onclick: () => { syncTime(); MT.act(ws, { do: 'sleep', tile: sel, capability: cp.id, forget: true }, 'human'); changed(); } }) : null,
+          el('button', { text: 'Remove', onclick: () => edit({ op: 'cap.remove', id: sel, capability: cp.id }) })); })) : null,
+      el('details', {}, el('summary', { text: 'Give this tile a sleeping capability' }), (() => {
+        const nm = el('input', { type: 'text', placeholder: 'What it is, e.g. Assembly bay', 'aria-label': 'Capability name' });
+        const on = el('input', { type: 'text', placeholder: 'wakes on this signal (blank = only when asked)', 'aria-label': 'Wake signal' });
+        const near = el('input', { type: 'text', placeholder: 'or: wakes when you come this close', 'aria-label': 'Wake distance' });
+        const src = el('select', { 'aria-label': 'What it brings' }, el('option', { value: '', text: 'choose what it brings…' }), shelfRead().map((e2, i) => el('option', { value: 'shelf:' + i, text: 'from the shelf: ' + e2.tile.name })), Object.keys(w.defs || {}).sort().map((d) => el('option', { value: 'def:' + d, text: 'by name: ' + w.defs[d].name })));
+        return [el('p', { class: 'note', text: 'It brings a whole tile from your shelf: that tile\u2019s contents appear inside this one when it wakes, and vanish again when it sleeps.' }),
+          el('div', { class: 'row' }, el('span', { text: 'Name' }), nm), el('div', { class: 'row' }, el('span', { text: 'Wakes on' }), on), el('div', { class: 'row' }, el('span', { text: 'Or when near' }), near), el('div', { class: 'row' }, el('span', { text: 'Brings' }), src),
+          el('div', { class: 'acts' }, el('button', { class: 'go', text: 'Add capability', onclick: () => {
+            const v = src.value; if (!v) return toast('Choose what it brings: a tile from your shelf, or a definition by name.', true);
+            const fromDef = v.indexOf('def:') === 0, pick = fromDef ? null : shelfRead()[Number(v.slice(6))];
+            if (!fromDef && !pick) return toast('That shelf entry is gone. Choose another.', true);
+            const label = nm.value || (fromDef ? w.defs[v.slice(4)].name : pick.tile.name);
+            const id = label.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 20).toLowerCase() || 'cap';
+            const cap = { id, name: label, wake: on.value ? { on: 'signal', name: on.value } : near.value ? { on: 'near', within: Number(near.value) || 8 } : { on: 'manual' } };
+            if (fromDef) cap.grants_ref = { def: v.slice(4) };
+            else { const inner = MT.clone(pick.tile); cap.grants = { form_hints: inner.form_hints, interior: { tiles: { [inner.id]: inner }, edges: {}, ports: [] } }; }
+            if (on.value) (cap.grants = cap.grants || {}).sockets = [{ id: on.value, kind: 'signal', dir: 'in', signal: on.value, label: on.value }];
+            if (edit({ op: 'cap.add', id: sel, capability: cap })) { nm.value = on.value = near.value = ''; renderAll(); }
+          } }))]; })())));
+  }
+  const defs = w.defs || {}, defIds = Object.keys(defs).sort();
+  if (t || defIds.length) out.push(el('div', { class: 'card' }, el('h4', { text: 'Shared definitions' }),
+    el('p', { class: 'note', text: 'Instances of a definition are the same thing in many places: each keeps its own name, position, wires and state, and a change promoted to the definition reaches all of them.' }),
+    defIds.length ? el('ul', { class: 'plain' }, defIds.map((d) => { const inst = MT.instancesOf(w, d), drift = MT.defDrift(w, d) || [];
+      return el('li', { class: 'card' }, el('b', { text: defs[d].name }), el('span', { class: 'tag', text: inst.length + ' instance' + (inst.length === 1 ? '' : 's') }),
+        drift.length ? el('span', { class: 'tag hold', text: drift.length + ' changed on its own' }) : el('span', { class: 'tag ok', text: 'all in step' }),
+        el('div', { class: 'acts' },
+          el('button', { class: 'go', text: 'Place another', onclick: () => { if (edit({ op: 'def.instance', in: ui.scope, def: d, place: [((inst.length * 2.6) % 9) - 4, 3 + inst.length * 0.4, ((inst.length * 3.1) % 7) - 3], by: 'human' })) renderAll(); } }),
+          drift.length ? el('button', { text: 'Bring all back in step', onclick: () => edit({ op: 'def.sync', def: d }) }) : null,
+          t && t.provenance.instance_of === d ? el('button', { text: 'Make this the definition', onclick: () => { if (edit({ op: 'def.update', id: sel })) edit({ op: 'def.sync', def: d }); } }) : null),
+        drift.length ? el('p', { class: 'note', text: 'Changed on its own: ' + drift.join(', ') }) : null); })) : null,
+    t ? el('div', { class: 'acts' }, t.provenance.instance_of
+      ? el('button', { text: 'Let this one go its own way', onclick: () => edit({ op: 'def.detach', id: sel }) })
+      : el('button', { text: 'Make “' + t.name + '” a shared definition', onclick: () => { if (edit({ op: 'def.create', id: sel, by: 'human' })) renderAll(); } }),
+      t.provenance.instance_of ? el('span', { class: 'tag', text: 'instance of ' + (defs[t.provenance.instance_of] || {}).name } ) : null) : null));
+  const shelf = shelfRead();
+  out.push(el('div', { class: 'card' }, el('h4', { text: 'Shelf' }), el('p', { class: 'note', text: 'Whole tiles kept in this browser, at full depth with their controls. Put one here and drop it into any world, at any depth.' }),
+    shelf.length ? el('ul', { class: 'plain' }, shelf.map((entry, i) => el('li', {}, el('b', { text: entry.tile.name }), el('span', { class: 'tag', text: MT.countTiles({ tiles: { x: entry.tile } }) + ' tiles' }), el('span', { class: 'tag', text: entry.saved }),
+      el('button', { class: 'go', text: 'Place here', onclick: () => { if (edit({ op: 'tile.add', in: ui.scope, tile: entry.tile, rename: true })) renderAll(); } }),
+      el('button', { text: 'Save as file', onclick: () => download(entry.tile.id + '.tile.json', JSON.stringify(entry.tile, null, 1)) }),
+      el('button', { class: 'warn', text: 'Forget', onclick: () => { const l = shelfRead(); l.splice(i, 1); shelfWrite(l); renderPane(); } })))) : el('p', { class: 'note', text: 'The shelf is empty.' }),
+    el('div', { class: 'acts' }, t ? el('button', { text: 'Put “' + t.name + '” on the shelf', onclick: () => { const l = shelfRead(); l.unshift({ tile: MT.clone(t), saved: new Date().toISOString().slice(0, 10) }); if (shelfWrite(l.slice(0, 40))) { toast('On the shelf.'); renderPane(); } } }) : null,
+      el('button', { text: 'Open a tile file', onclick: () => openFile('.json', (obj) => { if (edit({ op: 'tile.add', in: ui.scope, tile: obj, rename: true })) { toast('Placed.'); renderAll(); } }) }))));
+  out.push(el('div', { class: 'card' }, el('h4', { text: 'Paste a tile' }), el('p', { class: 'note', text: 'A tile is one JSON object, however deep. Paste one saved from anywhere; if its id is taken here, it is renamed rather than overwriting anything.' }),
+    (() => { const inp = el('textarea', { placeholder: '{ "id": "mt_…", "kind": "morphtile", … }', spellcheck: false, 'aria-label': 'Tile JSON to paste' });
+      return [inp, el('div', { class: 'acts' }, el('button', { class: 'go', text: 'Paste into ' + (ui.scope ? (MT.resolveTile(w, ui.scope) || {}).name : w.name), onclick: () => { let obj; try { obj = JSON.parse(inp.value); } catch (e) { return toast('That is not valid JSON: ' + e.message, true); } if (edit({ op: 'tile.add', in: ui.scope, tile: obj, rename: true })) { inp.value = ''; renderAll(); } } }))]; })()));
+  out.push(el('div', { class: 'card' }, el('h4', { text: 'Collapse tiles into one' }), el('p', { class: 'note', text: 'The chosen tiles move inside one new tile, unchanged, with their wires, state and history. Wires that cross the boundary become ports. Open it again at any time, to any depth.' }),
+    el('div', { class: 'hints' }, ids.map((id) => el('label', {}, el('input', { type: 'checkbox', checked: !!ui.picks[id], onchange: (e) => (ui.picks[id] = e.target.checked) }), c.tiles[id].name))), nameIn,
+    el('div', { class: 'acts' }, el('button', { class: 'go', text: 'Collapse chosen tiles', onclick: () => { const chosen = ids.filter((id) => ui.picks[id]); if (!chosen.length) return toast('Choose at least one tile to collapse.', true); if (edit({ op: 'tile.collapse', in: ui.scope, ids: chosen, name: nameIn.value || undefined, by: 'human' })) { ui.picks = {}; ui.collapseName = ''; renderAll(); } } }))));
+  return out;
+}
+function newTile() { const n = MT.countTiles(viewWorld()) + 1, tile = MT.createTile({ name: 'Tile ' + n, salt: Date.now(), created_by: 'human', form_hints: ['game_asset', 'ui_panel', 'website'], facets: { material: MT.PRESETS.material['violet glass'], connect: { sockets: [{ id: 'foot', kind: 'attach', pos: [0, -0.6, 0] }, { id: 'top', kind: 'attach', pos: [0, 0.6, 0] }], bridges: [], place: [((n * 37) % 9) - 4, 3.2, ((n * 53) % 7) - 3] } } }); if (edit({ op: 'tile.add', in: ui.scope, tile })) { ui.sel = (ui.scope ? ui.scope + '/' : '') + tile.id; renderAll(); } }
+function socketOptions(c, filter) { const o = []; for (const id of Object.keys(c.tiles).sort()) for (const s of c.tiles[id].facets.connect.sockets || []) if (filter(s, id)) o.push({ v: id + '|' + s.id, label: c.tiles[id].name + ' · ' + s.id + (s.port ? ' (port)' : ''), s }); return o; }
+function paneWires(w) {
+  const c = MT.containerAt(w, ui.scope) || w, name = (x) => (c.tiles[x.tile] ? c.tiles[x.tile].name : x.tile) + ' · ' + x.socket, edges = Object.keys(c.edges).sort().map((k) => c.edges[k]);
+  const list = el('ul', { class: 'plain' }, edges.map((e) => { const targets = socketOptions(c, (s, id) => s.kind === e.kind && (e.kind === 'attach' || s.dir === 'in') && id !== e.from.tile);
+    return el('li', { class: 'card' }, el('span', { class: 'tag', text: e.kind }), el('span', { text: name(e.from) + ' → ' }), el('select', { 'aria-label': 'Rewire target', onchange: (ev) => { const [tile, socket] = ev.target.value.split('|'); edit({ op: 'edge.rewire', in: ui.scope, id: e.id, to: { tile, socket } }); } }, targets.map((o) => el('option', { value: o.v, text: o.label, selected: o.v === e.to.tile + '|' + e.to.socket }))), el('button', { text: 'Remove', onclick: () => edit({ op: 'edge.remove', in: ui.scope, id: e.id }) })); }));
+  const from = el('select', { 'aria-label': 'From socket' }, socketOptions(c, (s) => s.kind === 'attach' || s.dir === 'out').map((o) => el('option', { value: o.v, text: o.label + (o.s.kind === 'attach' ? ' (attach)' : ' (signal out)') })));
+  const to = el('select', { 'aria-label': 'To socket' }, socketOptions(c, (s) => s.kind === 'attach' || s.dir === 'in').map((o) => el('option', { value: o.v, text: o.label + (o.s.kind === 'attach' ? ' (attach)' : ' (signal in)') })));
+  const shell = ui.scope ? MT.resolveTile(w, ui.scope) : null;
+  return [el('p', { class: 'note', text: (shell ? 'Wires inside “' + shell.name + '”. ' : '') + 'Attach wires decide where a tile sits (3D) and what it nests inside (panel). Signal wires carry events. Rewire either kind and every form follows.' }), list,
+    shell ? el('div', { class: 'card' }, el('h4', { text: 'Ports of this shell' }), el('ul', { class: 'plain' }, shell.interior.ports.map((p) => el('li', {}, el('span', { class: 'tag', text: p.id }), el('span', { text: '↔ ' + (c.tiles[p.tile] || {}).name + ' · ' + p.socket })))),
+      (() => { const free = socketOptions(c, (s, id) => !shell.interior.ports.some((p) => p.tile === id && p.socket === s.id)), pick = el('select', { 'aria-label': 'Inner socket to expose' }, free.map((o) => el('option', { value: o.v, text: o.label }))); return el('div', { class: 'acts' }, pick, el('button', { text: 'Expose as port', disabled: !free.length, onclick: () => { const [tile, socket] = pick.value.split('|'); edit({ op: 'port.add', id: ui.scope, tile, socket }); } })); })()) : null,
+    el('div', { class: 'card' }, el('h4', { text: 'Add a wire' }), from, to, el('div', { class: 'acts' }, el('button', { text: 'Add wire', disabled: !from.options.length || !to.options.length, onclick: () => { const [ft, fs] = from.value.split('|'), [tt, tsk] = to.value.split('|'), k = MT.findSocket(c.tiles[ft], fs).kind; edit({ op: 'edge.add', in: ui.scope, edge: { kind: k, from: { tile: ft, socket: fs }, to: { tile: tt, socket: tsk } } }); } })))];
+}
+const statusTag = (s) => el('span', { class: 'tag ' + (/READY|COMMITTED|BOUND|verified/.test(s) && !/not_tested/.test(s) ? 'ok' : /REFUSED|mismatch/i.test(s) ? 'bad' : 'hold'), text: s });
+function paneSafety() {
+  const cands = Object.values(ws.candidates), out = [el('p', { class: 'note', text: 'Nothing edits the live world directly. Edits land on disposable clones; a plan shows what would merge and what is held; a commit writes a receipt you can roll back until the world drifts.' })];
+  out.push(el('div', { class: 'card' }, el('h4', { text: 'Clones' }), cands.length ? el('ul', { class: 'plain' }, cands.map((c) => el('li', {}, el('b', { text: c.label }), el('span', { class: 'tag', text: c.by }), el('span', { text: MT.diffUnits(c.base, c.world).map((u) => u.key).join(', ') || 'no changes yet' }),
+    el('button', { text: ui.cand === c.id ? 'Editing this' : 'Edit this one', disabled: ui.cand === c.id, onclick: () => { ui.cand = c.id; renderAll(); } }), el('button', { text: 'Discard', onclick: () => { MT.act(ws, { do: 'discard', candidate: c.id }); if (ui.cand === c.id) ui.cand = null; ui.plan = null; changed(); } })))) : el('p', { class: 'note', text: 'No clones. Change anything in Tiles or Wires and a draft clone is made for you.' }),
+    el('div', { class: 'acts' }, el('button', { text: 'New clone', onclick: () => { ui.cand = MT.act(ws, { do: 'clone', label: 'clone ' + (ws.counter + 1) }, 'human').candidate; changed(); } }), el('button', { class: 'go', text: 'Plan merge', disabled: !cands.length, onclick: planNow }))));
+  if (ui.plan && ws.plans[ui.plan]) { const p = ws.plans[ui.plan]; out.push(el('div', { class: 'card' }, el('div', { class: 'acts' }, el('h4', { text: 'Merge plan' }), statusTag(p.status)), el('ul', { class: 'plain' }, p.entries.map((e) => el('li', {}, statusTag(e.status), el('span', { text: e.key }), el('span', { class: 'tag', text: e.by })))), p.errors.length ? el('pre', { text: p.errors.join('\n') }) : null,
+    el('div', { class: 'acts' }, el('button', { class: 'go', text: 'Commit plan', disabled: !/^(READY|PARTIAL_HELD)$/.test(p.status), onclick: commitNow })))); }
+  out.push(el('div', { class: 'card' }, el('h4', { text: 'Receipts' }), ws.receipts.length ? el('ul', { class: 'plain' }, ws.receipts.slice().reverse().map((r) => el('li', {}, el('b', { text: r.id }), el('span', { text: r.units.map((u) => u.key).join(', ') }), el('span', { class: 'tag', text: r.before_struct_hash.slice(0, 8) + ' → ' + r.after_struct_hash.slice(0, 8) }), r.rolled_back ? el('span', { class: 'tag', text: 'rolled back' }) : el('button', { text: 'Roll back', onclick: () => { const x = MT.act(ws, { do: 'rollback', token: r.rollback_token }); toast(x.ok ? 'Rolled back. Exact restore: ' + x.exact : x.status + (x.detail ? ' — ' + x.detail : ''), !x.ok); changed(); } })))) : el('p', { class: 'note', text: 'No commits yet.' })));
+  return out;
+}
+function planNow() { const r = MT.act(ws, { do: 'plan' }); ui.plan = r.plan.id; ui.tab = 'safety'; renderAll(); }
+function commitNow() { syncTime(); const r = MT.act(ws, { do: 'commit', plan: ui.plan }, 'human'); toast(r.ok ? 'Committed. Receipt ' + r.receipt.id + (r.receipt.held.length ? ', ' + r.receipt.held.length + ' unit(s) still held.' : '') : r.status, !r.ok); ui.plan = null; if (!ws.candidates[ui.cand]) ui.cand = null; changed(); }
+function paneTime() {
+  const skip = (dt) => { syncTime(); MT.act(ws, { do: 'tick', dt }); changed(); };
+  return [el('p', { class: 'note', text: 'State is genesis + ordered events + logical time + closed-form rules. Skipping six hours adds one event; nothing is simulated in between.' }),
+    el('div', { class: 'card' }, el('div', { class: 'acts' }, el('button', { text: ui.playing ? 'Pause time' : 'Let time run', onclick: () => { syncTime(); ui.playing = !ui.playing; ui.anchor = performance.now(); changed(); } }), el('button', { text: 'Skip 1 minute', onclick: () => skip(60) }), el('button', { text: 'Skip 6 hours', onclick: () => skip(21600) })),
+      el('ul', { class: 'plain' }, el('li', { text: 'Logical time: ' + ws.live.time.toFixed(1) + ' s' }), el('li', { text: 'Ledger: ' + ws.ledger.events.length + ' events, ' + ws.ledger.checkpoints.length + ' checkpoints' }), el('li', { text: 'Persisted mutations: ' + Object.values(ws.live.vars).reduce((n, b) => n + Object.keys(b).length, 0) + ' values (everything else is derived)' }))),
+    el('div', { class: 'card' }, el('h4', { text: 'Replay as evidence' }), el('div', { class: 'acts' }, el('button', { text: 'Rebuild from last checkpoint', onclick: () => { syncTime(); ui.rebuilt = MT.act(ws, { do: 'reconstruct' }); changed(); } }), el('button', { text: 'Rebuild from genesis', onclick: () => { syncTime(); ui.rebuilt = MT.act(ws, { do: 'reconstruct', fromGenesis: true }); changed(); } })),
+      ui.rebuilt ? el('ul', { class: 'plain' }, el('li', {}, statusTag(ui.rebuilt.matches_live ? 'verified: rebuilt hash equals live hash' : 'MISMATCH'), el('span', { text: ui.rebuilt.replayed + ' events replayed from seq ' + ui.rebuilt.from_seq + ', ' + ui.rebuilt.simulation_steps + ' simulation steps, hash ' + ui.rebuilt.hash.slice(0, 12) }))) : null),
+    el('div', { class: 'card' }, el('h4', { text: 'What the world activates for itself' }),
+      el('p', { class: 'note', text: 'Capabilities can wake when you come near them, when a value crosses a line, or at a moment. Asking the world what it wants is a read; the answer is recorded as ordinary events.' }),
+      (function () { const cp = Math.cos(ui.cam.pitch), tgt = ui.cam.target || [0, 1.4, 0], from = [tgt[0] + ui.cam.dist * cp * Math.sin(ui.cam.yaw), tgt[1] + ui.cam.dist * Math.sin(ui.cam.pitch), tgt[2] + ui.cam.dist * cp * Math.cos(ui.cam.yaw)];
+        const want = MT.pendingWakes(ws.live, { from, t: now() }), rp = MT.sleepingReport(ws.live);
+        return el('ul', { class: 'plain' }, el('li', {}, statusTag(rp.asleep + ' asleep'), el('span', { text: rp.awake + ' awake' })),
+          el('li', {}, el('label', {}, el('input', { type: 'checkbox', checked: ui.autoSettle, onchange: (e) => { ui.autoSettle = e.target.checked; changed(); } }), ' let the world wake and sleep things as I move')),
+          el('li', { class: 'ctl' }, el('span', { text: 'Draw distance' }), el('input', { type: 'range', min: 0, max: 60, step: 2, value: ui.within, 'aria-label': 'Draw distance', onchange: (e) => { ui.within = Number(e.target.value); renderAll(); } }), el('span', { class: 'tag', text: ui.within ? ui.within + ' units' : 'everything' })),
+          el('li', {}, el('button', { text: want.length ? 'Settle now (' + want.length + ' waiting)' : 'Nothing is waiting', disabled: !want.length, onclick: () => { settleWorld(); changed(); } }))); })()),
+    el('div', { class: 'card' }, el('h4', { text: 'Files' }), el('p', { class: 'note', text: 'A workspace file carries its whole history and a claim of what replaying it must produce; opening one replays it and checks that claim. A world file is just the world as it stands now.' }),
+      el('div', { class: 'acts' },
+        el('button', { class: 'go', text: 'Save workspace file', onclick: () => download('morphtile-workspace-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(MT.exportWorkspace(ws), null, 1)) }),
+        el('button', { text: 'Open workspace file', onclick: () => openFile('.json', (obj) => { if (!obj || !obj.ledger) return toast('That is not a workspace file.', true); let next; try { next = MT.importWorkspace(obj); } catch (e) { return toast('That file could not be replayed: ' + e.message, true); } ws = next; ui.cand = ui.plan = ui.rebuilt = null; ui.sel = ''; ui.scope = ''; ui.open = {}; const c = ws.import_check || {}; toast(c.status === 'VERIFIED' ? 'Replayed and verified against its own claim.' : c.status === 'HOLD_REPLAY_MISMATCH' ? 'HELD: replaying this file does not produce what it claims. Loaded anyway, treat it as unverified.' : 'Loaded. This file carries no claim to check against.', c.status === 'HOLD_REPLAY_MISMATCH'); changed(); }) }),
+        el('button', { text: 'Save world file', onclick: () => download('morphtile-world-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(MT.exportWorld(ws.live), null, 1)) }),
+        el('button', { text: 'Open world file', onclick: () => openFile('.json', (obj) => { const r = MT.importWorld(obj); if (!r.ok) return toast(r.status + (r.errors ? ': ' + r.errors.slice(0, 2).join('; ') : r.observed ? ' (claimed ' + String(r.claimed).slice(0, 10) + ', got ' + r.observed.slice(0, 10) + ')' : ''), true); ws = MT.createWorkspace(r.world); ui.cand = ui.plan = ui.rebuilt = null; ui.sel = ''; ui.scope = ''; ui.open = {}; toast(r.status === 'VERIFIED' ? 'World verified and opened as a fresh genesis.' : 'World opened, unverified (it carried no claim).'); changed(); }) })),
+      ws.import_check ? el('ul', { class: 'plain' }, el('li', {}, statusTag(ws.import_check.status), el('span', { class: 'tag', text: ws.import_check.evidence }), el('span', { text: 'this workspace came from a file' }))) : null),
+    el('div', { class: 'card' }, el('h4', { text: 'Workspace' }), el('div', { class: 'acts' }, el('button', { class: 'warn', text: 'Reset to genesis world', onclick: () => { try { localStorage.removeItem(KEY); } catch (e) {} ws = MT.createWorkspace(MT.seedWorld()); ui.cand = ui.plan = ui.rebuilt = null; ui.sel = 'mt_tower'; ui.scope = ''; ui.open = {}; changed(); } })))];
+}
+function hashColor(hex) { const h = hex.replace('sha256:', ''); return [0, 2, 4].map((i) => 0.25 + (parseInt(h.slice(i, i + 2), 16) / 255) * 0.7); }
+function paneBridges(w) {
+  const ref = (f) => 'github:' + SOURCE.repo + '@' + SOURCE.commit.slice(0, 10) + '/' + SOURCE.path + f;
+  const cards = Object.keys(FIXTURES).map((f) => { const rep = ui.offers[f];
+    return el('div', { class: 'card' }, el('h4', { text: f }), el('p', { class: 'note', text: 'Byte copy from ' + SOURCE.repo + ' at commit ' + SOURCE.commit.slice(0, 10) + '. Read here with no network and no dependency on the source.' }),
+      el('div', { class: 'acts' }, el('button', { text: 'Verify payload bytes', onclick: () => { ui.offers[f] = MT.ingestMaterialOffer(FIXTURES[f]); renderPane(); } })),
+      rep ? el('ul', { class: 'plain' }, rep.entries.map((e) => el('li', {}, statusTag(e.state + (e.reason ? ': ' + e.reason : '')), el('span', { class: 'tag', text: e.evidence }), el('span', { text: e.entryId }),
+        el('button', { text: 'Use as material on ' + ((MT.resolveTile(w, ui.sel) || {}).name || 'selected tile'), onclick: () => { const m = MT.materialFromOffer(FIXTURES[f], rep, e.entryId, ref(f), e.observed ? hashColor(e.observed) : null); if (m.facet.data.payload) m.facet.data.note = 'payload is a 1x1 conformance fixture, colour is derived from its verified hash'; if (edit({ op: 'facet.swap', id: ui.sel, facet: 'material', value: m.facet })) edit({ op: 'bridge.attach', id: ui.sel, bridge: m.bridge }); } }))), el('li', {}, el('span', { text: 'Pipeline evidence (weakest link): ' }), statusTag(rep.pipeline_evidence || 'none'))) : null); });
+  return [el('p', { class: 'note', text: 'A bridge is never trusted because it is declared. Payloads are re-hashed here; anything that does not verify stays a visible HOLD and renders amber.' }), ...cards,
+    el('div', { class: 'card' }, el('h4', { text: 'Capability registry' }), el('p', { class: 'note', text: 'Advertised manifests are inert data until bound to a local executor.' }), el('ul', { class: 'plain' }, registry.list().map((m) => el('li', {}, statusTag(m.status), el('b', { text: m.id }), el('span', { text: 'produces ' + m.produces + ' · ' + m.by + ' · ' + m.note })))))];
+}
+const DOOR_EXAMPLES = {
+  'AI repaints the tower on its own clone': [{ do: 'clone', label: 'ai repaint' }, { do: 'edit', candidate: '$clone', op: { op: 'facet.swap', id: 'mt_tower', facet: 'material', value: MT.PRESETS.material['checker hull'] } }],
+  'AI rewires the switch to the rover': [{ do: 'clone', label: 'ai rewire' }, { do: 'edit', candidate: '$clone', op: { op: 'edge.rewire', id: 's_switch', to: { tile: 'mt_rover', socket: 'drive' } } }],
+  'AI collapses the rover and its wheels into one tile': [{ do: 'clone', label: 'ai collapse' }, { do: 'edit', candidate: '$clone', op: { op: 'tile.collapse', ids: ['mt_rover', 'mt_wheel_fl', 'mt_wheel_fr', 'mt_wheel_rl', 'mt_wheel_rr'], name: 'Rover rig', id: 'mt_rig', by: 'ai:fable' } }, { do: 'edit', candidate: '$clone', op: { op: 'tile.collapse', ids: ['mt_rig'], name: 'Garage', id: 'mt_garage', by: 'ai:fable' } }],
+  'Drive the rover through its shell (after committing the collapse)': [{ do: 'signal', tile: 'mt_garage', name: 'drive' }],
+  'AI adds a control that reaches into a collapsed tile': [{ do: 'clone', label: 'ai control' }, { do: 'edit', candidate: '$clone', op: { op: 'tile.collapse', ids: ['mt_rover', 'mt_wheel_fl', 'mt_wheel_fr', 'mt_wheel_rl', 'mt_wheel_rr'], name: 'Rover unit', id: 'mt_unit', by: 'ai:fable' } }, { do: 'edit', candidate: '$clone', op: { op: 'param.add', id: 'mt_unit', param: { id: 'orbit', label: 'Orbit radius', type: 'number', min: 6, max: 14, step: 0.2, binds: [{ tile: 'mt_rover', facet: 'behavior', at: 'data.ops.0.radius' }] } } }, { do: 'edit', candidate: '$clone', op: { op: 'param.set', id: 'mt_unit', param: 'orbit', value: 12 } }],
+  'AI stamps three copies of that unit (commit the one above first)': [{ do: 'clone', label: 'ai copies' }, { do: 'edit', candidate: '$clone', op: { op: 'tile.stamp', id: 'mt_unit', as: 'mt_unit_b', offset: [0, 1.6, 0], by: 'ai:fable' } }, { do: 'edit', candidate: '$clone', op: { op: 'param.set', id: 'mt_unit_b', param: 'orbit', value: 9 } }, { do: 'edit', candidate: '$clone', op: { op: 'tile.stamp', id: 'mt_unit', as: 'mt_unit_c', offset: [0, 3.2, 0], by: 'ai:fable' } }, { do: 'edit', candidate: '$clone', op: { op: 'param.set', id: 'mt_unit_c', param: 'orbit', value: 6.4 } }],
+  'AI writes a new tile as text': [{ do: 'clone', label: 'ai text' }, { do: 'edit', candidate: '$clone', op: { op: 'tile.add', tile: { id: 'mt_lamp', kind: 'morphtile', version: '0.1', name: 'Sky lamp', form_hints: ['game_asset', 'ui_panel', 'website'], facets: { mesh: { type: 'primitive', source: null, data: { shape: 'sphere', size: [1.1, 1.1, 1.1] } }, material: { type: 'primitive', source: null, data: { color: [1, 0.82, 0.35], emissive: ['*', ['var', 'on'], 0.6], glow: [1, 0.8, 0.3] } }, behavior: { type: 'scripted', data: { ops: [{ op: 'bob', amp: 0.25, rate: 1.1 }] } }, logic: { type: 'rule', data: { vars: { on: 1 }, rules: [{ on: 'flick', do: [{ set: ['on', ['-', 1, ['var', 'on']]] }] }] } }, connect: { sockets: [{ id: 'foot', kind: 'attach', pos: [0, -0.55, 0] }, { id: 'flick', kind: 'signal', dir: 'in', signal: 'flick', label: 'Flick' }], bridges: [], place: [3.4, 3.6, -2.2] } }, provenance: { created_by: 'ai:fable', bridges: [], sha256: null }, state: { version: 1, mutable: true, last_transform: null } }, rename: true } }],
+  'AI makes the rover a shared definition and places three': [{ do: 'clone', label: 'ai instances' }, { do: 'edit', candidate: '$clone', op: { op: 'tile.collapse', ids: ['mt_rover', 'mt_wheel_fl', 'mt_wheel_fr', 'mt_wheel_rl', 'mt_wheel_rr'], name: 'Rover unit', id: 'mt_unit', by: 'ai:fable' } }, { do: 'edit', candidate: '$clone', op: { op: 'def.create', id: 'mt_unit', as: 'def_rover', name: 'Rover', by: 'ai:fable' } }, { do: 'edit', candidate: '$clone', op: { op: 'def.instance', def: 'def_rover', place: [-3.4, 3.2, 2.6], by: 'ai:fable' } }, { do: 'edit', candidate: '$clone', op: { op: 'def.instance', def: 'def_rover', place: [3.6, 4.4, -2.2], by: 'ai:fable' } }],
+  'AI fixes the definition once and every instance follows': [{ do: 'clone', label: 'ai fix' }, { do: 'edit', candidate: '$clone', op: { op: 'facet.swap', id: 'mt_unit/mt_rover', facet: 'material', value: { type: 'primitive', source: null, data: { color: [1, 0.45, 0.3], glow: [1, 0.6, 0.3], emissive: 0.2 } } } }, { do: 'edit', candidate: '$clone', op: { op: 'def.update', id: 'mt_unit' } }, { do: 'edit', candidate: '$clone', op: { op: 'def.sync', def: 'def_rover' } }],
+  'AI gives the switch a sleeping capability, then calls for it': [{ do: 'clone', label: 'ai capability' }, { do: 'edit', candidate: '$clone', op: { op: 'cap.add', id: 'mt_switch', capability: { id: 'bay', name: 'Assembly bay', wake: { on: 'signal', name: 'open' }, grants: { form_hints: ['tool'], sockets: [{ id: 'open', kind: 'signal', dir: 'in', signal: 'open', label: 'Open the bay' }], interior: { ports: [], edges: { a_arm: { id: 'a_arm', kind: 'attach', from: { tile: 'mt_bench', socket: 'top' }, to: { tile: 'mt_arm', socket: 'foot' } } }, tiles: { mt_bench: { id: 'mt_bench', kind: 'morphtile', version: '0.1', name: 'Bench', form_hints: ['game_asset', 'ui_panel'], facets: { mesh: { type: 'primitive', source: null, data: { shape: 'box', size: [2.2, 0.3, 1.4] } }, material: { type: 'primitive', source: null, data: { color: [0.5, 0.55, 0.75] } }, behavior: { type: 'none', data: {} }, logic: { type: 'none', data: {} }, connect: { sockets: [{ id: 'top', kind: 'attach', pos: [0, 0.15, 0] }], bridges: [], place: [0, 0.6, 0] } }, provenance: { created_by: 'ai:fable', bridges: [], sha256: null }, state: { version: 1, mutable: true, last_transform: null } }, mt_arm: { id: 'mt_arm', kind: 'morphtile', version: '0.1', name: 'Arm', form_hints: ['game_asset', 'ui_panel'], facets: { mesh: { type: 'primitive', source: null, data: { shape: 'cylinder', size: [0.3, 1.6, 0.3] } }, material: { type: 'primitive', source: null, data: { color: [1, 0.6, 0.25], emissive: 0.2, glow: [1, 0.6, 0.3] } }, behavior: { type: 'scripted', data: { ops: [{ op: 'spin', axis: 'y', rate: 1.2 }] } }, logic: { type: 'rule', data: { vars: { made: 0 }, rules: [{ on: 'make', do: [{ set: ['made', ['+', ['var', 'made'], 1]] }] }] } }, connect: { sockets: [{ id: 'foot', kind: 'attach', pos: [0, -0.8, 0] }, { id: 'make', kind: 'signal', dir: 'in', signal: 'make', label: 'Make one' }], bridges: [] } }, provenance: { created_by: 'ai:fable', bridges: [], sha256: null }, state: { version: 1, mutable: true, last_transform: null } } } } } } } }],
+  'Call for it (commit the one above first)': [{ do: 'signal', tile: 'mt_switch', name: 'open' }],
+  'Press the switch': [{ do: 'signal', tile: 'mt_switch', name: 'press' }],
+  'Skip six hours, then prove it': [{ do: 'tick', dt: 21600 }, { do: 'reconstruct', fromGenesis: true }],
+};
+function paneDoor() {
+  const ta = el('textarea', { value: ui.doorText || JSON.stringify(Object.values(DOOR_EXAMPLES)[0], null, 1), spellcheck: false, 'aria-label': 'Ops JSON' }), who = el('select', { 'aria-label': 'Caller' }, ['ai:fable', 'ai:codex', 'ai:claude', 'human'].map((x) => el('option', { value: x, text: x })));
+  return [el('p', { class: 'note', text: 'The same contract the buttons use. Paste a JSON list of actions; "$clone" means the clone made earlier in the list. An AI’s clone meets yours in the merge plan — try repainting the tower yourself first, then run the first example, then Plan merge.' }),
+    el('div', { class: 'chips' }, Object.keys(DOOR_EXAMPLES).map((k) => el('button', { text: k, onclick: () => { ui.doorText = JSON.stringify(DOOR_EXAMPLES[k], null, 1); renderPane(); } }))), ta,
+    el('div', { class: 'acts' }, who, el('button', { class: 'go', text: 'Run actions', onclick: () => { ui.doorText = ta.value; let ops; try { ops = JSON.parse(ta.value); } catch (e) { return toast('That is not valid JSON: ' + e.message, true); } syncTime(); let last = null; ui.door = (Array.isArray(ops) ? ops : [ops]).map((op) => { op = JSON.parse(JSON.stringify(op).replace(/"\$clone"/g, JSON.stringify(last))); const r = MT.act(ws, op, who.value); if (r.candidate) last = r.candidate; if (r.trace) r.trace = r.trace.length + ' deliveries'; if (r.plan) r.plan = { id: r.plan.id, status: r.plan.status }; return { do: op.do, result: r }; }); ui.plan = null; changed(); } })),
+    ui.door ? el('pre', { text: JSON.stringify(ui.door, null, 1) }) : null,
+    el('p', { class: 'note', text: 'From a console or another script: window.MorphTileWorkshop.act({do:"signal",tile:"mt_switch",name:"press"}, "ai:codex")' })];
+}
+function renderTabs() { const tb = $('tabs'); tb.textContent = ''; TABS.forEach(([k, label]) => tb.append(el('button', { role: 'tab', 'aria-selected': String(ui.tab === k), text: label + (k === 'safety' && Object.keys(ws.candidates).length ? ' (' + Object.keys(ws.candidates).length + ')' : ''), onclick: () => { ui.tab = k; renderTabs(); renderPane(); } }))); }
+function renderPane() { const p = $('pane'), w = viewWorld(); p.textContent = ''; const kids = ui.tab === 'tiles' ? paneTiles(w) : ui.tab === 'wires' ? paneWires(w) : ui.tab === 'safety' ? paneSafety() : ui.tab === 'time' ? paneTime() : ui.tab === 'bridges' ? paneBridges(w) : paneDoor(); kids.filter(Boolean).forEach((k) => p.append(k)); }
+function renderAll() {
+  const f = $('forms'); f.textContent = ''; FORMS.forEach(([k, label]) => f.append(el('button', { text: label, 'aria-pressed': String(ui.form === k), onclick: () => { ui.form = k; renderAll(); } })));
+  $('meta').textContent = ws.live.name + '  t=' + ws.live.time.toFixed(0) + 's  #' + MT.structHash(ws.live).slice(0, 10);
+  const strip = $('strip'), c = ui.cand && ws.candidates[ui.cand]; strip.hidden = !c; strip.textContent = '';
+  if (c) strip.append(el('span', { text: 'You are looking at the clone “' + c.label + '”. The live world is untouched until you commit.' }), el('button', { text: 'See live world', onclick: () => { ui.cand = null; renderAll(); } }), el('button', { class: 'go', text: 'Plan merge', onclick: planNow }));
+  renderStage(); renderTabs(); renderPane();
+}
+window.MorphTileWorkshop = { act: (op, by) => { syncTime(); const r = MT.act(ws, op, by || 'ai:external'); changed(); return r; }, world: () => MT.clone(ws.live), workspace: () => ws, MT };
+renderAll(); raf = requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
