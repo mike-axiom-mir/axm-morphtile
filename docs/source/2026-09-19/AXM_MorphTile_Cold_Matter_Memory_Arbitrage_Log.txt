@@ -1,0 +1,97 @@
+AXM / MORPHTILE RESEARCH LOG
+Cold Matter / Construct-on-Wake — Memory Arbitrage Experiment
+Mike — Axiom/Mir
+Date: 2026-09-19
+
+STATUS
+Research direction only. Do not claim the memory result until measured.
+Run after the editable-world-interface work is stabilized.
+
+CORE OBSERVATION
+MorphTile separates stored possibility from active realization: matter describes what exists; capabilities may sleep; recipes compactly describe larger realized structures; definitions are reusable; meaningful state can persist without continuous simulation; deterministic replay can reconstruct current state.
+
+HYPOTHESIS
+If an expanded runtime object is deterministically reconstructible from compact matter + meaningful state, it may not need to remain resident in RAM while inactive.
+
+IMPORTANT
+"Sleeping" does not mean information disappears. Preserve the compact description, identity, provenance, required state, mutations, references and reconstruction recipe. Discard only reconstructible runtime realization.
+
+THREE TIERS
+
+HOT
+Fully realized runtime representation. Highest RAM/runtime cost.
+
+WARM
+Canonical matter + definitions + state remain resident. Reconstructible expanded/runtime products are discarded and rebuilt when required.
+
+COLD
+RAM retains only the minimum useful index/identity/hash/state needed to locate and verify matter. Full canonical matter/recipes may remain on local storage. Wake path: load -> reconstruct -> verify -> activate.
+
+INVARIANT
+Sleeping/unloading must never silently erase meaningful history.
+
+Example:
+If a generated building had its door destroyed, wake it from:
+definition + recipe + seed + persisted mutation("door destroyed")
+—not as a pristine regenerated building.
+
+Nothing may be discarded unless provably reconstructible or explicitly disposable.
+
+CODEX EXPERIMENT
+Do this after the interface work. Build an adversarial measurement prototype; do not redesign MorphTile merely to make the benchmark look good.
+
+1. Create a very large deterministic MorphTile structure.
+2. Measure baseline RAM/process memory before realization.
+3. Fully realize it. Measure RAM, realized object/triangle/node counts, and construction time.
+4. Apply warm/cold behavior:
+   - discard reconstructible runtime products;
+   - preserve identity, required state, mutations, hashes, provenance and reconstruction information;
+   - for COLD, move inactive canonical payload to local storage where appropriate.
+5. Measure RAM again.
+6. Wake only a small region/subtree.
+7. Reconstruct that region on demand.
+8. Verify deterministic structure/output, persisted mutations, identity/path semantics, and that unrelated siblings stayed unrealized.
+9. Measure:
+   - RAM before realization
+   - RAM fully realized
+   - RAM warm
+   - RAM cold
+   - RAM with a small region awake
+   - wake/reconstruction latency
+   - storage size
+   - state required to preserve history
+10. Repeat at increasing scales and report where the approach stops being advantageous.
+
+ADVERSARIAL CHECKS
+- Mutate -> sleep -> wake: mutation survives.
+- Missing referenced matter: visible HOLD, never fabricated success.
+- Corrupted payload/hash: verification fails visibly.
+- Two instances of one definition retain independent state.
+- Repeated sleep/wake cycles preserve hashes/state.
+- Nested cold nodes can wake a child without realizing unrelated siblings.
+- Audit caches/duplicates so apparent RAM savings are genuine.
+- Crash/restart reconstructs from persisted evidence, not hidden process memory.
+
+TRUTH BOUNDARY
+This does not create RAM, CPU cycles or FLOPS. Potential gain comes from exchanging unnecessary residency for compact description, persistence, selective loading, deterministic reconstruction and recomputation.
+
+Current MorphTile semantics support "exists without active realization", but full cold-memory eviction has NOT yet been demonstrated by this log.
+
+SUCCESS CRITERION
+Produce evidence supporting (or disproving) a statement like:
+
+"A world whose fully realized representation consumes X memory can remain inactive at Y memory/storage cost, wake region Z to memory cost W, and reconstruct the tested state/output identically within measured latency T."
+
+Preserve negative results. No fake win.
+
+WHY IT MATTERS
+If successful, this can recurse:
+world -> region -> building -> machine -> subsystem -> capability
+
+Large software worlds could contain far more potential structure than the machine keeps resident while preserving deterministic identity and meaningful history.
+
+SHORT PRINCIPLE
+All there.
+Not all awake.
+Not all resident.
+Nothing meaningful lost.

@@ -1,0 +1,193 @@
+AXM / MORPHTILE — CODEX BUILD NOTE
+Universal Spatial Anchor / Recursive Local Origins
+Mike — Axiom/Mir
+Date: 2026-09-19
+
+PURPOSE
+Add the smallest robust spatial-anchor model that makes placement and portability independent of any fixed world surroundings.
+
+CORE IDEA
+A MorphTile world does not need fixed borders, terrain, skybox, room, map shape, or surrounding engine space in order to know where something is.
+
+It needs a guaranteed reference frame.
+
+Every world has a canonical root spatial origin:
+    (0, 0, 0)
+
+Every spatial container/tile can also act as a local reference frame for what it contains.
+
+Positions inside a container are relative to that container's frame, and frames resolve recursively back to the world root.
+
+DESIGN PRINCIPLE
+One guaranteed anchor.
+No guaranteed surroundings.
+
+Do NOT make "middle" mean that content must be physically centered around the origin.
+The origin is a coordinate/reference contract, not a required visual object and not a world boundary.
+
+EXAMPLE
+
+WORLD ROOT (0,0,0)
+└── island anchor
+    └── resort anchor
+        └── hotel anchor
+            └── room anchor
+                └── machine anchor
+                    └── component anchor
+
+Moving the hotel should move the hotel frame.
+It should NOT require rewriting every chair, room object, machine and component into new world-space coordinates.
+
+PORTABILITY EXAMPLE
+
+Source world:
+    resort local contents: unchanged
+    resort anchor in source world: (300, 20, -80)
+
+Export resort:
+    carry its internal local hierarchy/relationships
+    do not weld its descendants to source-world absolute coordinates
+
+Destination world:
+    place resort anchor at (-40, 5, 900)
+
+Expected:
+    internal layout remains identical relative to the resort
+    destination chooses only the new parent-frame placement
+
+REQUIREMENTS
+
+1. WORLD ROOT
+- Every world has an implicit or explicit canonical spatial root at identity / (0,0,0).
+- Old worlds that lack an explicit root field must resolve identically to today's behavior.
+- Do not require a visible root tile.
+
+2. LOCAL FRAMES
+- Root tiles resolve relative to the world root.
+- Interior roots resolve relative to their containing tile/shell.
+- Attached children continue to resolve through sockets/attachment frames.
+- Arbitrary nesting depth must preserve relative placement within existing safety/depth limits.
+
+3. PORTABILITY
+- Exporting a tile/kit must preserve its internal coordinate relationships.
+- Importing it into another world must permit choosing a new placement for the imported top-level anchor without rewriting descendant local coordinates.
+- Existing kit dependency behavior (definitions + world words) must remain intact.
+
+4. COLLAPSE / EXPAND
+- Collapse must not visually move the selected matter.
+- Expand must restore equivalent world-space placement.
+- Nested collapse/expand should preserve transforms.
+- State/history/provenance rules remain unchanged.
+
+5. DEFINITIONS / INSTANCES
+- A shared definition describes reusable body/local structure.
+- Instance placement remains instance-local.
+- Moving one instance must not mutate the definition or other instances.
+
+6. FORMS
+- Spatial forms consume resolved transforms.
+- Non-spatial forms must not become dependent on arbitrary world coordinates unless their own contract asks for them.
+- A website/UI representation should remain valid even when its source tile lives at an unusual spatial coordinate.
+
+7. NO FIXED SURROUNDINGS
+Do not introduce assumptions such as:
+- mandatory terrain around origin;
+- fixed world dimensions;
+- origin must be visible;
+- content must stay near origin;
+- every world must be game-like or 3D.
+
+MorphTile may represent software, interfaces, websites, tools, games or other matter. The spatial anchor is a capability/reference contract, not a requirement that every world visually be a 3D map.
+
+8. TRUTH / SAFETY
+- No silent coordinate rewriting.
+- No lossy flattening to world coordinates.
+- Preserve clone -> plan -> commit -> receipt -> rollback discipline.
+- Invalid/missing frame relationships must HOLD visibly rather than fabricate placement.
+- Deterministic: same matter + same hierarchy + same time => same resolved transforms.
+
+TESTS TO ADD
+
+A. Root compatibility
+Create an old-style world with no new explicit anchor metadata. Confirm existing top-level tile placement resolves exactly as before.
+
+B. Nested frame test
+world -> island -> resort -> hotel -> room -> object.
+Move only the resort anchor.
+Confirm every descendant moves by the same world-space transform while every descendant local placement remains byte-for-byte unchanged.
+
+C. Portable resort test
+Build nested resort in World A.
+Record local descendant coordinates and relative geometry.
+Export as a kit.
+Import into World B at a very different root position.
+Verify:
+- descendant local coordinates unchanged;
+- relative distances/orientations unchanged;
+- world-space result translated/rotated according to destination anchor;
+- definitions and words required by the kit still resolve.
+
+D. Collapse/expand round trip
+Record render/transform receipts.
+Collapse nested group.
+Verify same visible world-space result.
+Expand.
+Verify equivalent resolved transforms and preserved state.
+
+E. Shared-definition instances
+Place the same definition at two distant anchors.
+Verify their local internals match while world positions differ.
+Move one instance and prove the other is unchanged.
+
+F. Deep nesting
+Exercise multiple local frames and verify deterministic resolution and existing depth guards.
+
+G. Non-spatial regression
+Compile panel/text/website forms before and after moving the spatial anchor.
+Unless those forms explicitly expose position, semantic output should remain equivalent.
+
+H. Rollback
+Move an anchor through normal candidate/merge machinery.
+Commit.
+Rollback.
+Verify exact previous structural state and transform result.
+
+IMPLEMENTATION GUIDANCE
+Prefer extending/clarifying the existing transform/frame machinery rather than creating a parallel coordinate system.
+
+The current MorphTile code already has:
+- tile connect.place;
+- attach sockets;
+- recursive interior containers;
+- tileMatrix()/attachFrame() transform resolution;
+- collapse/expand transform handling;
+- definitions whose body deliberately excludes instance place.
+
+Build on those existing mechanisms.
+
+Do NOT rebuild the spatial system from scratch merely to introduce the term "anchor".
+
+QUESTION CODEX SHOULD ANSWER WITH EVIDENCE
+Does the current `connect.place` + shell-frame + attachment model already satisfy most of this invariant?
+
+If yes:
+- preserve it;
+- formalize the world-root/local-frame contract;
+- add only the missing import/reposition APIs and tests.
+
+If no:
+- identify the smallest concrete gap;
+- repair that gap;
+- demonstrate it with tests.
+
+SUCCESS STATEMENT
+Only after tests support it, we should be able to say:
+
+"Every MorphTile world has a stable spatial reference frame without requiring fixed surroundings. Portable matter keeps its local geometry and hierarchy, and can be placed at a new destination anchor without rewriting everything inside it."
+
+SHORT PRINCIPLE
+One anchor.
+No walls.
+Local inside.
+Portable outside.
+Move the parent, not every chair.

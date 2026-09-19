@@ -1,0 +1,234 @@
+AXM / MORPHTILE WORLD #1 — DESIGN LOG
+SHOP, MARKET & PLAYER COMMERCE SYSTEM
+Mike — Axiom/Mir
+Date: 2026-09-19
+
+STATUS
+World #1 design direction. These are game/world rules, NOT MorphTile defaults.
+
+ROOT DESIGN PRINCIPLE
+Keep the economy simple at the rule level but deep through interaction.
+Trade should not collapse into one global menu where every transaction is functionally identical.
+Convenience may cost more; direct human/player interaction should not be taxed merely for existing.
+
+THREE TRADE LAYERS
+
+1. AUCTION HOUSE — MAXIMUM CONVENIENCE
+Purpose:
+A global/high-reach option for players who value speed and convenience.
+
+Rules:
+- Easy listing and purchasing.
+- Useful for common items, quick trades and broad reach.
+- Intentionally high transaction cut.
+- Cut applies to BOTH buyer and seller.
+- The high cost is the price of convenience.
+- It should not automatically become the economically optimal way to trade everything.
+
+Design intent:
+The auction house remains useful without replacing physical markets, discovery, negotiation or player-created commerce.
+
+2. PHYSICAL PLAYER MARKETS — ZERO CUT
+Purpose:
+Direct, social commerce in actual world locations.
+
+Rules:
+- Players physically meet and trade.
+- No transaction percentage cut.
+- Players can negotiate, barter, sell items, offer crafting/services, take custom orders, etc.
+- Resort areas, towns, events, clan spaces and naturally popular locations can become physical markets.
+
+Design intent:
+If players are spending their own time and location to meet and trade, the game does not take a percentage simply because the transaction happened.
+
+3. POPUP STORES — PAY FOR THE SHOP, NOT THE SALE
+Purpose:
+Let players create temporary stores anywhere the world permits.
+
+Rules:
+- A player deploys a popup store at a chosen world location.
+- The popup has a defined lifetime.
+- Creating/deploying it costs a fixed amount of whatever resource/material/money is eventually chosen during balancing.
+- NO percentage transaction cut after deployment.
+- The owner stocks it from their own inventory.
+- The owner sets prices/trade conditions within world rules.
+- The popup remains in the world while the owner adventures elsewhere or is offline.
+- Other players can discover it physically, inspect it and buy from it.
+- Expiry, inventory and transactions are persistent deterministic world state.
+
+CORE ECONOMIC IDENTITY
+Auction house:
+Pay heavily for convenience.
+
+Physical/P2P:
+Spend time/location; no transaction cut.
+
+Popup:
+Pay for temporary infrastructure; keep the proceeds.
+
+PLAYER-CREATED MARKET GEOGRAPHY
+Popup stores should allow market locations to emerge instead of AXM declaring every commercial district.
+
+Example:
+A dangerous cave consumes repair materials.
+One player places a repair-material popup near its entrance.
+It sells well.
+Other players notice and place food, gear, crafting materials and services nearby.
+The location organically becomes a market hub because players actually need it.
+
+Likewise:
+- tower entrances can become trade hubs;
+- transport junctions can become trade hubs;
+- newly unlocked regions can create temporary boom markets;
+- remote specialist merchants can become destinations;
+- competition can create clusters and price pressure.
+
+Location becomes economically meaningful without requiring AXM to sell artificial virtual land.
+
+POPUP MODES
+
+A. BASIC UNATTENDED POPUP
+- Fully deterministic.
+- Fixed stock.
+- Fixed prices/trade rules.
+- Defined duration.
+- No AI required.
+- Works while owner is offline.
+
+B. NPC-RUN POPUP
+- Owner assigns an actual in-world NPC/companion to run the shop.
+- NPC physically remains associated with the shop while the owner adventures or logs out.
+- The NPC is a world actor, not merely a shop UI.
+- NPC skills/capabilities may later affect what services the shop can provide.
+- Recalling/removing the NPC removes that attendant function.
+
+C. PLAYER-OWNED AI-DRIVEN NPC
+Later capability:
+The NPC can optionally be driven by the PLAYER'S OWN AI instance.
+
+Possible AI sources:
+- local model;
+- user's chosen cloud AI;
+- other compatible user-controlled AI bridge.
+
+The AI is an optional brain for an existing world actor. It does not own the economy.
+
+Possible bounded shopkeeper capabilities:
+- discuss stock;
+- explain items;
+- advise customers;
+- negotiate inside owner-defined limits;
+- offer permitted bundles;
+- accept declared barter conditions;
+- remember allowed shop/customer context;
+- provide crafting/gear knowledge when that NPC has the relevant capability.
+
+The deterministic world remains authoritative for:
+- item existence;
+- inventory;
+- ownership;
+- prices/ranges permitted by owner;
+- transaction settlement;
+- currency/material transfer;
+- preventing duplicate spending/items;
+- shop expiry.
+
+An AI may propose or negotiate a transaction; world rules validate and execute it.
+
+AI SHOP INFRASTRUCTURE
+A small service/infrastructure fee may later be appropriate for enabling an AI-driven NPC shop.
+
+If the user supplies their own local/cloud inference, AXM should not pretend it is selling that inference.
+Any AXM-side fee should correspond to actual service/infrastructure provided.
+
+AI instances should not need to reason continuously.
+A shopkeeper specialist can sleep when nobody is interacting and wake when needed.
+
+SPECIALIST POSSIBILITY
+An AI-backed NPC may eventually contain bounded specialist roles such as:
+- merchant;
+- social;
+- crafting;
+- equipment;
+- appraisal;
+- negotiation.
+
+Only relevant specialists need to wake.
+
+SHOP EVOLUTION / LEGO
+The commerce primitive can gain richer physical forms as later MorphTile layers unlock more LEGO.
+
+Possible progression:
+- blanket + box;
+- tent stall;
+- vending machine;
+- mobile caravan;
+- companion merchant;
+- automated workshop;
+- custom player-built commercial machines.
+
+The economic primitive remains understandable while presentation and capability expand.
+
+OFFLINE PERSISTENCE
+The popup is separate persistent world state from the owner's currently active character.
+
+Owner offline does NOT imply shop disappears.
+
+A deterministic popup can persist using:
+- owner identity/reference;
+- committed stock;
+- pricing/trade rules;
+- expiry;
+- transaction receipts;
+- resulting proceeds.
+
+An NPC-driven popup additionally persists the assigned NPC's relevant world state.
+
+AI is optional and must never be required for basic offline shop persistence.
+
+PEER-TO-PEER DIRECTION
+Explore whether popup shops can participate naturally in AXM's peer-to-peer multiplayer architecture.
+
+Desired principle:
+The shop should be representable as portable/verifiable state plus deterministic transaction rules rather than requiring a permanently simulated centralized merchant.
+
+Do not weaken anti-double-spend/ownership authority merely to make this P2P.
+Prototype and verify before claiming it works.
+
+RELATION TO WORLD #1 ECONOMY
+This market design connects with the other current World #1 ideas:
+- materials are important for gear repair/crafting;
+- crafting/repair skills can reduce material waste;
+- vault contents are protected;
+- worn pocket storage is protected;
+- larger carried bags may lose a small bounded random portion on death;
+- some carried money may be lost;
+- preparation affects expedition risk;
+- the resort acts as an early safe/home/service space.
+
+Markets therefore support actual world needs rather than existing only as a money-making minigame.
+
+AI TEST-GROUND VALUE
+World #1 can eventually test AI in multiple bounded roles:
+- player companion;
+- independent machine-controlled player;
+- shopkeeper NPC;
+- crafting specialist;
+- scout;
+- other world actors.
+
+This also creates useful future training/testing ground for WALMI while preserving the distinction between:
+1. WALMI's own separate MorphTile world/save; and
+2. WALMI's ordinary player profile inside Mike's adventure world.
+
+ROOT BOUNDARY
+These commerce rules belong to Mike's World #1.
+MorphTile itself should provide neutral primitives such as persistent matter/state, ownership, capabilities, sleep/wake, interfaces, events, networking hooks and verification.
+Other MorphTile worlds remain free to implement completely different economies.
+
+SHORT PRINCIPLE
+Convenience has a price.
+People make markets.
+Popup stores make geography matter.
+AI may run an NPC; it does not own the transaction.
+Player-driven. World-powered.

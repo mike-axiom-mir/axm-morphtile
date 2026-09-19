@@ -1,0 +1,197 @@
+AXM / MORPHTILE — CODEX BUILD NOTE
+Interface Is Matter / Movable Presentation Fabric
+Mike — Axiom/Mir
+Date: 2026-09-19
+
+STATUS
+Future MorphTile build direction. Preserve current working architecture; extend it rather than rebuilding it.
+
+CORE IDEA
+An interface should not be treated as a privileged overlay that exists outside the world.
+
+Interface can itself be MorphTile matter.
+
+The same underlying capability/state may be presented as:
+- a camera-attached HUD;
+- a movable floating panel;
+- a physical terminal inside a world;
+- a room control surface;
+- a desktop-style application;
+- a phone-sized panel;
+- a website-like view;
+- another compatible presentation.
+
+The interface presentation does not own a second authoritative copy of the state.
+
+ROOT PRINCIPLE
+Capability is canonical.
+State is canonical.
+Presentation is a view/interface onto that matter.
+Placement of the interface is adjustable.
+
+This is NOT a requirement that every interface must be 3D.
+It means interface presentation is composable matter rather than a hard-coded engine shell.
+
+WHY
+A player/world creator should be able to decide how their world is presented.
+
+Examples:
+- inventory as conventional HUD;
+- inventory panel attached to a wall;
+- inventory shown on an in-world terminal;
+- inventory presented as a desktop panel;
+- compatible inventory information presented through a website form.
+
+Same inventory state underneath.
+
+DESIGN TARGET
+
+CANONICAL MATTER / STATE
+        |
+        +--> world/spatial form
+        +--> UI form
+        +--> website form
+        +--> text form
+        +--> future forms
+
+A form may expose actions only when the underlying matter exposes the capability and the current environment/user permission allows it.
+
+Do not duplicate authoritative state merely because the presentation changed.
+
+INTERFACE PLACEMENT
+World creators/users should eventually be able to control interface placement such as:
+- screen/camera anchored;
+- world anchored;
+- tile/object anchored;
+- floating;
+- docked;
+- full screen;
+- embedded in another interface/container.
+
+The exact UI vocabulary can grow later. Start with the smallest general placement contract.
+
+VIEW POSITION
+The viewer/camera itself should be treated as adjustable host/session presentation state where appropriate.
+
+Do not silently write personal camera/view choices into canonical shared world matter unless the world explicitly chooses to persist them.
+
+Distinguish:
+1. canonical world matter;
+2. world-defined interface matter;
+3. per-user/per-session presentation state.
+
+INTERACTION
+An interface form may expose real actions into canonical matter.
+
+Examples:
+- press a world signal;
+- adjust a parameter;
+- open/close a local presentation;
+- invoke an explicitly exposed capability.
+
+Interaction must use the same bounded action contracts as other callers.
+A UI must not gain hidden authority merely because it is graphical.
+
+WEBSITE DIRECTION
+MorphTile already has a static website form.
+
+Long-term direction:
+allow compatible matter to have an interactive website presentation WITHOUT assuming that the website receives arbitrary local/world authority.
+
+A web presentation should be able to call only explicitly exposed capabilities through an appropriate safe bridge/host.
+
+Security boundary:
+non-walled does NOT mean permissionless.
+
+OPEN COMPOSITION.
+EXPLICIT CAPABILITY GRANTS.
+
+A downloaded tile, webpage, UI package or world must never receive filesystem, payment, network, device or other sensitive capabilities merely because it asks for them.
+
+WORLD #1 EXAMPLE
+Mike's first adventure world can use this naturally.
+
+Early:
+- simple HUD;
+- resort-room terminal;
+- storage/vault interface;
+- equipment/inventory interface.
+
+Later:
+- player moves/rearranges panels;
+- panels can become physical world objects;
+- clan rooms can expose shared interfaces;
+- machines can expose their own controls;
+- the same underlying matter can have different presentations.
+
+This should be a WORLD capability/design choice, not a forced MorphTile aesthetic.
+
+PORTABILITY
+If interface matter is exported with a tile/kit, it should remain understandable elsewhere when its dependencies are present.
+
+Do not weld interface layout to one machine's pixel resolution.
+
+Prefer:
+- relative layout;
+- anchors;
+- constraints;
+- declared minimum/ideal sizes;
+- host adaptation.
+
+A host may choose a compatible presentation when the exact original presentation cannot fit.
+
+TRUTH BOUNDARY
+The current MorphTile workshop already treats forms as views over canonical matter and its ui_panel returns a vnode tree rather than owning separate state.
+
+The current website form is static compiled delivery.
+
+This note does NOT claim:
+- interactive website bridges already exist;
+- arbitrary UI layouts already exist;
+- every form can already transform into every other form;
+- responsive cross-device presentation is solved.
+
+Those are build targets.
+
+CODEX FIRST PASS
+Before adding machinery, inspect the existing form architecture.
+
+Answer:
+1. What parts of "interface is matter" are already true?
+2. What remains host-only presentation state?
+3. What is the smallest missing primitive needed to make interface placement itself declarative matter?
+4. Can it be added without duplicating canonical state or weakening the action/permission boundary?
+
+Then implement the smallest useful slice.
+
+SUGGESTED MINIMUM SLICE
+Add a declarative interface-placement/presentation descriptor that can express at least:
+- screen/docked;
+- world/tile anchored;
+- floating;
+- preferred size/position;
+- optional user-adjustable flag.
+
+Keep per-session actual window/camera placement outside canonical matter unless explicitly persisted.
+
+TESTS
+- One canonical variable appears consistently in two different interface presentations.
+- Editing through either presentation changes the same canonical state.
+- Moving/rearranging an interface does not duplicate or fork the underlying state.
+- A per-user view adjustment does not mutate shared world matter by default.
+- Export/import preserves world-defined interface matter.
+- Missing/unsupported presentation capability degrades visibly rather than silently changing semantics.
+- UI cannot invoke an action the underlying matter did not expose.
+- Existing panel/text/website/world forms continue to work.
+- Clone -> plan -> commit -> receipt -> rollback remains intact for canonical interface-matter edits.
+
+SUCCESS STATEMENT
+Only after evidence supports it:
+
+"MorphTile interfaces are presentations of canonical matter that can themselves be composed and placed as matter, while user/session view state remains separate and permissions remain explicit."
+
+SHORT PRINCIPLE
+Interface is matter.
+State stays canonical.
+Views may move.
+Authority does not magically move with them.

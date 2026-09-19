@@ -45,6 +45,7 @@ See [`LICENSE`](LICENSE),
 | `conformance/vectors.json` | Worlds plus the answers any correct implementation must produce. `npm run conformance` regenerates them. |
 | `docs/PRINCIPLES.md` | **Read this first.** Mike's three founding principles and exactly how the code and tests hold to them. |
 | `docs/LICENSING.md` | The no-lock boundary between the MorphTile engine and portable Creator Output. |
+| `docs/source/2026-09-19/` | Verbatim direction notes for interface-as-matter, universal spatial anchors, World #1 commerce, and cold-matter memory research, with explicit implementation status. |
 | `test/views.js` | Worlds carrying their own interface: written, composed, and still addressing the real matter. |
 | `test/kits.js` | Kits: a tile carrying the shapes and words it needs, verified, never half-arriving. |
 | `test/words.js` | A world teaching itself new words, and the guards that keep that safe. |
