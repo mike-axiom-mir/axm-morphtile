@@ -5,7 +5,7 @@ Software as matter. One tile schema (mesh, material, behavior, logic, connect) t
 same JSON. Its own small world with the door open: it depends on nothing (not UC, not any
 fabric repo, not a CDN, not npm) and anything may bridge in or out.
 
-    npm test          # 62 behavioral and licence-contract tests, Node >= 18, zero dependencies
+    npm test          # 67 behavioral and licence-contract tests, Node >= 18, zero dependencies
     npm run build     # -> dist/axiomatter-workshop.html  (one file, opens on a phone)
     npm run shot      # -> evidence/world.png rendered by the built-in rasterizer
 
@@ -43,6 +43,7 @@ See [`LICENSE`](LICENSE),
 | `bridges/fixtures/` | Byte copies of real `axm-material-offer` packets from `axm-material-surface-fabric`, with `SOURCE.json` pinning repo + commit + sha256. |
 | `docs/PRINCIPLES.md` | **Read this first.** Mike's three founding principles and exactly how the code and tests hold to them. |
 | `docs/LICENSING.md` | The no-lock boundary between the MorphTile engine and portable Creator Output. |
+| `test/recipes.js` | Shapes invented inside the world, driven by controls, stopped safely when they run away. |
 | `test/sleeping.js` | Capabilities that sleep in a node until needed: zero cost, waking, sleeping again, 1000 loaded nodes. |
 | `test/instances.js` | Definitions and instances: shared bodies, one-change propagation, visible drift, detaching. |
 | `test/text.js` | The text surface: round trips, one-word edits, refusals with line numbers. |
@@ -70,6 +71,11 @@ runs independently, and any tile is one JSON object you can copy out and paste i
 until something calls for it: no geometry, no rules, no state, no cost. A world with 1000 such nodes counts 1000 tiles and draws
 in well under a second. Waking is sparse state, not a rewrite: the matter is byte-identical asleep or awake, each instance wakes
 on its own, and a tile's own rule can wake it (`{"wake": "bay"}`). It sleeps again keeping its state, or lets it go on purpose.
+
+**The engine's list is not the limit.** A mesh can be a *recipe*: loops, conditions and expressions over named numbers, described
+as matter rather than chosen from a list the engine ships. Four numbers make a spiral staircase; three make a lattice shell. Promote
+any of those numbers to a control and the recipe becomes a family of shapes. A runaway recipe stops at a stated budget and shows
+amber, like any other hold — it never hangs the world.
 
 **The world activates itself.** A capability can name a shared definition instead of carrying a copy, so a node holds a *name* and
 builds the thing only when it wakes. Asking the world what it wants woken — by nearness, by a value crossing a line, or at a moment —

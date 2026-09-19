@@ -1,12 +1,13 @@
 # STATUS — what to trust (v0.3, 2026-09-19, third pass by Fable)
 
-Read `docs/PRINCIPLES.md` first: two principles from Mike that outrank everything here.
+Read `docs/PRINCIPLES.md` first: three principles from Mike that outrank everything here.
 
 Evidence words used here: **PROVEN** = a test in `test/run.js` asserts it. **WORKS** = exercised
 by hand / headless browser, no assertion yet. **STUB** = shape exists, behavior thin.
 **ASPIRATION** = on the posters, not in the code.
 
-## PROVEN (62/62 tests pass: `test/run.js` 16, `test/depth.js` 11, `test/blocks.js` 10, `test/text.js` 6, `test/instances.js` 6, `test/sleeping.js` 11, `test/licensing.js` 2)
+## PROVEN (67/67 tests pass: `test/run.js` 16, `test/depth.js` 11, `test/blocks.js` 10, `test/text.js` 6, `test/instances.js` 6, `test/sleeping.js` 11, `test/recipes.js` 5, `test/licensing.js` 2)
+- **Invented shapes (v0.3).** A recipe mesh turns loops, conditions and expressions into real geometry: a spiral from four numbers, a lattice shell from three, neither of them known to the engine. Deterministic. One control turns a recipe into a family of shapes and rolls back exactly. A runaway recipe stops at its budget in milliseconds and shows amber like any other hold; nesting deeper than 8 is held too. Recipes travel through text, files, definitions and depth.
 - **Capability by name (v0.3).** A node can carry a definition by reference at a fraction of the bytes of a copy, resolved into real tiles only when it wakes. An unresolvable name is a visible HOLD (amber in every form), never an empty room.
 - **The world activates itself.** `pendingWakes` answers by nearness, by a value crossing a line, or at a moment — and asking changes nothing (world hash identical). 500 nodes each carrying a whole block stay at 510 tiles until you walk up: then only the nine within reach build themselves, and they sleep again when you leave. Every waking and sleeping is in the ledger and replays.
 - **Hold far more than you draw.** A 4000-tile world drawn `within: 14` considers ~22 tiles instead of 4000, takes about a quarter of the time, and produces the *identical picture* — what was skipped was never on screen.
@@ -43,7 +44,7 @@ by hand / headless browser, no assertion yet. **STUB** = shape exists, behavior 
 - Workspace export -> import rebuilds live state by replay, never by trusting the file.
 
 ## WORKS (seen running in headless Chromium at phone size, no JS errors)
-- v0.3 workshop: a 'What the world activates for itself' card (live count of asleep/awake, auto-settle toggle, draw-distance slider, settle-now), capability builder with wake-when-near and bring-by-name, Sleeping capabilities card (add one from a shelf tile, wake, let sleep, sleep-and-forget, remove) with the world note reporting how many sleep, Shared definitions card (make a definition, place another, bring back in step, make this the definition, let one go its own way), Text tab (read, edit, apply, revert, copy, save as .txt, scoped to the level you are in), sliders and choice controls in both Tiles and Panel, add-a-control builder, Make a copy, whole-tile editor with clipboard, paste, shelf (save/place/forget/save-as-file), workspace+world file save/open with the verification message, all driven headlessly on a 390px phone with no JS errors; no horizontal overflow down to 280px at 120% font.
+- v0.3 workshop: a Recipe card (a slider per named number, 'Make a control' to promote one, and the recipe itself as editable JSON), a 'What the world activates for itself' card (live count of asleep/awake, auto-settle toggle, draw-distance slider, settle-now), capability builder with wake-when-near and bring-by-name, Sleeping capabilities card (add one from a shelf tile, wake, let sleep, sleep-and-forget, remove) with the world note reporting how many sleep, Shared definitions card (make a definition, place another, bring back in step, make this the definition, let one go its own way), Text tab (read, edit, apply, revert, copy, save as .txt, scoped to the level you are in), sliders and choice controls in both Tiles and Panel, add-a-control builder, Make a copy, whole-tile editor with clipboard, paste, shelf (save/place/forget/save-as-file), workspace+world file save/open with the verification message, all driven headlessly on a 390px phone with no JS errors; no horizontal overflow down to 280px at 120% font.
 - v0.2 workshop depth flow (collapse by checklist -> plan -> commit -> open shell -> scoped wires + ports -> open in panel -> AI collapses rover twice -> drive through 2 shells -> replay verified), dark mode, no JS errors.
 - Workshop: form switch, orbit/tap-select, facet presets, raw facet JSON editing, wires add/rewire/remove,
   clone/plan/commit/rollback UI, time skip + replay check, bridge verification, AI door, localStorage save.
@@ -67,7 +68,7 @@ by hand / headless browser, no assertion yet. **STUB** = shape exists, behavior 
   ~150 lines here. Not checked for contract compatibility with the real repo's manifests.
 - **Directional State Fabric governance**: not started. Only `state.mutable === false` blocks a facet swap.
 - **Protocol evolution**: `version: "0.1"` exists; there is no 0.2, so no adjacent-pair evidence yet.
-- **Mesh**: primitives + two generators (terrain, tower). `type: reference` always renders as an amber HOLD box.
+- **Mesh**: primitives, two built-in generators (terrain, tower) and `recipe` — shapes described as matter. Recipe parts are the same primitives, so a recipe cannot yet invent a *new primitive* (only new arrangements), and it cannot read another tile's mesh. `type: reference` always renders as an amber HOLD box.
 - **Material**: flat colour, 3 procedural patterns, emissive (may be a logic expression). No textures.
 - **Behavior**: spin, bob, orbit, pulse — closed-form in time or in a logic var. No physics, no collisions.
 - **Logic**: `set` + `emit`, small expression language. No timers other than accrual, no cross-tile reads.

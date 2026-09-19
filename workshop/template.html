@@ -220,6 +220,21 @@ function paneTiles(w) {
     const setLogic = (k) => { const need = (LOGIC_SOCKETS[k] || []).filter(([s]) => !MT.findSocket(t, s)); if (need.length) { const cc = MT.clone(t.facets.connect); need.forEach(([s, dir]) => cc.sockets.push({ id: s, kind: 'signal', dir, signal: s })); swap('connect', cc); } swap('logic', LOGIC[k]); };
     const meshes = Object.assign(t.interior ? { 'its contents': { type: 'interior', source: null, data: {} } } : {}, MT.PRESETS.mesh);
     const ta = el('textarea', { value: JSON.stringify(t.facets[ui.facetEdit], null, 1), spellcheck: false, 'aria-label': 'Facet JSON' });
+    const rec = t.facets.mesh.type === 'generated' && t.facets.mesh.data.generator === 'recipe' ? t.facets.mesh.data : null;
+    if (rec) { const built = MT.compileMesh(t);
+      out.push(el('div', { class: 'card' }, el('h4', { text: 'Recipe' }),
+        el('p', { class: 'note', text: 'This shape is not one the engine ships — it is described here, as matter: loops and expressions over these numbers. Change a number and the shape is different.' }),
+        el('div', { class: 'acts' }, el('span', { class: 'tag' + (built.hold ? ' hold' : ' ok'), text: built.hold || built.recipe_parts + ' parts' })),
+        Object.keys(rec.vars || {}).map((k) => el('div', { class: 'row' }, el('span', { text: k }), el('div', { class: 'acts ctl' },
+          el('input', { type: 'range', min: 0, max: Math.max(2, Math.abs(rec.vars[k]) * 3), step: Math.abs(rec.vars[k]) > 4 ? 1 : 0.05, value: rec.vars[k], 'aria-label': k,
+            oninput: (e) => { const o = e.target.parentNode.querySelector('output'); if (o) o.textContent = e.target.value; },
+            onchange: (e) => { const d = MT.clone(rec); d.vars[k] = Number(e.target.value); swap('mesh', { type: 'generated', source: null, data: d }); } }),
+          el('output', { text: String(rec.vars[k]) }),
+          el('button', { text: 'Make a control', onclick: () => edit({ op: 'param.add', id: sel, param: { id: k, label: k, type: 'number', min: 0, max: Math.max(2, Math.abs(rec.vars[k]) * 3), step: Math.abs(rec.vars[k]) > 4 ? 1 : 0.05, binds: [{ facet: 'mesh', at: 'data.vars.' + k }] } }) })))),
+        el('details', {}, el('summary', { text: 'Write the recipe itself' }), (function () { const rt = el('textarea', { class: 'code', value: JSON.stringify(rec, null, 1), spellcheck: false, 'aria-label': 'Recipe JSON' });
+          return [el('p', { class: 'note', text: 'parts: a list. Each entry is a shape, or {repeat: n, as: "i", body: [...]} to loop, or {when: <test>, ...} to skip. Any number may be an expression such as ["*", ["var", "i"], 0.3].' }), rt,
+            el('div', { class: 'acts' }, el('button', { class: 'go', text: 'Apply recipe', onclick: () => { try { swap('mesh', { type: 'generated', source: null, data: JSON.parse(rt.value) }); } catch (e) { toast('That is not valid JSON: ' + e.message, true); } } }))]; })())));
+    }
     const params = t.params || [];
     out.push(el('div', { class: 'card' }, el('h4', { text: 'Controls' }),
       el('p', { class: 'note', text: params.length ? 'Each control writes straight into the matter it points at — its own facets, or a tile inside it at any depth. It stores no value of its own.' : 'No controls yet. A control is a simple surface over something deeper: choose a facet and a place inside it.' }),

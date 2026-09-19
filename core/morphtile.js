@@ -913,7 +913,38 @@
     return a + (b - a) * sx + (c - a) * sz + (a - b - c + d) * sx * sz;
   }
   const smooth = (e0, e1, x) => { const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
+  // A recipe is a shape described as matter: loops, expressions and parts, evaluated by the same little expression
+  // language the rest of the world uses. New forms can be invented inside a world without any engine code, and the
+  // only limit is a stated budget — exceeded, it says so in amber rather than running away.
+  const RECIPE_BUDGET = 4000;
+  function runRecipe(out, data) {
+    const vars = Object.assign({}, data.vars || {}), budget = Math.min(data.budget || RECIPE_BUDGET, RECIPE_BUDGET);
+    let made = 0, stopped = null;
+    const num = (v, scope, d) => { if (v === undefined) return d; const x = evalExpr(v, { t: 0, get: (n) => (n in scope ? scope[n] : vars[n]) }); return typeof x === 'number' && isFinite(x) ? x : d; };
+    const vec = (v, scope, d) => (Array.isArray(v) ? [num(v[0], scope, d[0]), num(v[1], scope, d[1]), num(v[2], scope, d[2])] : d);
+    const walk = (nodes, scope, depth) => {
+      if (stopped || depth > 8) { if (depth > 8) stopped = stopped || 'HOLD_RECIPE_TOO_DEEP'; return; }
+      for (const n of nodes || []) {
+        if (stopped) return;
+        if (n.repeat !== undefined) {
+          const count = Math.max(0, Math.floor(num(n.repeat, scope, 0)));
+          if (count > budget) { stopped = 'HOLD_RECIPE_OVER_BUDGET'; return; }
+          for (let i = 0; i < count; i++) { const inner = Object.assign({}, scope); inner[n.as || 'i'] = i; inner[(n.as || 'i') + '_of'] = count; inner[(n.as || 'i') + '_at'] = count > 1 ? i / (count - 1) : 0; walk(n.body, inner, depth + 1); if (stopped) return; }
+          continue;
+        }
+        if (n.when !== undefined && !evalExpr(n.when, { t: 0, get: (k) => (k in scope ? scope[k] : vars[k]) })) continue;
+        if (n.body) { walk(n.body, scope, depth + 1); continue; }
+        if (++made > budget) { stopped = 'HOLD_RECIPE_OVER_BUDGET'; return; }
+        addPart(out, { shape: n.shape || 'box', size: vec(n.size, scope, [1, 1, 1]), pos: vec(n.pos, scope, [0, 0, 0]), rot: vec(n.rot, scope, [0, 0, 0]),
+          color: n.color ? vec(n.color, scope, [0.6, 0.6, 0.7]) : null, segments: n.segments, taper: n.taper === undefined ? undefined : num(n.taper, scope, 1), sub: n.sub });
+      }
+    };
+    walk(data.parts, {}, 0);
+    if (stopped) { out.hold = stopped; addPart(out, { shape: 'box', size: [1, 1, 1], color: [1, 0.7, 0.3] }); }
+    out.recipe_parts = made;
+  }
   const GENERATORS = {
+    recipe(out, d) { runRecipe(out, d); },
     terrain(out, d) { // floating island: heightfield top, rocky underside, flat plateau in the middle for things to stand on
       const R = d.radius || 5.5, n = d.resolution || 22, H = d.height || 1.6, plateau = d.plateau == null ? 1 : d.plateau, depth = d.depth || 4, seed = d.seed || 1, A = affine();
       const at = (i, j) => {
@@ -1289,6 +1320,14 @@
       tower: { type: 'generated', source: null, data: { generator: 'tower', levels: 3, radius: 0.6, seed: 4 } },
       'tall tower': { type: 'generated', source: null, data: { generator: 'tower', levels: 5, radius: 0.5, seed: 9 } },
       island: { type: 'generated', source: null, data: { generator: 'terrain', radius: 5.5, height: 1.6, plateau: 1, depth: 4, seed: 3 } },
+      spiral: { type: 'generated', source: null, data: { generator: 'recipe', vars: { rungs: 14, turn: 0.55, lift: 0.26, reach: 1.1 }, parts: [
+        { repeat: ['var', 'rungs'], as: 'i', body: [
+          { shape: 'box', size: [0.55, 0.12, 0.22], pos: [['*', ['var', 'reach'], ['+', 1, ['*', 0.02, ['var', 'i']]]], ['*', ['var', 'lift'], ['var', 'i']], 0], rot: [0, ['*', ['var', 'turn'], ['var', 'i']], 0] },
+          { shape: 'cylinder', size: [0.16, ['var', 'lift'], 0.16], pos: [0, ['*', ['var', 'lift'], ['var', 'i']], 0], color: [0.55, 0.6, 0.85] }] }] } },
+      lattice: { type: 'generated', source: null, data: { generator: 'recipe', vars: { n: 4, gap: 0.55 }, parts: [
+        { repeat: ['var', 'n'], as: 'x', body: [{ repeat: ['var', 'n'], as: 'y', body: [{ repeat: ['var', 'n'], as: 'z', body: [
+          { when: ['or', ['or', ['==', ['var', 'x'], 0], ['==', ['var', 'y'], 0]], ['==', ['var', 'z'], 0]],
+            shape: 'box', size: [0.2, 0.2, 0.2], pos: [['*', ['var', 'gap'], ['var', 'x']], ['*', ['var', 'gap'], ['var', 'y']], ['*', ['var', 'gap'], ['var', 'z']]] }] }] }] }] } },
       'unresolved reference': { type: 'reference', source: 'uc://asset-packages/axm.example.modular-tank@1.0.0', data: {} },
     },
     material: {

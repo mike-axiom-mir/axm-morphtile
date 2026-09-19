@@ -8,7 +8,7 @@ Ground rules that are already true and should stay true:
 5. Ops and merge-unit keys address tiles by PATH. Never add an API that only works at the root.
 6. A form may stop descending (a simple view). It may never keep its own reduced copy of the world.
 
-**If you are the next model picking this up: read `docs/PRINCIPLES.md`, then run `npm test` (60 tests). Every test name is a claim; if one fails, that claim is what broke.** The workshop is `npm run build` -> `dist/axiomatter-workshop.html`, one file, no server.
+**If you are the next model picking this up: read `docs/PRINCIPLES.md`, then run `npm test` (65 tests). Every test name is a claim; if one fails, that claim is what broke.** The workshop is `npm run build` -> `dist/axiomatter-workshop.html`, one file, no server.
 
 Priority order changed on 2026-09-19 by Mike's principle 1: **deepen native matter before adding bridges.** Items 1-2 below (bridges) now come AFTER the depth list.
 
@@ -17,6 +17,8 @@ because software has no physics. States activate only when needed; capabilities 
 the live website and outside bridges come after that. v0.3 implements the sleeping-capability half of this (`test/sleeping.js`).
 
 Depth list (do these first):
+- **D10 Recipes that compose.** A recipe part can only be a built-in primitive today. Let a part be *another tile or definition* (stamped by reference at compile time, budget shared), so an invented shape can be built from invented shapes. The evaluator is `runRecipe`; the budget guard must stay.
+- **D11 Recipes for the other facets.** The same little language could describe a material (a pattern as an expression of position) or a behavior, so 'what the engine ships' stops being the limit anywhere, not just for geometry.
 - ~~**D7 More ways to wake.**~~ **Done in v0.3**: `signal`, `near` (with hysteresis), `value`, `time`, `manual`, via the pure `pendingWakes` + `settle`. Next: waking because a *form* needs it (a panel opening, a website compiling), and a schedule.
 - ~~**D8 Capability from anywhere.**~~ **Done in v0.3** for definitions (`grants_ref`), with HOLD on an unresolvable name. Next: references to a shelf entry, a file, or a bridged package — the resolver is one function (`grantsOf`), so add cases there and keep the evidence labels.
 - **D9 Nothing computed unless read.** `renderAsset({within})` is done and proven. Still linear: add a spatial index (a grid keyed by place) so `leaves()` and `pendingWakes` stop touching every tile, and cache `leaves()` per structure hash.
