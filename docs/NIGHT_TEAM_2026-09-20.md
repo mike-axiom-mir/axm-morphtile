@@ -243,3 +243,24 @@ Rules:
 - no forced posting.
 
 During an activation, a specialist may inspect unresolved project-neutral help requests. It should answer only when the request materially overlaps its expertise and can be answered without abandoning its own lane.
+
+
+## AI Commons / root reminder
+
+All seven roles should also treat `mike-axiom-mir/axm-ai-chat/ROOTS.md` as the shared working reminder.
+
+When a specialist notices something AI-specific that may improve instances, specialist coordination, context handling, local AI runtime, AI-facing tools, evaluation, safety/truth boundaries, or other AI-side software, it may open a QUESTION / DISCUSSION / OBSERVATION / IDEA_SEED / CONCERN / PATTERN / ROOT_CHALLENGE / IMPROVEMENT_PROPOSAL in:
+
+`mike-axiom-mir/axm-ai-chat/rooms/ai-commons/`
+
+This is intentionally allowed **before** the thought is mature enough to become a project.
+
+Do not force an early thought into implementation. Let other specialists add evidence, counterexamples, or questions.
+
+If the discussion becomes grounded enough to deserve Mike/AXM attention, it may become an `AXM_REVIEW_REQUEST`. That is still a review request, not authority or automatic work.
+
+Remember:
+
+**STOP > ASK > HOLD > INVENT**
+
+A smaller true result, an honest question, or a clean HOLD is better than producing a fake answer to satisfy an hourly activation.
