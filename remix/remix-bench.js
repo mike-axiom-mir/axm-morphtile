@@ -1,7 +1,8 @@
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory(require("../core/morphtile.js"), require("../library/lego-library.js"));
+  else root.MorphTileRemixBench = factory(root.MorphTile, root.MorphTileLegoLibrary);
+})(typeof self !== "undefined" ? self : this, function (MT, Lib) {
 "use strict";
-
-const MT = require("../core/morphtile.js");
-const Lib = require("../library/lego-library.js");
 const clone = MT.clone;
 const BODY_KEYS = ["facets", "form_hints", "params", "interior", "capabilities", "view", "presentation"];
 
@@ -99,4 +100,5 @@ function stageRemix(ws, proposal, by) {
   return { ok: true, status: plan.status, candidate, plan, created_new_atoms: 0, reused_atoms: proposal.reused_atoms, recipe_hash: proposal.recipe_hash };
 }
 
-module.exports = { autoSlot, proposeRemix, stageRemix };
+return { autoSlot, proposeRemix, stageRemix };
+});

@@ -1,6 +1,8 @@
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory(require("../core/morphtile.js"));
+  else root.MorphTileLegoLibrary = factory(root.MorphTile);
+})(typeof self !== "undefined" ? self : this, function (MT) {
 "use strict";
-
-const MT = require("../core/morphtile.js");
 const ID = /^[A-Za-z0-9_.-]+$/;
 const clone = MT.clone;
 
@@ -155,4 +157,5 @@ function proposeLibraryUse(world, library, itemId, opts) {
   return { ok: true, status: "READY_FOR_REMIX", item: found.item, object: found.object };
 }
 
-module.exports = { createLegoLibrary, objectRef, capture, exportLegoPack, verifyLegoPack, importLegoPack, getItem, exportLibraryPack, proposeLibraryUse };
+return { createLegoLibrary, objectRef, capture, exportLegoPack, verifyLegoPack, importLegoPack, getItem, exportLibraryPack, proposeLibraryUse };
+});
