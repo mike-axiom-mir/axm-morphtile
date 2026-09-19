@@ -5,9 +5,10 @@ Software as matter. One tile schema (mesh, material, behavior, logic, connect) t
 same JSON. Its own small world with the door open: it depends on nothing (not UC, not any
 fabric repo, not a CDN, not npm) and anything may bridge in or out.
 
-    npm test          # 101 behavioral and licence-contract tests (including the published conformance vectors), Node >= 18, zero dependencies
+    npm test          # 123 behavioral, world-module and licence-contract tests, Node >= 18, zero dependencies
     npm run build     # -> dist/axiomatter-workshop.html  (one file, opens on a phone)
     npm run shot      # -> evidence/world.png rendered by the built-in rasterizer
+    npm run cold:measure # -> bounded local cold-memory measurement evidence
 
 Open `dist/axiomatter-workshop.html` in any browser. No server, no install.
 
@@ -46,6 +47,9 @@ See [`LICENSE`](LICENSE),
 | `docs/PRINCIPLES.md` | **Read this first.** Mike's three founding principles and exactly how the code and tests hold to them. |
 | `docs/LICENSING.md` | The no-lock boundary between the MorphTile engine and portable Creator Output. |
 | `docs/source/2026-09-19/` | Verbatim direction notes for interface-as-matter, universal spatial anchors, World #1 commerce, and cold-matter memory research, with explicit implementation status. |
+| `docs/SPATIAL_AND_PRESENTATION.md` | Canonical root/local frames, destination-placed kits and interface-placement matter. |
+| `experimental/cold-matter.js` | Hash-verified local cold-region and nested-subtree storage/wake experiment. |
+| `worlds/world1/commerce.js` | World #1 auction, direct trade, popup shop and bounded AI-attendant rules; not a core default. |
 | `test/views.js` | Worlds carrying their own interface: written, composed, and still addressing the real matter. |
 | `test/kits.js` | Kits: a tile carrying the shapes and words it needs, verified, never half-arriving. |
 | `test/words.js` | A world teaching itself new words, and the guards that keep that safe. |
@@ -123,6 +127,24 @@ refused with a line number if it is wrong, and it never overwrites what it canno
 are written in, hash-verified. Dropped into a fresh world it renders the same geometry. If something it needs is already taken by
 different content, *nothing* is applied: a tile never arrives half-built unless you say so. And without its kit, the same tile
 arrives honest — it names what it is missing and shows amber.
+
+**One anchor, no walls.** Every new world states the identity spatial root; old worlds imply the same root and render unchanged.
+Root tiles and nested containers are local frames. A whole resort can arrive at a new position and rotation by changing only its
+top-level anchor while every chair and room keeps its local coordinates. Moving a rotated shell and expanding it preserves the
+resolved world placement. Definition instances keep independent position and rotation.
+
+**Interface placement is matter; session view is not.** A tile may say that its interface is docked, floating, fullscreen,
+embedded, world-anchored or tile-anchored, with preferred size and position. Hosts resolve that descriptor and expose unsupported
+placements as HOLD. User-adjustable session movement is layered outside canonical matter until someone deliberately commits it.
+
+**Cold matter is measured, not advertised as magic.** The Node experiment writes regions to verified local payloads, drops their
+resident structures, wakes one region or nested child, preserves mutations and independent instance state across restart, and
+reconstructs the exact full hash. Its three isolated scale samples report warm/cold heap and RSS independently and record where a
+benefit stops appearing; no universal RAM-saving claim is made.
+
+**World #1 markets are world rules.** Its separate module implements a high-cut auction house, location-grounded zero-cut direct
+trade, fixed-cost/zero-cut popup stores, offline persistence, deterministic receipts and bounded player-owned AI shop proposals.
+Inventory and settlement remain world-authoritative and revision checked. None of those economic choices are MorphTile defaults.
 
 **Nothing is trapped.** Any tile goes on a shelf or out as a `.json` file. The whole workspace saves as one file carrying a claim of
 what replaying it must produce — reopening it replays from genesis and checks that claim, holding anything that does not match. A

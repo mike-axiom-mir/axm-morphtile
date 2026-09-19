@@ -1,5 +1,5 @@
 /*!
- * MorphTile / AxioMatter core  v0.3
+ * MorphTile / AxioMatter core  v0.4
  * One file, zero dependencies. Runs in Node (require) and in a browser (global `MorphTile`).
  *
  * License: PolyForm Noncommercial License 1.0.0 plus the MorphTile Creator
@@ -89,6 +89,23 @@
   };
   const KNOWN_FORMS = ['game_asset', 'ui_panel', 'website', 'vehicle', 'character', 'world', 'tool'];
   const SPATIAL_FORMS = ['game_asset', 'vehicle', 'character', 'world'];
+  const PRESENTATION_MODES = ['screen', 'docked', 'floating', 'fullscreen', 'embedded', 'world', 'tile'];
+  const IDENTITY_SPATIAL_ROOT = { origin: [0, 0, 0], rotation: [0, 0, 0] };
+  const vec = (v, n) => Array.isArray(v) && v.length === n && v.every((x) => typeof x === 'number' && isFinite(x));
+  function spatialRootOf(world) {
+    const r = world && world.spatial_root;
+    return r ? { origin: clone(r.origin), rotation: clone(r.rotation || [0, 0, 0]), explicit: true } : { origin: [0, 0, 0], rotation: [0, 0, 0], explicit: false };
+  }
+  function presentationError(p) {
+    if (!p || typeof p !== 'object') return 'presentation must be an object';
+    if (!PRESENTATION_MODES.includes(p.mode)) return 'presentation.mode must be ' + PRESENTATION_MODES.join('|');
+    if (p.dock != null && !['left', 'right', 'top', 'bottom'].includes(p.dock)) return 'presentation.dock must be left|right|top|bottom';
+    if (p.preferred_size != null && (!vec(p.preferred_size, 2) || p.preferred_size.some((x) => x <= 0))) return 'presentation.preferred_size must be two positive numbers';
+    if (p.preferred_position != null && !(vec(p.preferred_position, 2) || vec(p.preferred_position, 3))) return 'presentation.preferred_position must be two or three numbers';
+    if (p.user_adjustable != null && typeof p.user_adjustable !== 'boolean') return 'presentation.user_adjustable must be boolean';
+    if (p.anchor != null && typeof p.anchor !== 'string') return 'presentation.anchor must be a tile path string';
+    return null;
+  }
   function defaultFacets() {
     return {
       mesh: { type: 'primitive', source: null, data: { shape: 'box', size: [1, 1, 1] } },
@@ -99,7 +116,7 @@
     };
   }
   function contentHash(tile) {
-    return hashOf({ id: tile.id, kind: tile.kind, version: tile.version, name: tile.name, facets: tile.facets, form_hints: tile.form_hints, interior: tile.interior, params: tile.params, capabilities: tile.capabilities, view: tile.view });
+    return hashOf({ id: tile.id, kind: tile.kind, version: tile.version, name: tile.name, facets: tile.facets, form_hints: tile.form_hints, interior: tile.interior, params: tile.params, capabilities: tile.capabilities, view: tile.view, presentation: tile.presentation });
   }
   function createTile(spec) {
     spec = spec || {};
@@ -115,6 +132,7 @@
     if (spec.params) tile.params = clone(spec.params);
     if (spec.capabilities) tile.capabilities = clone(spec.capabilities);
     if (spec.view) tile.view = clone(spec.view);
+    if (spec.presentation) tile.presentation = clone(spec.presentation);
     tile.provenance.sha256 = contentHash(tile);
     return tile;
   }
@@ -127,6 +145,9 @@
     else {
       for (const f of FACETS) if (!tile.facets[f]) e.push('facet missing: ' + f);
       for (const f in FACET_TYPES) if (tile.facets[f] && !FACET_TYPES[f].includes(tile.facets[f].type)) e.push(f + '.type invalid: ' + tile.facets[f].type);
+      const cn = tile.facets.connect || {};
+      if (cn.place != null && !vec(cn.place, 3)) e.push('connect.place must be three finite numbers');
+      if (cn.rotation != null && !vec(cn.rotation, 3)) e.push('connect.rotation must be three finite numbers');
       const so = (tile.facets.connect && tile.facets.connect.sockets) || [], seen = {};
       for (const s of so) {
         if (!s.id) e.push('socket without id'); else if (seen[s.id]) e.push('duplicate socket ' + s.id); seen[s.id] = 1;
@@ -135,6 +156,7 @@
       }
     }
     if (!Array.isArray(tile.form_hints)) e.push('form_hints must be an array');
+    if (tile.presentation) { const bad = presentationError(tile.presentation); if (bad) e.push(bad); }
     return { ok: e.length === 0, errors: e };
   }
   const findSocket = (tile, id) => ((tile.facets.connect.sockets || []).find((s) => s.id === id) || null);
@@ -344,15 +366,15 @@
   }
 
   // ───────────────────────────── 4 world
-  function createWorld(name) { return { kind: 'morphtile-world', version: '0.1', name: name || 'Untitled world', tiles: {}, edges: {}, vars: {}, defs: {}, time: 0 }; }
+  function createWorld(name) { return { kind: 'morphtile-world', version: '0.1', name: name || 'Untitled world', spatial_root: clone(IDENTITY_SPATIAL_ROOT), tiles: {}, edges: {}, vars: {}, defs: {}, time: 0 }; }
   // Definitions: one shared body that many tiles ARE. The body lives once in world.defs; each instance is a real tile
   // with its own id, name, place, wires and state. Syncing a definition rewrites every instance's body through ordinary
   // merge units — so instancing gains nothing that is hidden from planning, receipts or rollback.
-  const BODY = ['facets', 'form_hints', 'params', 'interior', 'capabilities', 'view'];
+  const BODY = ['facets', 'form_hints', 'params', 'interior', 'capabilities', 'view', 'presentation'];
   // A body is what the instances share. It deliberately excludes everything that is each instance's own:
   // its place, and — at every depth inside it — each tile's state and provenance. Those are history, not shape.
   const stripHistory = (c) => { for (const k in c.tiles) { const t = c.tiles[k]; delete t.state; delete t.provenance; if (t.interior) stripHistory(t.interior); } return c; };
-  function bodyOf(tile) { const b = {}; for (const k of BODY) if (tile[k] !== undefined) b[k] = clone(tile[k]); if (b.facets) { b.facets.connect = clone(b.facets.connect); delete b.facets.connect.place; } if (b.interior) stripHistory(b.interior); return b; }
+  function bodyOf(tile) { const b = {}; for (const k of BODY) if (tile[k] !== undefined) b[k] = clone(tile[k]); if (b.facets) { b.facets.connect = clone(b.facets.connect); delete b.facets.connect.place; delete b.facets.connect.rotation; } if (b.interior) stripHistory(b.interior); return b; }
   const bodyHash = (body) => hashOf(body);
   function restoreHistory(c, had, by) { // each instance keeps its own history for the tiles it already had; new ones start fresh
     for (const k in c.tiles) {
@@ -365,15 +387,16 @@
     return c;
   }
   function applyBody(tile, body) {
-    const place = tile.facets.connect.place, had = tile.interior;
+    const place = tile.facets.connect.place, rotation = tile.facets.connect.rotation, had = tile.interior;
     for (const k of BODY) { if (body[k] === undefined) delete tile[k]; else tile[k] = clone(body[k]); }
     if (place !== undefined) tile.facets.connect.place = clone(place);
+    if (rotation !== undefined) tile.facets.connect.rotation = clone(rotation); else delete tile.facets.connect.rotation;
     if (tile.interior) restoreHistory(tile.interior, had, tile.provenance && tile.provenance.created_by);
     tile.provenance.sha256 = contentHash(tile); return tile;
   }
   function instancesOf(world, defId) { const out = []; for (const e of leaves(world)) if (e.tile.provenance && e.tile.provenance.instance_of === defId) out.push(e); return out; }
   function defDrift(world, defId) { const def = (world.defs || {})[defId]; if (!def) return null; const h = bodyHash(def.body); return instancesOf(world, defId).filter((e) => bodyHash(bodyOf(e.tile)) !== h).map((e) => e.path); }
-  const structHash = (world) => hashOf({ tiles: world.tiles, edges: world.edges, defs: world.defs || {}, words: world.words || {} });
+  const structHash = (world) => hashOf({ tiles: world.tiles, edges: world.edges, defs: world.defs || {}, words: world.words || {}, spatial_root: world.spatial_root });
   const parentEdgeOf = (c, tileId) => sortedEdges(c).find((e) => e.kind === 'attach' && e.to.tile === tileId) || null;
   const childrenOf = (c, tileId) => sortedEdges(c).filter((e) => e.kind === 'attach' && e.from.tile === tileId).map((e) => e.to.tile);
   const rootsOf = (c) => Object.keys(c.tiles).sort().filter((id) => !parentEdgeOf(c, id));
@@ -407,7 +430,10 @@
     for (const id in parents) { let cur = id, n = 0; while (parents[cur] && n++ < 1000) { cur = parents[cur]; if (cur === id) { e.push('attach cycle through ' + at(id)); break; } } }
   }
   function validateWorld(world) {
-    const e = []; validateContainer(world, '', e);
+    const e = [], root = spatialRootOf(world);
+    if (!vec(root.origin, 3) || !vec(root.rotation, 3)) e.push('spatial_root needs three-number origin and rotation arrays');
+    else if (canonical(root.origin) !== canonical([0, 0, 0]) || canonical(root.rotation) !== canonical([0, 0, 0])) e.push('spatial_root is the canonical identity frame; place content through tile-local frames instead');
+    validateContainer(world, '', e);
     for (const entry of leaves(world)) { const d = entry.tile.provenance && entry.tile.provenance.instance_of; if (d && !(world.defs || {})[d]) e.push(entry.path + ': points at a definition that is not here: ' + d); }
     return { ok: e.length === 0, errors: e };
   }
@@ -449,7 +475,7 @@
     const box = (cpath) => { const c = containerAt(world, cpath || ''); if (!c) throw new Error('no container ' + cpath); return c; };
     let rekeys = [];
     switch (op.op) {
-      case 'tile.add': { const c = box(op.in), t = clone(op.tile); if (c.tiles[t.id] && op.rename) { const b0 = t.id; let n = 2; while (c.tiles[b0 + '_' + n]) n++; t.id = b0 + '_' + n; } if (c.tiles[t.id]) throw new Error('tile exists: ' + t.id); c.tiles[t.id] = t; break; }
+      case 'tile.add': { const c = box(op.in), t = clone(op.tile); if (c.tiles[t.id] && op.rename) { const b0 = t.id; let n = 2; while (c.tiles[b0 + '_' + n]) n++; t.id = b0 + '_' + n; } if (c.tiles[t.id]) throw new Error('tile exists: ' + t.id); if (t.provenance) t.provenance.sha256 = contentHash(t); c.tiles[t.id] = t; break; }
       case 'tile.replace': { const [cpath, id] = splitPath(op.id), c = box(cpath); need(op.id); if (!op.tile || op.tile.id !== id) throw new Error('the replacement must keep the id ' + id); c.tiles[id] = clone(op.tile); break; }
       case 'word.define': { // teach this world a word; every expression anywhere in it can use it at once
         const name = op.name;
@@ -463,6 +489,13 @@
       case 'def.put': { world.defs = world.defs || {}; if (!op.id) throw new Error('a definition needs an id'); world.defs[op.id] = { id: op.id, name: op.name || op.id, body: clone(op.body), created_by: op.by || 'human' }; break; }
       case 'word.remove': { if (!(world.words || {})[op.name]) throw new Error('no word ' + op.name); delete world.words[op.name]; if (!Object.keys(world.words).length) delete world.words; break; }
       case 'view.set': { const t = need(op.id); if (op.view === null || op.view === undefined) delete t.view; else t.view = clone(op.view); break; }
+      case 'presentation.set': { const t = need(op.id); if (op.presentation === null || op.presentation === undefined) delete t.presentation; else { const bad = presentationError(op.presentation); if (bad) throw new Error(bad); t.presentation = clone(op.presentation); } break; }
+      case 'frame.set': {
+        const t = need(op.id), cn = t.facets.connect;
+        if (op.place != null) { if (!vec(op.place, 3)) throw new Error('frame place must be three finite numbers'); cn.place = clone(op.place); }
+        if (op.rotation != null) { if (!vec(op.rotation, 3)) throw new Error('frame rotation must be three finite numbers'); cn.rotation = clone(op.rotation); }
+        break;
+      }
       case 'cap.add': { const t = need(op.id), c = clone(op.capability); if (!c.id) throw new Error('a capability needs an id'); if (capOf(t, c.id)) throw new Error('capability exists: ' + c.id); (t.capabilities = t.capabilities || []).push(c); break; }
       case 'cap.remove': { const t = need(op.id); if (!capOf(t, op.capability)) throw new Error('no capability ' + op.capability); t.capabilities = t.capabilities.filter((c) => c.id !== op.capability); if (!t.capabilities.length) delete t.capabilities; break; }
       case 'def.create': { // this tile becomes the first instance of a shared definition
@@ -479,6 +512,7 @@
         while (c.tiles[id]) id = base + '_' + ++n;
         const t = createTile({ id, name: op.name || def.name + ' ' + (instancesOf(world, def.id).length + 1), created_by: op.by || 'human' });
         t.provenance.instance_of = def.id; applyBody(t, def.body); t.facets.connect.place = clone(op.place || [0, 0, 0]);
+        if (op.rotation) t.facets.connect.rotation = clone(op.rotation);
         t.provenance.sha256 = contentHash(t); c.tiles[id] = t; break;
       }
       case 'def.update': { // take one instance's current body as the definition's new truth
@@ -499,6 +533,7 @@
         if (!id) do { id = src.id + '_' + ++n; } while (c.tiles[id]);
         const pl = src.facets.connect.place || [0, 0, 0], off = op.offset || [0, 0, 0];
         t.id = id; t.name = op.name || src.name + (n > 1 ? ' ' + n : ' copy'); t.facets.connect.place = [pl[0] + off[0], pl[1] + off[1], pl[2] + off[2]];
+        if (op.rotation) t.facets.connect.rotation = clone(op.rotation);
         t.state = { version: 1, mutable: true, last_transform: null };
         t.provenance = { created_by: op.by || 'human', bridges: clone(src.provenance.bridges), stamped_from: { path: op.id, sha256: src.provenance.sha256 }, sha256: null };
         t.provenance.sha256 = contentHash(t); c.tiles[id] = t; break;
@@ -572,10 +607,14 @@
         const it = x.interior, pmap = {}; it.ports.forEach((p) => (pmap[p.id] = p));
         for (const k in it.tiles) if (c.tiles[k]) throw new Error('cannot expand: a tile with id ' + k + ' already exists here');
         for (const k in it.edges) if (c.edges[k]) throw new Error('cannot expand: a wire with id ' + k + ' already exists here');
-        const pe = parentEdgeOf(c, id), anchored = pe && pmap[pe.to.socket] ? pmap[pe.to.socket].tile : null, pl = x.facets.connect.place || [0, 0, 0];
+        const pe = parentEdgeOf(c, id), anchored = pe && pmap[pe.to.socket] ? pmap[pe.to.socket].tile : null, shellFrame = placementOf(x);
         for (const e of sortedEdges(c)) for (const end of ['from', 'to']) if (e[end].tile === id) { const p = pmap[e[end].socket]; if (!p) throw new Error('cannot expand: wire ' + e.id + ' uses a socket that belongs to the shell itself'); e[end] = { tile: p.tile, socket: p.socket }; }
         for (const p of c.ports || []) if (p.tile === id) { const q = pmap[p.socket]; if (!q) throw new Error('cannot expand: an outer port uses the shell itself'); p.tile = q.tile; p.socket = q.socket; }
-        for (const k of rootsOf(it)) if (k !== anchored) { const q = it.tiles[k].facets.connect.place || [0, 0, 0]; it.tiles[k].facets.connect.place = [q[0] + pl[0], q[1] + pl[1], q[2] + pl[2]]; }
+        for (const k of rootsOf(it)) {
+          const child = it.tiles[k], hadRotation = child.facets.connect.rotation !== undefined, shellRotated = canonical(shellFrame.rotation) !== canonical([0, 0, 0]), merged = composePlacement(shellFrame, placementOf(child));
+          if (k !== anchored) child.facets.connect.place = merged.place;
+          if (hadRotation || shellRotated) child.facets.connect.rotation = merged.rotation; else delete child.facets.connect.rotation;
+        }
         Object.assign(c.tiles, it.tiles); Object.assign(c.edges, it.edges); delete c.tiles[id];
         rekeys = Object.keys(it.tiles).sort().map((k) => [join(op.id, k), join(cpath, k)]);
         break;
@@ -598,7 +637,7 @@
     const t = c.tiles[id];
     if (!k.part) return t || null;
     if (!t) return null;
-    return k.part === 'meta' ? metaOf(t) : k.part === 'view' ? t.view || null : k.part === 'capabilities' ? t.capabilities || null : k.part === 'params' ? t.params || null : k.part === 'ports' ? (t.interior ? t.interior.ports : null) : k.part === 'interior' ? t.interior || null : t.facets[k.part.slice(6)] || null;
+    return k.part === 'meta' ? metaOf(t) : k.part === 'view' ? t.view || null : k.part === 'presentation' ? t.presentation || null : k.part === 'capabilities' ? t.capabilities || null : k.part === 'params' ? t.params || null : k.part === 'ports' ? (t.interior ? t.interior.ports : null) : k.part === 'interior' ? t.interior || null : t.facets[k.part.slice(6)] || null;
   }
   function setUnit(world, key, value) {
     if (key.startsWith('word:')) { world.words = world.words || {}; if (value === null) delete world.words[key.slice(5)]; else world.words[key.slice(5)] = clone(value); return; }
@@ -614,6 +653,7 @@
     else if (k.part === 'params') { if (value === null) delete t.params; else t.params = clone(value); }
     else if (k.part === 'capabilities') { if (value === null) delete t.capabilities; else t.capabilities = clone(value); }
     else if (k.part === 'view') { if (value === null) delete t.view; else t.view = clone(value); }
+    else if (k.part === 'presentation') { if (value === null) delete t.presentation; else t.presentation = clone(value); }
     else if (k.part === 'ports') t.interior.ports = clone(value);
     else if (k.part === 'interior') { if (value === null) delete t.interior; else t.interior = clone(value); }
     else t.facets[k.part.slice(6)] = clone(value);
@@ -628,6 +668,7 @@
       if (!same(x.params, y.params)) out.push({ key: 'tile:' + p + '#params', value: y.params ? clone(y.params) : null });
       if (!same(x.capabilities, y.capabilities)) out.push({ key: 'tile:' + p + '#capabilities', value: y.capabilities ? clone(y.capabilities) : null });
       if (!same(x.view, y.view)) out.push({ key: 'tile:' + p + '#view', value: y.view ? clone(y.view) : null });
+      if (!same(x.presentation, y.presentation)) out.push({ key: 'tile:' + p + '#presentation', value: y.presentation ? clone(y.presentation) : null });
       if (!x.interior !== !y.interior) out.push({ key: 'tile:' + p + '#interior', value: y.interior ? clone(y.interior) : null });
       else if (x.interior) { if (!same(x.interior.ports, y.interior.ports)) out.push({ key: 'tile:' + p + '#ports', value: clone(y.interior.ports) }); diffContainer(x.interior, y.interior, p, out); }
     }
@@ -799,7 +840,7 @@
     return { ok: true, status: 'ROLLED_BACK', exact: structHash(ws.live) === r.before_struct_hash };
   }
   function exportWorkspace(ws) {
-    const out = { format: 'morphtile-workspace', version: '0.3', exported_at_time: ws.live.time, ledger: { genesis: ws.ledger.genesis, events: ws.ledger.events }, candidates: ws.candidates, receipts: ws.receipts, counter: ws.counter };
+    const out = { format: 'morphtile-workspace', version: '0.4', exported_at_time: ws.live.time, ledger: { genesis: ws.ledger.genesis, events: ws.ledger.events }, candidates: ws.candidates, receipts: ws.receipts, counter: ws.counter };
     out.expect = { live_hash: hashOf(ws.live), struct_hash: structHash(ws.live), events: ws.ledger.events.length, tiles: countTiles(ws.live) }; // what a correct replay of this file must produce
     return out;
   }
@@ -808,7 +849,7 @@
   function exportWords(world, names) {
     const src = world.words || {}, pick = {};
     for (const k of (names && names.length ? names : Object.keys(src)).sort()) if (src[k]) pick[k] = clone(src[k]);
-    return { format: 'morphtile-words', version: '0.3', words: pick, expect: { sha256: hashOf(pick), count: Object.keys(pick).length } };
+    return { format: 'morphtile-words', version: '0.4', words: pick, expect: { sha256: hashOf(pick), count: Object.keys(pick).length } };
   }
   function importWords(world, pack, opts) {
     opts = opts || {};
@@ -849,7 +890,7 @@
     if (!tile) return null;
     const need = needsOf(world, tile), missing = Object.keys(need.defs).filter((k) => !need.defs[k]);
     for (const k of missing) delete need.defs[k];
-    const kit = { format: 'morphtile-kit', version: '0.3', name: (opts && opts.name) || tile.name, tile: clone(tile), defs: need.defs, words: need.words };
+    const kit = { format: 'morphtile-kit', version: '0.4', name: (opts && opts.name) || tile.name, tile: clone(tile), defs: need.defs, words: need.words };
     kit.expect = { sha256: hashOf({ tile: kit.tile, defs: kit.defs, words: kit.words }), defs: Object.keys(kit.defs).length, words: Object.keys(kit.words).length, missing };
     return kit;
   }
@@ -859,7 +900,7 @@
     const claimed = kit.expect && kit.expect.sha256, observed = hashOf({ tile: kit.tile, defs: kit.defs || {}, words: kit.words || {} });
     if (claimed && claimed !== observed) return { ok: false, status: 'HOLD_HASH_MISMATCH', claimed, observed, ops: [], conflicts: [] };
     const ops = [], conflicts = [], already = [];
-    const wordPack = importWords(world, { format: 'morphtile-words', version: '0.3', words: kit.words || {} }, opts);
+    const wordPack = importWords(world, { format: 'morphtile-words', version: '0.4', words: kit.words || {} }, opts);
     ops.push(...wordPack.ops); conflicts.push(...wordPack.conflicts); already.push(...(wordPack.already || []));
     for (const id of Object.keys(kit.defs || {}).sort()) {
       const mine = (world.defs || {})[id], theirs = kit.defs[id];
@@ -867,10 +908,16 @@
       ops.push({ op: 'def.put', id, name: theirs.name, body: theirs.body, by: theirs.created_by });
     }
     if (conflicts.length && !opts.partial) return { ok: true, status: 'HELD_INCOMPLETE', evidence: claimed ? 'verified_payload_sha256' : 'structurally_possible_not_tested', ops: [], conflicts, already, detail: 'the tile would arrive without something it needs, so nothing is applied' };
-    ops.push({ op: 'tile.add', in: opts.in || '', tile: kit.tile, rename: true });
-    return { ok: true, status: conflicts.length ? 'PARTIAL_HELD' : 'READY', evidence: claimed ? 'verified_payload_sha256' : 'structurally_possible_not_tested', ops, conflicts, already };
+    const incoming = clone(kit.tile), source = placementOf(incoming), requested = opts.anchor || {};
+    const place = opts.place || requested.place || requested.position, rotation = opts.rotation || requested.rotation;
+    if (place != null) { if (!vec(place, 3)) return { ok: false, status: 'HOLD_INVALID_DESTINATION_ANCHOR', detail: 'place must be three finite numbers', ops: [], conflicts, already }; incoming.facets.connect.place = clone(place); }
+    if (rotation != null) { if (!vec(rotation, 3)) return { ok: false, status: 'HOLD_INVALID_DESTINATION_ANCHOR', detail: 'rotation must be three finite numbers', ops: [], conflicts, already }; incoming.facets.connect.rotation = clone(rotation); }
+    if (incoming.provenance) incoming.provenance.sha256 = contentHash(incoming);
+    ops.push({ op: 'tile.add', in: opts.in || '', tile: incoming, rename: true });
+    return { ok: true, status: conflicts.length ? 'PARTIAL_HELD' : 'READY', evidence: claimed ? 'verified_payload_sha256' : 'structurally_possible_not_tested', ops, conflicts, already,
+      placement: { source, destination: placementOf(incoming), descendants_rewritten: false } };
   }
-  function exportWorld(world, name) { const w = clone(world); if (name) w.name = name; return { format: 'morphtile-world', version: '0.3', world: w, expect: { struct_hash: structHash(w), tiles: countTiles(w) } }; }
+  function exportWorld(world, name) { const w = clone(world); if (name) w.name = name; return { format: 'morphtile-world', version: '0.4', world: w, expect: { struct_hash: structHash(w), tiles: countTiles(w) } }; }
   function importWorld(data) {
     const w = data && data.format === 'morphtile-world' ? data.world : data && data.kind === 'morphtile-world' ? data : null;
     if (!w) return { ok: false, status: 'HOLD_NOT_A_WORLD' };
@@ -956,6 +1003,24 @@
   const compose = (A, B) => { const p = mv3(A.m, B.t); return { m: mul3(A.m, B.m), t: [p[0] + A.t[0], p[1] + A.t[1], p[2] + A.t[2]] }; };
   const xform = (A, p) => { const q = mv3(A.m, p); return [q[0] + A.t[0], q[1] + A.t[1], q[2] + A.t[2]]; };
   const rotXYZ = (r) => mul3(rotY(r[1] || 0), mul3(rotX(r[0] || 0), rotZ(r[2] || 0)));
+  const cleanNumber = (n) => Math.abs(n) < 1e-12 ? 0 : Math.round(n * 1e12) / 1e12;
+  function rotationOf(m) { // inverse of rotXYZ: Ry * Rx * Rz
+    const x = Math.asin(Math.max(-1, Math.min(1, -m[5]))), cx = Math.cos(x);
+    let y, z;
+    if (Math.abs(cx) > 1e-9) { y = Math.atan2(m[2], m[8]); z = Math.atan2(m[3], m[4]); }
+    else { y = Math.atan2(-m[6], m[0]); z = 0; }
+    return [cleanNumber(x), cleanNumber(y), cleanNumber(z)];
+  }
+  function placementOf(tile) {
+    const c = (tile && tile.facets && tile.facets.connect) || {};
+    return { place: clone(c.place || [0, 0, 0]), rotation: clone(c.rotation || [0, 0, 0]) };
+  }
+  function composePlacement(parent, child) {
+    const A = affine(rotXYZ(parent.rotation || [0, 0, 0]), parent.place || [0, 0, 0]);
+    const B = affine(rotXYZ(child.rotation || [0, 0, 0]), child.place || [0, 0, 0]);
+    const C = compose(A, B);
+    return { place: C.t.map(cleanNumber), rotation: rotationOf(C.m) };
+  }
 
   function pushTri(out, A, a, b, c, dir, tint, K) { // orient so the normal points along `dir`, then place with affine A
     if (dot(cross(sub3(b, a), sub3(c, a)), dir) < 0) { const x = b; b = c; c = x; }
@@ -1104,6 +1169,7 @@
     },
   };
   const meshCache = new Map();
+  function clearRuntimeCaches() { const cleared = meshCache.size; meshCache.clear(); return { cleared }; }
   const compileMesh = (tile, world) => compileMeshData(tile.facets.mesh, tile.facets.material.data, world ? { world } : null);
   function compileMeshData(mf, material, ctx) {
     const md = material || {}, world = ctx && ctx.world;
@@ -1167,15 +1233,15 @@
   }
   function tileMatrix(world, path, t, memo, depth) {
     if (memo[path]) return memo[path];
-    const [cpath, id] = splitPath(path), c = containerAt(world, cpath), tile = activeTile(world, path, c.tiles[id]), pose = behaviorPose(world, path, tile, t), B = affine(rotXYZ(pose.r), pose.pos);
+    const [cpath, id] = splitPath(path), c = containerAt(world, cpath), tile = activeTile(world, path, c.tiles[id]), pose = behaviorPose(world, path, tile, t), B = affine(rotXYZ(pose.r), pose.pos), local = placementOf(tile), P = affine(rotXYZ(local.rotation), local.place);
     const pe = (depth || 0) < 64 ? parentEdgeOf(c, id) : null;
     let M;
-    if (pe) M = compose(compose(attachFrame(world, join(cpath, pe.from.tile), pe.from.socket, t, memo), B), negSocket(findSocket(tile, pe.to.socket)));
+    if (pe) M = compose(compose(compose(attachFrame(world, join(cpath, pe.from.tile), pe.from.socket, t, memo), affine(rotXYZ(local.rotation), [0, 0, 0])), B), negSocket(findSocket(tile, pe.to.socket)));
     else if (cpath) { // a root of an interior: it lives in its shell's frame; if the shell hangs from outside through this tile's port, it hangs the same way it did before collapsing
       const shell = activeTile(world, cpath), sp = splitPath(cpath), spe = parentEdgeOf(containerAt(world, sp[0]), sp[1]);
       const anchor = spe && ((shell.interior && shell.interior.ports) || []).find((p) => p.id === spe.to.socket && p.tile === id), S = tileMatrix(world, cpath, t, memo, (depth || 0) + 1);
-      M = anchor ? compose(compose(S, B), negSocket(findSocket(tile, anchor.socket))) : compose(compose(S, affine(ID3, tile.facets.connect.place || [0, 0, 0])), B);
-    } else M = compose(affine(ID3, tile.facets.connect.place || [0, 0, 0]), B);
+      M = anchor ? compose(compose(compose(S, affine(rotXYZ(local.rotation), [0, 0, 0])), B), negSocket(findSocket(tile, anchor.socket))) : compose(compose(S, P), B);
+    } else M = compose(P, B);
     M.glow = pose.glow; memo[path] = M;
     return M;
   }
@@ -1254,6 +1320,36 @@
   const h = (tag, props, children) => Object.assign({ tag, children: children || [] }, props || {});
   const fmt = (v) => (typeof v === 'number' ? (Number.isInteger(v) ? String(v) : v.toFixed(1)) : String(v));
   function meshSummary(tile) { const m = tile.facets.mesh; return m.type === 'interior' ? 'holds ' + countTiles(tile.interior || { tiles: {} }) + ' tiles, ' + depthOf(tile) + ' deep' : m.type === 'generated' ? 'generated ' + m.data.generator : m.type === 'reference' ? 'referenced' : m.data.parts ? m.data.parts.length + ' parts' : m.data.shape || 'box'; }
+  function resolvePresentation(world, path, opts) {
+    opts = opts || {};
+    const tile = activeTile(world, path), canonicalPresentation = clone((tile && tile.presentation) || { mode: 'screen', user_adjustable: false });
+    const session = (opts.session_presentations || {})[path];
+    const resolved = canonicalPresentation.user_adjustable && session ? Object.assign({}, canonicalPresentation, clone(session)) : canonicalPresentation;
+    const bad = presentationError(resolved);
+    if (bad) return { status: 'HOLD_INVALID_PRESENTATION', detail: bad, canonical: canonicalPresentation, resolved };
+    const supported = opts.presentation_modes || PRESENTATION_MODES;
+    if (!supported.includes(resolved.mode)) return { status: 'HOLD_UNSUPPORTED_PRESENTATION', detail: 'host does not support ' + resolved.mode, canonical: canonicalPresentation, resolved };
+    let anchor_frame = null;
+    if (resolved.mode === 'world') anchor_frame = { place: [0, 0, 0], rotation: [0, 0, 0], anchor: 'world-root' };
+    if (resolved.mode === 'tile') {
+      const anchor = resolved.anchor || path;
+      if (!resolveTile(world, anchor)) return { status: 'HOLD_MISSING_PRESENTATION_ANCHOR', detail: 'no tile ' + anchor, canonical: canonicalPresentation, resolved };
+      const m = tileMatrix(world, anchor, opts.t == null ? world.time : opts.t, {});
+      anchor_frame = { place: m.t.map(cleanNumber), rotation: rotationOf(m.m), anchor };
+    }
+    return { status: 'READY', canonical: canonicalPresentation, resolved, anchor_frame, session_applied: !!(canonicalPresentation.user_adjustable && session) };
+  }
+  function presentNode(node, world, path, opts) {
+    const p = resolvePresentation(world, path, opts), d = p.resolved || { mode: 'screen' }, mode = PRESENTATION_MODES.includes(d.mode) ? d.mode : 'screen';
+    node.cls = (node.cls || '') + ' mt-p-' + mode + (d.dock ? ' mt-dock-' + d.dock : '') + (p.status !== 'READY' ? ' is-presentation-held' : '');
+    node.attrs = Object.assign({}, node.attrs, { 'data-presentation-mode': mode, 'data-presentation-status': p.status });
+    node.style = Object.assign({}, node.style);
+    if (d.preferred_size) { node.style['--p-width'] = d.preferred_size[0] + 'px'; node.style['--p-height'] = d.preferred_size[1] + 'px'; }
+    if (d.preferred_position) { node.style['--p-x'] = d.preferred_position[0] + 'px'; node.style['--p-y'] = d.preferred_position[1] + 'px'; }
+    const where = mode === 'docked' ? 'docked ' + (d.dock || 'right') : mode === 'tile' ? 'tile anchor ' + ((p.anchor_frame && p.anchor_frame.anchor) || d.anchor || path) : mode === 'world' ? 'world anchor' : mode;
+    node.children.unshift(h('p', { cls: 'mt-presentation-tag' + (p.status === 'READY' ? '' : ' is-hold'), text: p.status === 'READY' ? where + (p.session_applied ? ' · session adjusted' : '') : p.status + ' · ' + p.detail }));
+    return node;
+  }
   // A tile may carry its own interface in `view`: the same little language, deciding what is shown and how.
   // The engine's card is only the default for a tile that has not said otherwise — presentation stops being
   // the engine's to decide. Views read; they never write, and every control they place addresses a real path.
@@ -1306,14 +1402,14 @@
     const node = (c, cpath, id) => {
       const path = join(cpath, id), tile = activeTile(world, path, c.tiles[id]), kids = childrenOf(c, id).map((k) => node(c, cpath, k));
       const inside = tile.interior && isOpen(path) ? h('div', { cls: 'mt-interior' }, rootsOf(tile.interior).map((k) => node(tile.interior, path, k))) : null;
-      if (tile.view && declares(tile, ['ui_panel'])) { const own = compileView(world, path, tile, t, null, 0, []);
+      if (tile.view && declares(tile, ['ui_panel'])) { const own = presentNode(compileView(world, path, tile, t, null, 0, []), world, path, Object.assign({}, opts, { t }));
         return kids.length || inside ? h('div', { cls: 'v-holder' }, [own].concat(inside ? [inside] : [], kids.length ? [h('div', { cls: 'mt-children' }, kids)] : [])) : own; }
       if (!declares(tile, ['ui_panel'])) { skipped.push(path); return h('div', { cls: 'mt-foreign', tile: path }, [h('span', { text: tile.name + ' is not declared for this form' })].concat(kids, inside ? [inside] : [])); }
       const md = tile.facets.material.data || {}, col = md.color || [0.5, 0.55, 0.8], shape = tile.facets.mesh.data && tile.facets.mesh.data.shape, size = (tile.facets.mesh.data && tile.facets.mesh.data.size) || [1, 1, 1];
       const em = Math.max(0, Number(evalExpr(md.emissive, tileCtx(world, path, t, tile))) || 0), vars = readVars(world, path, t), socks = tile.facets.connect.sockets || [];
       const wires = sortedEdges(c).filter((e) => e.kind === 'signal' && e.from.tile === id).map((e) => h('li', { text: e.from.socket + ' → ' + (c.tiles[e.to.tile] || {}).name + ' · ' + e.to.socket }));
       const ops = tile.facets.behavior.type === 'scripted' ? tile.facets.behavior.data.ops || [] : [];
-      return h('section', {
+      return presentNode(h('section', {
         cls: 'mt-panel' + (tile.interior ? ' mt-shell' : '') + (em > 0.05 ? ' is-lit' : '') + (ops.some((o) => o.op === 'pulse') ? ' is-pulsing' : '') + (md.hold ? ' is-hold' : ''), tile: path,
         style: { '--tile': css(col), '--tile-dim': css(col, 0.35), '--glow': css(md.glow || col), 'border-radius': shape === 'sphere' ? '28px' : shape === 'cylinder' || shape === 'cone' ? '18px' : '6px', 'flex-grow': String(Math.max(1, Math.round(size[0] * size[2]))) },
       }, [
@@ -1330,9 +1426,10 @@
         wires.length ? h('ul', { cls: 'mt-wires' }, wires) : null,
         inside,
         kids.length ? h('div', { cls: 'mt-children' }, kids) : null,
-      ].filter(Boolean));
+      ].filter(Boolean)), world, path, Object.assign({}, opts, { t }));
     };
-    return { form: 'ui_panel', root: h('div', { cls: 'mt-panels' }, rootsOf(world).map((id) => node(world, '', id))), skipped };
+    const root = h('div', { cls: 'mt-panels' }, rootsOf(world).map((id) => node(world, '', id)));
+    return { form: 'ui_panel', root, skipped, presentations: leaves(world).filter((e) => declares(e.tile, ['ui_panel'])).map((e) => Object.assign({ path: e.path }, resolvePresentation(world, e.path, Object.assign({}, opts, { t })))) };
   }
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   function vnodeToHTML(v) {
@@ -1356,14 +1453,16 @@
       lines.push(pad + name + ' ' + f.type + (f.data && Object.keys(f.data).length ? ' ' + jsonish(f.data) : '') + (f.source ? ' from ' + JSON.stringify(f.source) : ''));
     };
     const tile = (c, id, depth) => {
-      const t = c.tiles[id], pad = IND.repeat(depth), place = t.facets.connect.place;
+      const t = c.tiles[id], pad = IND.repeat(depth), place = t.facets.connect.place, rotation = t.facets.connect.rotation;
       lines.push(pad + 'tile ' + id + ' ' + JSON.stringify(t.name) + (t.form_hints.length ? ' as ' + t.form_hints.join(' ') : ''));
       if (place && canonical(place) !== canonical([0, 0, 0])) lines.push(pad + IND + 'at ' + place.join(' '));
+      if (rotation && canonical(rotation) !== canonical([0, 0, 0])) lines.push(pad + IND + 'rotate ' + rotation.join(' '));
       for (const f of FACETS) facetLine(t, f, pad + IND);
       for (const s of t.facets.connect.sockets || []) if (!s.port) lines.push(pad + IND + 'socket ' + s.id + ' ' + s.kind + (s.kind === 'signal' ? ' ' + s.dir + (s.signal && s.signal !== s.id ? ' ' + s.signal : '') : ' at ' + (s.pos || [0, 0, 0]).join(' ')) + (s.label ? ' ' + JSON.stringify(s.label) : ''));
       for (const p of t.params || []) lines.push(pad + IND + 'control ' + p.id + ' ' + jsonish(p));
       for (const cp of t.capabilities || []) lines.push(pad + IND + 'capability ' + cp.id + ' ' + jsonish(cp));
       if (t.view) lines.push(pad + IND + 'view ' + jsonish(t.view));
+      if (t.presentation) lines.push(pad + IND + 'presentation ' + jsonish(t.presentation));
       for (const b of t.provenance.bridges || []) lines.push(pad + IND + 'bridge ' + jsonish(b));
       if (t.interior) {
         lines.push(pad + IND + 'inside');
@@ -1415,6 +1514,7 @@
       if (indent <= curIndent) fail(i, 'indent this under its tile');
       if (word === 'inside') { cur.interior = cur.interior || { tiles: {}, edges: {}, ports: [] }; cur.facets.mesh = { type: 'interior', source: null, data: {} }; stack.push({ c: cur.interior, indent, shell: cur }); continue; }
       if (word === 'at') { cur.facets.connect.place = rest.split(/\s+/).map(Number); continue; }
+      if (word === 'rotate') { cur.facets.connect.rotation = rest.split(/\s+/).map(Number); continue; }
       if (FACETS.includes(word)) {
         const m = /^(\S+)(?:\s+(\{.*?\}))?(?:\s+from\s+("(?:[^"\\]|\\.)*"))?$/.exec(rest) || fail(i, 'expected: ' + word + ' <type> [{json}] [from "<source>"]');
         cur.facets[word] = { type: m[1], source: m[3] ? JSON.parse(m[3]) : null, data: m[2] ? readJSON(m[2], i) : {} };
@@ -1429,6 +1529,7 @@
         cur.facets.connect.sockets.push(s); continue;
       }
       if (word === 'view') { cur.view = readJSON(rest, i); continue; }
+      if (word === 'presentation') { cur.presentation = readJSON(rest, i); continue; }
       if (word === 'capability') { const m = /^([A-Za-z0-9_\-]+)\s+(\{.*\})$/.exec(rest) || fail(i, 'expected: capability <id> {json}'); const cp = readJSON(m[2], i); cp.id = m[1]; (cur.capabilities = cur.capabilities || []).push(cp); continue; }
       if (word === 'control') { const m = /^([A-Za-z0-9_\-]+)\s+(\{.*\})$/.exec(rest) || fail(i, 'expected: control <id> {json}'); const p = readJSON(m[2], i); p.id = m[1]; (cur.params = cur.params || []).push(p); continue; }
       if (word === 'bridge') { (cur.provenance.bridges = cur.provenance.bridges || []).push(readJSON(rest, i)); continue; }
@@ -1449,19 +1550,20 @@
     // Compare in a normal form, at every depth, so notation shorthands (an omitted zero place, an implied null source)
     // never read as a change — and so text is never able to quietly rewrite what it cannot express.
     const norm = (t) => { const x = clone(t); delete x.state; delete x.provenance; for (const f of FACETS) if (f !== 'connect' && x.facets[f].source === undefined) x.facets[f].source = null;
-      const c = x.facets.connect; c.place = c.place || [0, 0, 0]; c.sockets = (c.sockets || []).slice().sort((a, b) => (a.id < b.id ? -1 : 1)); c.bridges = c.bridges || [];
+      const c = x.facets.connect; c.place = c.place || [0, 0, 0]; c.rotation = c.rotation || [0, 0, 0]; c.sockets = (c.sockets || []).slice().sort((a, b) => (a.id < b.id ? -1 : 1)); c.bridges = c.bridges || [];
       if (x.interior) { x.interior.ports = (x.interior.ports || []).slice().sort((a, b) => (a.id < b.id ? -1 : 1)); for (const k in x.interior.tiles) x.interior.tiles[k] = norm(x.interior.tiles[k]); }
       return x; };
     // Text cannot say what a tile's history is, so it never overwrites one. A replacement starts from the tile that is
     // already there and takes only the parts the text actually changed — at every depth. State, provenance and anything
     // the notation does not express stay exactly as they were.
-    const normFacet = (f, name) => { const x = clone(f); if (name !== 'connect') { if (x.source === undefined) x.source = null; return x; } x.place = x.place || [0, 0, 0]; x.sockets = (x.sockets || []).slice().sort((a, b) => (a.id < b.id ? -1 : 1)); x.bridges = x.bridges || []; return x; };
+    const normFacet = (f, name) => { const x = clone(f); if (name !== 'connect') { if (x.source === undefined) x.source = null; return x; } x.place = x.place || [0, 0, 0]; x.rotation = x.rotation || [0, 0, 0]; x.sockets = (x.sockets || []).slice().sort((a, b) => (a.id < b.id ? -1 : 1)); x.bridges = x.bridges || []; return x; };
     const reconcile = (want, have) => {
       if (!have) return want;
       const out = clone(have);
       for (const f of FACETS) if (!same(normFacet(want.facets[f], f), normFacet(have.facets[f], f))) out.facets[f] = clone(want.facets[f]);
       if (want.capabilities) out.capabilities = clone(want.capabilities); else delete out.capabilities;
       if (want.view) out.view = clone(want.view); else delete out.view;
+      if (want.presentation) out.presentation = clone(want.presentation); else delete out.presentation;
       out.name = want.name; out.form_hints = clone(want.form_hints); out.provenance.bridges = clone(want.provenance.bridges);
       if (want.params) out.params = clone(want.params); else delete out.params;
       if (!want.interior) delete out.interior;
@@ -1616,14 +1718,14 @@
   }
 
   return {
-    VERSION: '0.3', FACETS, KNOWN_FORMS, SPATIAL_FORMS, EVIDENCE, PRESETS,
+    VERSION: '0.4', FACETS, KNOWN_FORMS, SPATIAL_FORMS, PRESENTATION_MODES, IDENTITY_SPATIAL_ROOT, EVIDENCE, PRESETS,
     clone, canonical, sha256, hashOf, ihash,
     createTile, validateTile, contentHash, findSocket,
     evalExpr, getVar, readVars, rekeyVars, paramValue, relTile, getAt, activeTile, isAwake, capOf, capStatus, grantsOf, sleepingReport, pendingWakes, splitPath, resolveTile, containerAt, countTiles, depthOf, leaves,
-    createWorld, validateWorld, structHash, BUILTIN_WORDS, bodyOf, bodyHash, instancesOf, defDrift, applyStructOp, applyEvent, diffUnits, unitValue, rootsOf, childrenOf, parentEdgeOf,
+    createWorld, validateWorld, structHash, spatialRootOf, placementOf, composePlacement, tileMatrix, BUILTIN_WORDS, bodyOf, bodyHash, instancesOf, defDrift, applyStructOp, applyEvent, diffUnits, unitValue, rootsOf, childrenOf, parentEdgeOf,
     reconstruct, exportWorld, importWorld, exportWords, importWords, exportKit, importKit, needsOf, createWorkspace, record, cloneBody, editCandidate, planMerge, commitPlan, rollback, exportWorkspace, importWorkspace,
     weakestEvidence, ingestMaterialOffer, materialFromOffer, createRegistry, dataUrlBytes,
-    compileMesh, compileMeshData, renderAsset, renderReceipt, compilePanel, compileView, vnodeToHTML, compileWebsite, toText, parseText, fromText,
+    compileMesh, compileMeshData, clearRuntimeCaches, renderAsset, renderReceipt, compilePanel, compileView, resolvePresentation, presentationError, vnodeToHTML, compileWebsite, toText, parseText, fromText,
     seedWorld, act,
   };
 });

@@ -8,7 +8,7 @@ Ground rules that are already true and should stay true:
 5. Ops and merge-unit keys address tiles by PATH. Never add an API that only works at the root.
 6. A form may stop descending (a simple view). It may never keep its own reduced copy of the world.
 
-**If you are the next model picking this up: read `docs/PRINCIPLES.md`, then `docs/FORMAT.md`, then run `npm test` (99 tests). Every test name is a claim; if one fails, that claim is what broke.** The workshop is `npm run build` -> `dist/axiomatter-workshop.html`, one file, no server.
+**If you are the next model picking this up: read `docs/PRINCIPLES.md`, then `docs/FORMAT.md`, then run `npm test` (123 tests). Every test name is a claim; if one fails, that claim is what broke.** The workshop is `npm run build` -> `dist/axiomatter-workshop.html`, one file, no server.
 
 Priority order changed on 2026-09-19 by Mike's principle 1: **deepen native matter before adding bridges.** Items 1-2 below (bridges) now come AFTER the depth list.
 
@@ -28,6 +28,12 @@ Depth list (do these first):
 - ~~**D4 Code surface.**~~ **Done in v0.3** (`toText`/`parseText`/`fromText`, Text tab, 6 tests). Next within it: collapse/expand as text verbs, a facet-data syntax nicer than inline JSON, and error underlining in the editor.
 - **D5 Multi-anchor collapse** (bake + remember) so any selection can collapse, still exactly reversible.
 - **D6 Live website form**: emit the same signal addresses so the exported page is a control surface, not just a picture.
+
+Direction-note implementation on 2026-09-19:
+- Universal spatial root/local frames and destination kit anchors are implemented and tested in `test/spatial.js`.
+- Declarative interface placement plus non-canonical session overrides are implemented and tested in `test/presentation.js`.
+- Cold region/nested-child storage is experimental, measured and adversarially tested in `experimental/cold-matter.js`; inspect the current evidence before making a RAM claim.
+- World #1 commerce is a separate world policy module in `worlds/world1/commerce.js`, not a core default.
 
 Bridge and other steps (after the depth list):
 1. **Real UC read.** Add `bridges/uc.js` (outside core) that reads one asset package from `axm-universal-creation`

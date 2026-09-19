@@ -1,0 +1,288 @@
+{
+  "format": "morphtile-cold-memory-measurement",
+  "version": "0.2",
+  "measured_at": "2026-09-19T21:37:07.727Z",
+  "runtime": {
+    "node": "v24.19.0",
+    "platform": "linux",
+    "arch": "x64",
+    "gc_exposed_in_samples": true,
+    "isolated_process_per_scale": true
+  },
+  "samples": [
+    {
+      "input": {
+        "regions": 24,
+        "parts_per_region": 24,
+        "expected": {
+          "live_hash": "c5361f33365b0c467e7bbfe82876d005861b66c4b34521976c389c15ee306dc7",
+          "struct_hash": "3ac9492c65678501b03c46b49d88d651097fd48db96e0f7d97d9b8c9fc27f693",
+          "tiles": 600
+        },
+        "preserved_state_bytes": 88
+      },
+      "realization": {
+        "rendered_tiles": 576,
+        "triangles": 31104,
+        "holds": 0
+      },
+      "timings_ms": {
+        "construction": 40.704,
+        "full_realization": 37.276,
+        "freeze": 50.596,
+        "wake_one_region": 2.654,
+        "wake_all": 74.714
+      },
+      "memory": {
+        "baseline": {
+          "rss_bytes": 41623552,
+          "heap_used_bytes": 7368680,
+          "heap_total_bytes": 12619776,
+          "external_bytes": 3861138
+        },
+        "fully_realized": {
+          "rss_bytes": 56799232,
+          "heap_used_bytes": 8733600,
+          "heap_total_bytes": 17862656,
+          "external_bytes": 3884182
+        },
+        "warm_canonical": {
+          "rss_bytes": 56799232,
+          "heap_used_bytes": 8471792,
+          "heap_total_bytes": 17862656,
+          "external_bytes": 3884182
+        },
+        "cold_index_only": {
+          "rss_bytes": 65024000,
+          "heap_used_bytes": 8694864,
+          "heap_total_bytes": 26513408,
+          "external_bytes": 4618544
+        },
+        "one_region_awake": {
+          "rss_bytes": 65155072,
+          "heap_used_bytes": 8750432,
+          "heap_total_bytes": 26513408,
+          "external_bytes": 3923356
+        },
+        "all_awake": {
+          "rss_bytes": 66891776,
+          "heap_used_bytes": 9557344,
+          "heap_total_bytes": 27037696,
+          "external_bytes": 4599408
+        },
+        "heap_delta_full_to_warm_bytes": -261808,
+        "heap_delta_full_to_cold_bytes": -38736,
+        "rss_delta_full_to_warm_bytes": 0,
+        "rss_delta_full_to_cold_bytes": 8224768
+      },
+      "storage": {
+        "bytes": 991336,
+        "region_files": 24
+      },
+      "runtime_products": {
+        "mesh_cache_entries_cleared": 1
+      },
+      "verification": {
+        "cold_open_status": "COLD_READY",
+        "one_region_status": "AWAKE_VERIFIED",
+        "unrelated_regions_resident_after_one_wake": [],
+        "mutation_preserved": true,
+        "all_status": "ALL_AWAKE",
+        "restored": {
+          "live_hash": "c5361f33365b0c467e7bbfe82876d005861b66c4b34521976c389c15ee306dc7",
+          "struct_hash": "3ac9492c65678501b03c46b49d88d651097fd48db96e0f7d97d9b8c9fc27f693",
+          "tiles": 600
+        },
+        "exact_live_hash": true,
+        "exact_struct_hash": true,
+        "exact_tile_count": true
+      }
+    },
+    {
+      "input": {
+        "regions": 60,
+        "parts_per_region": 24,
+        "expected": {
+          "live_hash": "598a077027c16c3262d379d182e6298037681b591dbcfef43c6cf7f50fa0afc0",
+          "struct_hash": "91cd524af6f4b877191eae104a01304fdbe6ae5fd2fde48ca0fc4f9d1e2817ba",
+          "tiles": 1500
+        },
+        "preserved_state_bytes": 88
+      },
+      "realization": {
+        "rendered_tiles": 1440,
+        "triangles": 77760,
+        "holds": 0
+      },
+      "timings_ms": {
+        "construction": 72.341,
+        "full_realization": 63.928,
+        "freeze": 116.739,
+        "wake_one_region": 2.64,
+        "wake_all": 341.212
+      },
+      "memory": {
+        "baseline": {
+          "rss_bytes": 41590784,
+          "heap_used_bytes": 7368280,
+          "heap_total_bytes": 12357632,
+          "external_bytes": 3861138
+        },
+        "fully_realized": {
+          "rss_bytes": 72552448,
+          "heap_used_bytes": 10284568,
+          "heap_total_bytes": 30183424,
+          "external_bytes": 3884182
+        },
+        "warm_canonical": {
+          "rss_bytes": 72683520,
+          "heap_used_bytes": 9615312,
+          "heap_total_bytes": 27561984,
+          "external_bytes": 3884182
+        },
+        "cold_index_only": {
+          "rss_bytes": 88948736,
+          "heap_used_bytes": 9965448,
+          "heap_total_bytes": 45649920,
+          "external_bytes": 5750418
+        },
+        "one_region_awake": {
+          "rss_bytes": 89079808,
+          "heap_used_bytes": 10007936,
+          "heap_total_bytes": 44863488,
+          "external_bytes": 3923356
+        },
+        "all_awake": {
+          "rss_bytes": 109158400,
+          "heap_used_bytes": 11878208,
+          "heap_total_bytes": 80777216,
+          "external_bytes": 5706208
+        },
+        "heap_delta_full_to_warm_bytes": -669256,
+        "heap_delta_full_to_cold_bytes": -319120,
+        "rss_delta_full_to_warm_bytes": 131072,
+        "rss_delta_full_to_cold_bytes": 16396288
+      },
+      "storage": {
+        "bytes": 2477309,
+        "region_files": 60
+      },
+      "runtime_products": {
+        "mesh_cache_entries_cleared": 1
+      },
+      "verification": {
+        "cold_open_status": "COLD_READY",
+        "one_region_status": "AWAKE_VERIFIED",
+        "unrelated_regions_resident_after_one_wake": [],
+        "mutation_preserved": true,
+        "all_status": "ALL_AWAKE",
+        "restored": {
+          "live_hash": "598a077027c16c3262d379d182e6298037681b591dbcfef43c6cf7f50fa0afc0",
+          "struct_hash": "91cd524af6f4b877191eae104a01304fdbe6ae5fd2fde48ca0fc4f9d1e2817ba",
+          "tiles": 1500
+        },
+        "exact_live_hash": true,
+        "exact_struct_hash": true,
+        "exact_tile_count": true
+      }
+    },
+    {
+      "input": {
+        "regions": 120,
+        "parts_per_region": 24,
+        "expected": {
+          "live_hash": "d73783d2a6884f8205b0c106d2d06a516d2fac4e458bfe2c9c3ba14259540d64",
+          "struct_hash": "24674ce9f8be61fa7f22c7e1f417a399fbca60f782a3d299e05d4715d65e24a7",
+          "tiles": 3000
+        },
+        "preserved_state_bytes": 88
+      },
+      "realization": {
+        "rendered_tiles": 2880,
+        "triangles": 155520,
+        "holds": 0
+      },
+      "timings_ms": {
+        "construction": 121.542,
+        "full_realization": 80.68,
+        "freeze": 205.507,
+        "wake_one_region": 2.459,
+        "wake_all": 1188.073
+      },
+      "memory": {
+        "baseline": {
+          "rss_bytes": 41963520,
+          "heap_used_bytes": 7368496,
+          "heap_total_bytes": 12619776,
+          "external_bytes": 3861138
+        },
+        "fully_realized": {
+          "rss_bytes": 96231424,
+          "heap_used_bytes": 12806240,
+          "heap_total_bytes": 50831360,
+          "external_bytes": 3884182
+        },
+        "warm_canonical": {
+          "rss_bytes": 96219136,
+          "heap_used_bytes": 11487744,
+          "heap_total_bytes": 47222784,
+          "external_bytes": 3884182
+        },
+        "cold_index_only": {
+          "rss_bytes": 111616000,
+          "heap_used_bytes": 12051424,
+          "heap_total_bytes": 81563648,
+          "external_bytes": 7637222
+        },
+        "one_region_awake": {
+          "rss_bytes": 111616000,
+          "heap_used_bytes": 12093888,
+          "heap_total_bytes": 80777216,
+          "external_bytes": 3923356
+        },
+        "all_awake": {
+          "rss_bytes": 201580544,
+          "heap_used_bytes": 15742792,
+          "heap_total_bytes": 152080384,
+          "external_bytes": 7551060
+        },
+        "heap_delta_full_to_warm_bytes": -1318496,
+        "heap_delta_full_to_cold_bytes": -754816,
+        "rss_delta_full_to_warm_bytes": -12288,
+        "rss_delta_full_to_cold_bytes": 15384576
+      },
+      "storage": {
+        "bytes": 4954109,
+        "region_files": 120
+      },
+      "runtime_products": {
+        "mesh_cache_entries_cleared": 1
+      },
+      "verification": {
+        "cold_open_status": "COLD_READY",
+        "one_region_status": "AWAKE_VERIFIED",
+        "unrelated_regions_resident_after_one_wake": [],
+        "mutation_preserved": true,
+        "all_status": "ALL_AWAKE",
+        "restored": {
+          "live_hash": "d73783d2a6884f8205b0c106d2d06a516d2fac4e458bfe2c9c3ba14259540d64",
+          "struct_hash": "24674ce9f8be61fa7f22c7e1f417a399fbca60f782a3d299e05d4715d65e24a7",
+          "tiles": 3000
+        },
+        "exact_live_hash": true,
+        "exact_struct_hash": true,
+        "exact_tile_count": true
+      }
+    }
+  ],
+  "observed_boundaries": {
+    "heap_full_to_cold": {
+      "not_observed_through_tested_scale_tiles": 3000
+    },
+    "rss_full_to_cold": {
+      "first_non_beneficial_tested_scale_tiles": 600,
+      "delta_bytes": 8224768
+    }
+  },
+  "truth_boundary": "Three synthetic deterministic scales, each in a fresh Node process. Heap/RSS include runtime and allocator noise; negative and positive deltas are preserved. This measures local-file eviction, warm cache clearing and selective reconstruction, not universal hardware behavior."
+}

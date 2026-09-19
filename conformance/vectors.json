@@ -1,7 +1,7 @@
 {
  "format": "morphtile-conformance",
  "version": "0.4",
- "engine": "0.3",
+ "engine": "0.4",
  "generated": "2026-09-19",
  "note": "Each case gives a world (and events or ops) and what a correct implementation must produce. Geometry hashes are over coordinates rounded to six decimals. Nothing here depends on trigonometry, so results are comparable across languages.",
  "cases": [
@@ -12,6 +12,18 @@
     "kind": "morphtile-world",
     "version": "0.1",
     "name": "Skyhold",
+    "spatial_root": {
+     "origin": [
+      0,
+      0,
+      0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ]
+    },
     "tiles": {
      "mt_island": {
       "id": "mt_island",
@@ -1516,7 +1528,7 @@
    },
    "expect": {
     "valid": true,
-    "struct_hash": "a5174ef8764e2b29098991ad87454a4e2e718f1386b2ca84592865fa037e0ccb",
+    "struct_hash": "cfc30402e90bcf8a9a9fd6fa6bb0d0c44b1a5ce67312e289b95cf36fbdf18f6e",
     "tiles": 9,
     "roots": [
      "mt_island",
@@ -1569,6 +1581,18 @@
     "kind": "morphtile-world",
     "version": "0.1",
     "name": "Skyhold",
+    "spatial_root": {
+     "origin": [
+      0,
+      0,
+      0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ]
+    },
     "tiles": {
      "mt_island": {
       "id": "mt_island",
@@ -3142,7 +3166,7 @@
      }
     },
     "time": 21660,
-    "world_hash": "e0937172a530e3b03b28911fac5dc636f2d75c9e3ec14ab08f3971831b76aa84",
+    "world_hash": "f974d18d3e8b4ed3fd60d19b2437cde754de1731b3060cc14e130abc3fabdc2c",
     "simulation_steps": 0,
     "read": {
      "mt_core.stored": 0,
@@ -3157,6 +3181,18 @@
     "kind": "morphtile-world",
     "version": "0.1",
     "name": "Skyhold",
+    "spatial_root": {
+     "origin": [
+      0,
+      0,
+      0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ]
+    },
     "tiles": {
      "mt_island": {
       "id": "mt_island",
@@ -4685,13 +4721,13 @@
    ],
    "expect": {
     "after_collapse": {
-     "struct_hash": "3c15aada13b5eb2b5dc585428a0c45e2a360035961e8c2aea7ae2f13b8928e48",
+     "struct_hash": "95021eb9fc56d25ef996a3eb292464f7fa21e156374a0aa09406aab09baf9b9f",
      "tiles": 10,
      "beacon_at": "mt_asm/mt_tower",
      "beacon": 1
     },
     "after_expand": {
-     "struct_hash": "a5174ef8764e2b29098991ad87454a4e2e718f1386b2ca84592865fa037e0ccb",
+     "struct_hash": "cfc30402e90bcf8a9a9fd6fa6bb0d0c44b1a5ce67312e289b95cf36fbdf18f6e",
      "vars": {
       "mt_core": {
        "energy": {
@@ -4716,6 +4752,18 @@
     "kind": "morphtile-world",
     "version": "0.1",
     "name": "Recipes",
+    "spatial_root": {
+     "origin": [
+      0,
+      0,
+      0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ]
+    },
     "tiles": {
      "mt_spiral": {
       "id": "mt_spiral",
@@ -5197,6 +5245,18 @@
     "kind": "morphtile-world",
     "version": "0.1",
     "name": "Composed",
+    "spatial_root": {
+     "origin": [
+      0,
+      0,
+      0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ]
+    },
     "tiles": {
      "mt_row": {
       "id": "mt_row",
@@ -5709,6 +5769,18 @@
     "kind": "morphtile-world",
     "version": "0.1",
     "name": "Skyhold",
+    "spatial_root": {
+     "origin": [
+      0,
+      0,
+      0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ]
+    },
     "tiles": {
      "mt_island": {
       "id": "mt_island",
@@ -7328,6 +7400,18 @@
     "kind": "morphtile-world",
     "version": "0.1",
     "name": "Skyhold",
+    "spatial_root": {
+     "origin": [
+      0,
+      0,
+      0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ]
+    },
     "tiles": {
      "mt_island": {
       "id": "mt_island",
@@ -8833,7 +8917,7 @@
    "text": "world \"Skyhold\"\ntile mt_core \"Matter core\" as game_asset ui_panel website\n  mesh primitive {\"rot\": [0.6,0,0.6], \"shape\": \"box\", \"size\": [0.9,0.9,0.9]}\n  material primitive {\"color\": [0.5,0.36,1], \"emissive\": 0.25, \"pattern\": \"checker\", \"scale\": 0.3}\n  behavior scripted {\"ops\": [{\"amp\": 0.18, \"op\": \"bob\", \"rate\": 1.4},{\"axis\": \"y\", \"op\": \"spin\", \"rate\": 0.5},{\"amp\": 0.35, \"op\": \"pulse\", \"rate\": 2}]}\n  logic rule {\"rules\": [{\"do\": [{\"set\": [\"stored\",[\"+\",[\"var\", \"stored\"],[\"floor\",[\"var\", \"energy\"]]]]},{\"set\": [\"energy\",0]}], \"on\": \"surge\"}], \"vars\": {\"energy\": {\"accrue\": {\"cap\": 21600, \"rate\": 1}, \"base\": 0}, \"stored\": 0}}\n  socket mount attach at 0 0 0\n  socket surge signal in \"Harvest energy\"\ntile mt_island \"Floating island\" as world game_asset ui_panel website\n  mesh generated {\"depth\": 4, \"generator\": \"terrain\", \"height\": 1.6, \"plateau\": 1, \"radius\": 5.5, \"seed\": 3}\n  material primitive {\"color\": [0.25,0.58,0.36]}\n  socket top attach at 0 1 0\n  socket dock attach at 1.25 1 0.75\n  control seed {\"binds\": [{\"at\": \"data.seed\", \"facet\": \"mesh\", \"tile\": \"\"}], \"id\": \"seed\", \"label\": \"Terrain seed\", \"max\": 60, \"min\": 1, \"step\": 1, \"type\": \"number\"}\n  control height {\"binds\": [{\"at\": \"data.height\", \"facet\": \"mesh\", \"tile\": \"\"}], \"id\": \"height\", \"label\": \"Hill height\", \"max\": 3, \"min\": 0.4, \"step\": 0.1, \"type\": \"number\"}\ntile mt_rover \"Sky rover\" as vehicle game_asset ui_panel website\n  at 0 0.4 0\n  mesh primitive {\"parts\": [{\"pos\": [0,0.35,0], \"shape\": \"box\", \"size\": [1.5,0.4,2.6]},{\"pos\": [0,0.72,0.75], \"shape\": \"wedge\", \"size\": [1.5,0.35,0.9]},{\"color\": [0.2,0.5,1], \"pos\": [0,0.75,-0.25], \"shape\": \"box\", \"size\": [1.2,0.4,1.1]}]}\n  material primitive {\"color\": [0.78,0.82,0.92], \"emissive\": [\"*\",[\"var\", \"moving\"],0.25], \"glow\": [0.3,0.6,1]}\n  behavior scripted {\"ops\": [{\"by\": [\"var\", \"odometer\"], \"op\": \"orbit\", \"radius\": 7.6, \"rate\": 0.22},{\"amp\": 0.07, \"op\": \"bob\", \"rate\": 2}]}\n  logic rule {\"rules\": [{\"do\": [{\"set\": [\"odometer\",[\"var\", \"odometer\"]]},{\"set\": [\"moving\",[\"-\",1,[\"var\", \"moving\"]]]},{\"emit\": \"rolling\"}], \"on\": \"drive\"}], \"vars\": {\"moving\": 0, \"odometer\": {\"accrue\": {\"rate\": [\"var\", \"moving\"]}, \"base\": 0}}}\n  socket w_fl attach at -0.95 0.05 0.85\n  socket w_fr attach at 0.95 0.05 0.85\n  socket w_rl attach at -0.95 0.05 -0.85\n  socket w_rr attach at 0.95 0.05 -0.85\n  socket drive signal in \"Drive / stop\"\n  socket rolling signal out\n  control orbit {\"binds\": [{\"at\": \"data.ops.0.radius\", \"facet\": \"behavior\", \"tile\": \"\"}], \"id\": \"orbit\", \"label\": \"Orbit radius\", \"max\": 14, \"min\": 6, \"step\": 0.2, \"type\": \"number\"}\ntile mt_switch \"Dock switch\" as game_asset ui_panel\n  mesh primitive {\"parts\": [{\"pos\": [0,0.25,0], \"shape\": \"cylinder\", \"size\": [0.5,0.5,0.5]},{\"color\": [1,0.55,0.3], \"pos\": [0,0.6,0], \"shape\": \"sphere\", \"size\": [0.34,0.34,0.34]}]}\n  material primitive {\"color\": [0.3,0.6,1], \"emissive\": 0.15}\n  logic rule {\"rules\": [{\"do\": [{\"set\": [\"presses\",[\"+\",[\"var\", \"presses\"],1]]},{\"emit\": \"pressed\"}], \"on\": \"press\"}], \"vars\": {\"presses\": 0}}\n  socket foot attach at 0 0 0\n  socket press signal in \"Press\"\n  socket pressed signal out\ntile mt_tower \"Beacon tower\" as game_asset ui_panel website\n  mesh generated {\"generator\": \"tower\", \"levels\": 3, \"radius\": 0.6, \"seed\": 4}\n  material primitive {\"color\": [0.62,0.66,0.78], \"emissive\": [\"*\",[\"var\", \"beacon\"],0.45], \"glow\": [0.35,0.65,1]}\n  logic rule {\"rules\": [{\"do\": [{\"set\": [\"beacon\",[\"-\",1,[\"var\", \"beacon\"]]]},{\"emit\": \"lit\"}], \"on\": \"toggle\"}], \"vars\": {\"beacon\": 0}}\n  socket base attach at 0 0 0\n  socket roof attach at 0 4.9 0\n  socket toggle signal in \"Toggle beacon\"\n  socket lit signal out\n  control levels {\"binds\": [{\"at\": \"data.levels\", \"facet\": \"mesh\", \"tile\": \"\"},{\"at\": \"sockets.1.pos.1\", \"expr\": [\"+\",[\"*\",[\"var\", \"value\"],1.1],1.6], \"facet\": \"connect\", \"tile\": \"\"}], \"id\": \"levels\", \"label\": \"Levels\", \"max\": 7, \"min\": 1, \"step\": 1, \"type\": \"number\"}\ntile mt_wheel_fl \"Wheel FL\" as game_asset\n  mesh primitive {\"rot\": [0,0,1.5707963267948966], \"segments\": 12, \"shape\": \"cylinder\", \"size\": [0.7,0.3,0.7]}\n  material primitive {\"color\": [0.16,0.18,0.3], \"pattern\": \"stripes\", \"scale\": 0.17}\n  behavior scripted {\"ops\": [{\"axis\": \"x\", \"by\": [\"var\", \"turns\"], \"op\": \"spin\", \"rate\": 3}]}\n  logic rule {\"rules\": [{\"do\": [{\"set\": [\"turns\",[\"var\", \"turns\"]]},{\"set\": [\"rolling\",[\"-\",1,[\"var\", \"rolling\"]]]}], \"on\": \"roll\"}], \"vars\": {\"rolling\": 0, \"turns\": {\"accrue\": {\"rate\": [\"var\", \"rolling\"]}, \"base\": 0}}}\n  socket hub attach at 0 0 0\n  socket roll signal in\ntile mt_wheel_fr \"Wheel FR\" as game_asset\n  mesh primitive {\"rot\": [0,0,1.5707963267948966], \"segments\": 12, \"shape\": \"cylinder\", \"size\": [0.7,0.3,0.7]}\n  material primitive {\"color\": [0.16,0.18,0.3], \"pattern\": \"stripes\", \"scale\": 0.17}\n  behavior scripted {\"ops\": [{\"axis\": \"x\", \"by\": [\"var\", \"turns\"], \"op\": \"spin\", \"rate\": 3}]}\n  logic rule {\"rules\": [{\"do\": [{\"set\": [\"turns\",[\"var\", \"turns\"]]},{\"set\": [\"rolling\",[\"-\",1,[\"var\", \"rolling\"]]]}], \"on\": \"roll\"}], \"vars\": {\"rolling\": 0, \"turns\": {\"accrue\": {\"rate\": [\"var\", \"rolling\"]}, \"base\": 0}}}\n  socket hub attach at 0 0 0\n  socket roll signal in\ntile mt_wheel_rl \"Wheel RL\" as game_asset\n  mesh primitive {\"rot\": [0,0,1.5707963267948966], \"segments\": 12, \"shape\": \"cylinder\", \"size\": [0.7,0.3,0.7]}\n  material primitive {\"color\": [0.16,0.18,0.3], \"pattern\": \"stripes\", \"scale\": 0.17}\n  behavior scripted {\"ops\": [{\"axis\": \"x\", \"by\": [\"var\", \"turns\"], \"op\": \"spin\", \"rate\": 3}]}\n  logic rule {\"rules\": [{\"do\": [{\"set\": [\"turns\",[\"var\", \"turns\"]]},{\"set\": [\"rolling\",[\"-\",1,[\"var\", \"rolling\"]]]}], \"on\": \"roll\"}], \"vars\": {\"rolling\": 0, \"turns\": {\"accrue\": {\"rate\": [\"var\", \"rolling\"]}, \"base\": 0}}}\n  socket hub attach at 0 0 0\n  socket roll signal in\ntile mt_wheel_rr \"Wheel RR\" as game_asset\n  mesh primitive {\"rot\": [0,0,1.5707963267948966], \"segments\": 12, \"shape\": \"cylinder\", \"size\": [0.7,0.3,0.7]}\n  material primitive {\"color\": [0.16,0.18,0.3], \"pattern\": \"stripes\", \"scale\": 0.17}\n  behavior scripted {\"ops\": [{\"axis\": \"x\", \"by\": [\"var\", \"turns\"], \"op\": \"spin\", \"rate\": 3}]}\n  logic rule {\"rules\": [{\"do\": [{\"set\": [\"turns\",[\"var\", \"turns\"]]},{\"set\": [\"rolling\",[\"-\",1,[\"var\", \"rolling\"]]]}], \"on\": \"roll\"}], \"vars\": {\"rolling\": 0, \"turns\": {\"accrue\": {\"rate\": [\"var\", \"rolling\"]}, \"base\": 0}}}\n  socket hub attach at 0 0 0\n  socket roll signal in\nwire a_core attach mt_tower.roof -> mt_core.mount\nwire a_switch attach mt_island.dock -> mt_switch.foot\nwire a_tower attach mt_island.top -> mt_tower.base\nwire a_wheel_fl attach mt_rover.w_fl -> mt_wheel_fl.hub\nwire a_wheel_fr attach mt_rover.w_fr -> mt_wheel_fr.hub\nwire a_wheel_rl attach mt_rover.w_rl -> mt_wheel_rl.hub\nwire a_wheel_rr attach mt_rover.w_rr -> mt_wheel_rr.hub\nwire s_lit signal mt_tower.lit -> mt_core.surge\nwire s_switch signal mt_switch.pressed -> mt_tower.toggle\nwire s_wheel_fl signal mt_rover.rolling -> mt_wheel_fl.roll\nwire s_wheel_fr signal mt_rover.rolling -> mt_wheel_fr.roll\nwire s_wheel_rl signal mt_rover.rolling -> mt_wheel_rl.roll\nwire s_wheel_rr signal mt_rover.rolling -> mt_wheel_rr.roll\n",
    "expect": {
     "ops_on_read_back": 0,
-    "struct_hash": "a5174ef8764e2b29098991ad87454a4e2e718f1386b2ca84592865fa037e0ccb"
+    "struct_hash": "cfc30402e90bcf8a9a9fd6fa6bb0d0c44b1a5ce67312e289b95cf36fbdf18f6e"
    }
   }
  ]
