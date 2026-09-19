@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const MT = require("../core/morphtile.js");
 const L = require("../library/lego-library.js");
+const R = require("../remix/remix-bench.js");
 
 function sourceWorld() {
   const w = MT.createWorld("Library lab");
@@ -62,4 +63,46 @@ test("a finished kit from the library still arrives through ordinary MorphTile i
   for (const op of proposal.ops) assert.ok(MT.editCandidate(ws, c, op).ok);
   const plan = MT.planMerge(ws, [c]); assert.equal(plan.status, "READY"); assert.ok(MT.commitPlan(ws, plan.id).ok);
   assert.ok(ws.live.tiles.source);
+});
+
+
+test("a self-created world can be scanned for new Lego without vaulting anything automatically", () => {
+  const w = sourceWorld(), lib = L.createLegoLibrary();
+  const scan = L.discoverWorldLego(lib, w, { provenance: { source: "self-created" } });
+  assert.ok(scan.ok); assert.ok(scan.candidates.length > 5);
+  assert.equal(Object.keys(lib.items).length, 0);
+  assert.equal(Object.keys(lib.objects).length, 0);
+  assert.equal(scan.new_candidates.length, scan.candidates.length);
+});
+
+test("selected Lego pulls its definition dependencies so the source world can be deleted safely", () => {
+  let w = sourceWorld(), lib = L.createLegoLibrary();
+  w.defs.shared_jump = { id: "shared_jump", name: "Shared jump body", body: MT.bodyOf(w.tiles.source), created_by: "human" };
+  w.tiles.source.capabilities.push({ id: "bring_shared", grants_ref: { def: "shared_jump" }, wake: { mode: "manual" } });
+
+  const scan = L.discoverWorldLego(lib, w, { provenance: { source: "self-created" } });
+  const cap = scan.candidates.find((x) => x.kind === "capability" && x.name === "bring_shared");
+  assert.ok(cap); assert.deepEqual(cap.dependencies.defs, ["shared_jump"]);
+  const pulled = L.pullWorldLego(lib, w, [cap.id], { provenance: { source: "self-created" } });
+  assert.ok(pulled.ok); assert.equal(pulled.auto_vaulted, false);
+  assert.ok(pulled.dependency_items.includes("dependency.definition.shared_jump"));
+  assert.equal(pulled.source_world_can_be_deleted_after_pull, true);
+
+  const capabilityItem = L.getItem(lib, cap.id), dependencyItem = L.getItem(lib, "dependency.definition.shared_jump");
+  assert.ok(capabilityItem); assert.ok(dependencyItem);
+  w = null;
+
+  const dest = MT.createWorld("After source deletion");
+  dest.tiles.target = MT.createTile({ id: "target", name: "Target" });
+  const ws = MT.createWorkspace(dest), defUse = L.proposeLibraryUse(ws.live, lib, "dependency.definition.shared_jump"), c = MT.cloneBody(ws);
+  assert.ok(defUse.ok);
+  for (const op of defUse.ops) assert.ok(MT.editCandidate(ws, c, op).ok);
+  assert.ok(MT.commitPlan(ws, MT.planMerge(ws, [c]).id).ok);
+
+  const proposal = R.proposeRemix(ws.live, lib, "target", [cap.id]);
+  assert.ok(proposal.ok); const staged = R.stageRemix(ws, proposal);
+  assert.ok(staged.ok); assert.equal(staged.status, "READY");
+  assert.ok(MT.commitPlan(ws, staged.plan.id).ok);
+  assert.equal(ws.live.tiles.target.capabilities.some((x) => x.id === "bring_shared"), true);
+  assert.ok(ws.live.defs.shared_jump);
 });

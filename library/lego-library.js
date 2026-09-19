@@ -62,7 +62,7 @@ function capture(world, spec) {
 }
 
 function entryId(spec, index) {
-  const id = spec.id || "item_" + (index + 1);
+  const id = spec.entry_id || spec.id || "item_" + (index + 1);
   if (!ID.test(id)) throw new Error("item id must be [A-Za-z0-9_.-]+");
   return id;
 }
@@ -143,6 +143,86 @@ function exportLibraryPack(library, itemIds, opts) {
   return pack;
 }
 
+function safeItemId(value) {
+  const id = String(value || "lego").replace(/[^A-Za-z0-9_.-]+/g, ".").replace(/^\.+|\.+$/g, "") || "lego";
+  return id;
+}
+
+function discoverWorldLego(library, world, opts) {
+  opts = opts || {};
+  const provenance = clone(opts.provenance || { source: "self-created" }), candidates = [], used = {};
+  const add = (baseId, spec) => {
+    const captured = capture(world, spec), ref = objectRef(captured.kind, captured.data);
+    let id = safeItemId(baseId), n = 2;
+    while (used[id]) id = safeItemId(baseId) + "." + n++;
+    used[id] = true;
+    const needs = ["world", "kit", "definition", "word"].includes(captured.kind) ? { defs: {}, words: {} } : MT.needsOf(world, captured.data);
+    candidates.push({
+      id, kind: captured.kind, name: captured.name, object_ref: ref,
+      already_vaulted: !!(library && library.objects && library.objects[ref]),
+      dependencies: {
+        defs: Object.keys(needs.defs || {}).filter((k) => !!needs.defs[k]).sort(),
+        words: Object.keys(needs.words || {}).filter((k) => !!needs.words[k]).sort()
+      },
+      spec: Object.assign({}, clone(spec), { entry_id: id, provenance }),
+      provenance: clone(provenance)
+    });
+  };
+
+  add("world." + safeItemId(world.name), { kind: "world", name: world.name });
+  for (const entry of MT.leaves(world)) {
+    const p = "tile." + safeItemId(entry.path), tile = entry.tile;
+    add(p + ".kit", { kind: "kit", path: entry.path });
+    add(p + ".body", { kind: "body", path: entry.path });
+    for (const facet of MT.FACETS) add(p + ".facet." + facet, { kind: "facet", facet, path: entry.path });
+    for (const cap of tile.capabilities || []) add(p + ".capability." + safeItemId(cap.id), { kind: "capability", path: entry.path, capability: cap.id });
+    for (const param of tile.params || []) add(p + ".parameter." + safeItemId(param.id), { kind: "parameter", path: entry.path, parameter: param.id });
+    if (tile.view !== undefined) add(p + ".view", { kind: "view", path: entry.path });
+    if (tile.presentation !== undefined) add(p + ".presentation", { kind: "presentation", path: entry.path });
+    add(p + ".forms", { kind: "form_hints", path: entry.path });
+  }
+  for (const id of Object.keys(world.defs || {}).sort()) add("definition." + safeItemId(id), { kind: "definition", id, entry_id: "definition." + safeItemId(id) });
+  for (const name of Object.keys(world.words || {}).sort()) add("word." + safeItemId(name), { kind: "word", id: name, entry_id: "word." + safeItemId(name) });
+  return {
+    ok: true, status: "READY", source: clone(provenance),
+    candidates, new_candidates: candidates.filter((x) => !x.already_vaulted).map((x) => x.id),
+    already_vaulted: candidates.filter((x) => x.already_vaulted).map((x) => x.id)
+  };
+}
+
+function pullWorldLego(library, world, candidateIds, opts) {
+  opts = opts || {};
+  const discovery = discoverWorldLego(library, world, opts), byId = {};
+  for (const row of discovery.candidates) byId[row.id] = row;
+  const wanted = Array.from(new Set(candidateIds || []));
+  if (!wanted.length) return { ok: false, status: "HOLD_NOTHING_SELECTED" };
+
+  const selections = [], dependencyKeys = {}, selected = [];
+  for (const id of wanted) {
+    const row = byId[id];
+    if (!row) return { ok: false, status: "HOLD_DISCOVERY_ITEM_MISSING", item: id };
+    selections.push(clone(row.spec)); selected.push(id);
+    for (const def of row.dependencies.defs) dependencyKeys["def:" + def] = def;
+    for (const word of row.dependencies.words) dependencyKeys["word:" + word] = word;
+  }
+  for (const key of Object.keys(dependencyKeys).sort()) {
+    if (key.startsWith("def:")) {
+      const id = dependencyKeys[key];
+      selections.push({ kind: "definition", id, entry_id: "dependency.definition." + safeItemId(id), provenance: clone(opts.provenance || { source: "self-created" }) });
+    } else {
+      const name = dependencyKeys[key];
+      selections.push({ kind: "word", id: name, entry_id: "dependency.word." + safeItemId(name), provenance: clone(opts.provenance || { source: "self-created" }) });
+    }
+  }
+
+  const pack = exportLegoPack(world, selections, { name: opts.name || "Pulled from " + world.name, provenance: opts.provenance });
+  const imported = importLegoPack(library, pack, { rename: !!opts.rename, partial: !!opts.partial });
+  return Object.assign({}, imported, {
+    selected, dependency_items: pack.entries.filter((x) => x.id.startsWith("dependency.")).map((x) => x.id),
+    auto_vaulted: false, source_world_can_be_deleted_after_pull: imported.ok && imported.status !== "HELD_INCOMPLETE"
+  });
+}
+
 function proposeLibraryUse(world, library, itemId, opts) {
   opts = opts || {};
   const found = getItem(library, itemId); if (!found) return { ok: false, status: "HOLD_LIBRARY_ITEM_MISSING" };
@@ -157,5 +237,5 @@ function proposeLibraryUse(world, library, itemId, opts) {
   return { ok: true, status: "READY_FOR_REMIX", item: found.item, object: found.object };
 }
 
-return { createLegoLibrary, objectRef, capture, exportLegoPack, verifyLegoPack, importLegoPack, getItem, exportLibraryPack, proposeLibraryUse };
+return { createLegoLibrary, objectRef, capture, exportLegoPack, verifyLegoPack, importLegoPack, getItem, exportLibraryPack, safeItemId, discoverWorldLego, pullWorldLego, proposeLibraryUse };
 });

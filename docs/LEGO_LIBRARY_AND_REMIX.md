@@ -26,9 +26,24 @@ The **Lego Vault** has a different job: reuse beyond the current world.
 
 Saving something from a world into the Vault is therefore **promotion for reuse**, not the act that makes it permanent.
 
-A useful experimental flow is:
+Nothing is Vaulted automatically — including self-created worlds. A self-created world can instead be **scanned as a source**. The Vault/worktable may show:
 
-`candidate scratch → adjust/drop/test → commit into world → optionally promote useful pieces or the finished assembly to Vault`
+- Lego found in this world;
+- which objects are already in the Vault by content hash;
+- which objects are genuinely new to this Vault;
+- dependencies a selected piece needs in order to survive outside the world.
+
+The user then chooses **Pull to Vault** for the pieces or finished Lego worth keeping. Pulling a piece also pulls its referenced definitions/words when needed, so the selected Lego does not become an orphaned pointer back into a world that may later be deleted.
+
+That gives a safe cleanup flow:
+
+`build/experiment in world → scan world → select useful Lego → pull to Vault → verify dependency closure → delete finished source world if desired`
+
+The source world does not need to remain as hidden storage for Vaulted Lego. If nothing from it is worth reusing, delete the world without polluting the Vault. If only three pieces are useful, Vault those three rather than atomizing the entire world.
+
+A useful experimental flow is therefore:
+
+`candidate scratch → adjust/drop/test → commit into world → later scan/pull only reusable discoveries`
 
 If the result stays only in that world, that is valid. If it is promoted, content addressing and dedup decide whether the Vault gained a genuinely new object or merely another reference/name/provenance record for something it already had.
 
