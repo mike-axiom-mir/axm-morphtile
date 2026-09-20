@@ -35,6 +35,12 @@ function setup() {
   return { d, w, frozen, runtime };
 }
 
+function resealRuntime(data) {
+  const body = MT.clone(data);
+  delete body.runtime_sha256;
+  return Object.assign(body, { runtime_sha256: MT.hashOf(body) });
+}
+
 test('flow runtime routes one tile mutation only to its dependent contracts and commits atomically', () => {
   const x = setup();
   try {
@@ -171,6 +177,37 @@ test('export/import rejects tampered generation evidence and preserves exact rec
     const tampered = JSON.parse(JSON.stringify(exported));
     tampered.generations[tampered.current_generation_sha256].contracts['cold:region_0'].representation = 'invented';
     assert.throws(() => Flow.importRuntime(tampered), /hash mismatch/);
+  } finally { cleanup(x.d); }
+});
+
+test('import rejects a re-sealed registry contract that violates constructor invariants', () => {
+  const x = setup();
+  try {
+    const tampered = Flow.exportRuntime(x.runtime);
+    tampered.registry['cold:region_0'].depends_on = [];
+    const resealed = resealRuntime(tampered);
+    assert.throws(() => Flow.importRuntime(resealed), /needs depends_on selectors/);
+  } finally { cleanup(x.d); }
+});
+
+test('import rejects a re-sealed commit receipt that references no stored generation', () => {
+  const x = setup();
+  try {
+    const tampered = Flow.exportRuntime(x.runtime);
+    const missing = MT.hashOf({ generation: 'not-stored' });
+    const body = {
+      type: 'generation.commit',
+      sequence: 99,
+      generation_sha256: missing,
+      parent_generation_sha256: tampered.current_generation_sha256,
+      plan_sha256: null,
+      updated: [],
+      reused: [],
+      by: 're-sealed-corruption-test',
+    };
+    tampered.receipts.push(Object.assign(body, { receipt_sha256: MT.hashOf(body) }));
+    const resealed = resealRuntime(tampered);
+    assert.throws(() => Flow.importRuntime(resealed), /commit receipt generation unknown/);
   } finally { cleanup(x.d); }
 });
 
