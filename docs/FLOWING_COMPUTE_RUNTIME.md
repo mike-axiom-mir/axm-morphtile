@@ -185,3 +185,15 @@ For now it remains under `experimental/`. Promotion into core should happen only
 - no RAM, energy, throughput or universal speed claim is made here;
 - no claim that all MorphTile dependencies are already mapped;
 - no claim that the Compute Substrate's later witness/security research is required here.
+
+## Neutral conformance proof
+
+MorphTile now pins the exact Neutral Compute Substrate v0.1 vector file under `conformance/neutral-compute-v0.1.json` with its source receipt beside it.
+
+The test adapter is MorphTile-native and imports only `experimental/flowing-runtime.js`; it does not import the neutral runtime implementation.
+
+The first vector run failed and exposed real gaps in raw-byte artifact identity and recursive namespace selector semantics. A second run exposed an unexported descendant-reactivation surface. After repairing those boundaries, the unchanged pinned vector file passed completely while all existing MorphTile tests, build and native conformance stayed green.
+
+See `evidence/NEUTRAL_COMPUTE_CONFORMANCE_V01.md` for exact heads, workflow runs, failures and final evidence.
+
+This is evidence that the runtime contract can survive a differently shaped implementation. It is not evidence that MorphTile should acquire a mandatory dependency on the neutral package.
