@@ -173,3 +173,6 @@ test('export/import rejects tampered generation evidence and preserves exact rec
     assert.throws(() => Flow.importRuntime(tampered), /hash mismatch/);
   } finally { cleanup(x.d); }
 });
+
+// Cross-implementation contract proof against the pinned neutral vectors.
+require('./neutral-flow-conformance.js');
