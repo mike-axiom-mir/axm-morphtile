@@ -35,6 +35,7 @@ function selectorMatches(pattern, selector) {
     const prefix = pattern.slice(0, -3);
     return selector === prefix || selector.startsWith(prefix + '/');
   }
+  if (pattern.endsWith('**')) return selector.startsWith(pattern.slice(0, -2));
   if (pattern.endsWith('*')) return selector.startsWith(pattern.slice(0, -1));
   return false;
 }
@@ -55,10 +56,13 @@ function normalizeContract(spec) {
 
 function normalizeArtifact(ref) {
   if (!ref || !SHA.test(String(ref.artifact_sha256 || ''))) throw new Error('artifact_sha256 must be sha256');
+  const hashKind = ref.hash_kind || 'canonical-json';
+  if (!['canonical-json', 'bytes'].includes(hashKind)) throw new Error('unsupported artifact hash_kind ' + hashKind);
   if (ref.source_sha256 != null && !SHA.test(String(ref.source_sha256))) throw new Error('source_sha256 must be sha256');
   if (ref.proof_sha256 != null && !SHA.test(String(ref.proof_sha256))) throw new Error('proof_sha256 must be sha256');
   return {
     artifact_sha256: String(ref.artifact_sha256),
+    hash_kind: hashKind,
     source_sha256: ref.source_sha256 == null ? null : String(ref.source_sha256),
     proof_sha256: ref.proof_sha256 == null ? null : String(ref.proof_sha256),
     representation: ref.representation || 'opaque',
@@ -66,13 +70,23 @@ function normalizeArtifact(ref) {
   };
 }
 
+function artifactHash(value, hashKind) {
+  if (hashKind === 'bytes') {
+    if (!(value instanceof Uint8Array)) throw new Error('bytes artifact must be Uint8Array');
+    return MT.sha256(value);
+  }
+  return hash(value);
+}
+
 function artifactRef(value, opts) {
   opts = opts || {};
+  const hashKind = opts.hash_kind || (value instanceof Uint8Array ? 'bytes' : 'canonical-json');
   return normalizeArtifact({
-    artifact_sha256: hash(value),
+    artifact_sha256: artifactHash(value, hashKind),
+    hash_kind: hashKind,
     source_sha256: opts.source_sha256 || null,
     proof_sha256: opts.proof_sha256 || null,
-    representation: opts.representation || 'canonical-json',
+    representation: opts.representation || (hashKind === 'bytes' ? 'bytes' : 'canonical-json'),
     meta: opts.meta || null,
   });
 }
@@ -300,14 +314,40 @@ function rollback(runtime, targetGenerationSha, by) {
   return { status: 'ROLLED_BACK', receipt: clone(receipt), head: currentHead(runtime) };
 }
 
+function reactivate(runtime, targetGenerationSha, by) {
+  if (!runtime.generations[targetGenerationSha]) return fail('HOLD_UNKNOWN_GENERATION', { target_generation_sha256: targetGenerationSha });
+  const from = runtime.current_generation_sha256;
+  if (from === targetGenerationSha) return { status: 'ALREADY_CURRENT', head: currentHead(runtime) };
+  if (!isAncestor(runtime, from, targetGenerationSha)) {
+    return fail('HOLD_TARGET_NOT_DESCENDANT', { current_generation_sha256: from, target_generation_sha256: targetGenerationSha });
+  }
+  runtime.current_generation_sha256 = targetGenerationSha;
+  invalidateHot(runtime);
+  const g = currentGeneration(runtime);
+  const receipt = sealed({
+    type: 'generation.reactivate',
+    from_generation_sha256: from,
+    to_generation_sha256: targetGenerationSha,
+    to_sequence: g.sequence,
+    by: by || null,
+  }, 'receipt_sha256');
+  runtime.receipts.push(receipt);
+  return { status: 'REACTIVATED', receipt: clone(receipt), head: currentHead(runtime) };
+}
+
 function wakeContract(runtime, id, artifact) {
   const g = currentGeneration(runtime);
   if (!g || !g.contracts[id]) return fail('HOLD_UNKNOWN_CONTRACT', { contract: id });
-  const observed = hash(artifact);
+  const hashKind = g.contracts[id].hash_kind || 'canonical-json';
+  let observed;
+  try { observed = artifactHash(artifact, hashKind); }
+  catch (e) { return fail('HOLD_ARTIFACT_TYPE_MISMATCH', { contract: id, detail: e.message }); }
   if (observed !== g.contracts[id].artifact_sha256) {
-    return fail('HOLD_ARTIFACT_HASH_MISMATCH', { contract: id, claimed: g.contracts[id].artifact_sha256, observed });
+    return fail('HOLD_ARTIFACT_HASH_MISMATCH', { contract: id, claimed: g.contracts[id].artifact_sha256, observed, hash_kind: hashKind });
   }
-  runtime.hot[id] = { artifact_sha256: observed, artifact: clone(artifact) };
+  runtime.hot[id] = hashKind === 'bytes'
+    ? { artifact_sha256: observed, hash_kind: hashKind, bytes: Array.from(artifact) }
+    : { artifact_sha256: observed, hash_kind: hashKind, artifact: clone(artifact) };
   return { status: 'AWAKE_VERIFIED', contract: id, artifact_sha256: observed, generation_sha256: g.generation_sha256 };
 }
 
@@ -318,7 +358,9 @@ function sleepContract(runtime, id) {
 }
 
 function hotArtifact(runtime, id) {
-  return runtime.hot[id] ? clone(runtime.hot[id].artifact) : null;
+  const entry = runtime.hot[id];
+  if (!entry) return null;
+  return entry.hash_kind === 'bytes' ? Uint8Array.from(entry.bytes || []) : clone(entry.artifact);
 }
 
 function persistentBody(runtime) {
