@@ -595,7 +595,7 @@
         break;
       }
       case 'def.put': { world.defs = world.defs || {}; if (!op.id) throw new Error('a definition needs an id'); putOwn(world.defs, op.id, { id: op.id, name: op.name || op.id, body: clone(op.body), created_by: op.by || 'human' }); break; }
-      case 'word.remove': { if (!(world.words || {})[op.name]) throw new Error('no word ' + op.name); delete world.words[op.name]; if (!Object.keys(world.words).length) delete world.words; break; }
+      case 'word.remove': { if (!hasOwn(world.words || {}, op.name)) throw new Error('no word ' + op.name); delete world.words[op.name]; if (!Object.keys(world.words).length) delete world.words; break; }
       case 'view.set': { const t = need(op.id); if (op.view === null || op.view === undefined) delete t.view; else t.view = clone(op.view); break; }
       case 'presentation.set': { const t = need(op.id); if (op.presentation === null || op.presentation === undefined) delete t.presentation; else { const bad = presentationError(op.presentation); if (bad) throw new Error(bad); t.presentation = clone(op.presentation); } break; }
       case 'frame.set': {
@@ -609,8 +609,8 @@
       case 'def.create': { // this tile becomes the first instance of a shared definition
         const t = need(op.id), defId = op.as || 'def_' + hashOf({ b: bodyOf(t), n: op.name || t.name }).slice(0, 6);
         world.defs = world.defs || {};
-        if (world.defs[defId]) throw new Error('a definition called ' + defId + ' already exists');
-        world.defs[defId] = { id: defId, name: op.name || t.name, body: bodyOf(t), created_by: op.by || 'human' };
+        if (hasOwn(world.defs, defId)) throw new Error('a definition called ' + defId + ' already exists');
+        putOwn(world.defs, defId, { id: defId, name: op.name || t.name, body: bodyOf(t), created_by: op.by || 'human' });
         t.provenance.instance_of = defId; t.provenance.sha256 = contentHash(t); break;
       }
       case 'def.instance': { // another tile that IS the same thing
@@ -625,8 +625,8 @@
       }
       case 'def.update': { // take one instance's current body as the definition's new truth
         const t = need(op.id), defId = op.def || (t.provenance && t.provenance.instance_of);
-        if (!defId || !(world.defs || {})[defId]) throw new Error(op.id + ' is not an instance of a definition');
-        world.defs[defId] = Object.assign({}, world.defs[defId], { body: bodyOf(t) }); break;
+        if (!defId || !hasOwn(world.defs || {}, defId)) throw new Error(op.id + ' is not an instance of a definition');
+        putOwn(world.defs, defId, Object.assign({}, world.defs[defId], { body: bodyOf(t) })); break;
       }
       case 'def.sync': { // every instance becomes the definition again; each keeps its id, name, place, wires and state
         const def = (world.defs || {})[op.def];
@@ -739,8 +739,8 @@
   function unitValue(world, key) {
     if (key === 'world:save_policy') return world.save_policy || null;
     if (key.startsWith('childworld:')) return (world.child_worlds || {})[key.slice('childworld:'.length)] || null;
-    if (key.startsWith('word:')) return (world.words || {})[key.slice(5)] || null;
-    if (key.startsWith('def:')) return (world.defs || {})[key.slice(4)] || null;
+    if (key.startsWith('word:')) { const src = world.words || {}, id = key.slice(5); return hasOwn(src, id) ? src[id] : null; }
+    if (key.startsWith('def:')) { const src = world.defs || {}, id = key.slice(4); return hasOwn(src, id) ? src[id] : null; }
     const k = parseKey(key), [cp, id] = splitPath(k.path), c = containerAt(world, cp);
     if (!c) return null;
     if (k.isEdge) return c.edges[id] || null;
@@ -752,8 +752,8 @@
   function setUnit(world, key, value) {
     if (key === 'world:save_policy') { if (value === null) delete world.save_policy; else world.save_policy = clone(value); return; }
     if (key.startsWith('childworld:')) { const id = key.slice('childworld:'.length); if (value === null) { if (world.child_worlds) { delete world.child_worlds[id]; if (!Object.keys(world.child_worlds).length) delete world.child_worlds; } } else { world.child_worlds = world.child_worlds || {}; world.child_worlds[id] = clone(value); } return; }
-    if (key.startsWith('word:')) { world.words = world.words || {}; if (value === null) delete world.words[key.slice(5)]; else world.words[key.slice(5)] = clone(value); return; }
-    if (key.startsWith('def:')) { world.defs = world.defs || {}; if (value === null) delete world.defs[key.slice(4)]; else world.defs[key.slice(4)] = clone(value); return; }
+    if (key.startsWith('word:')) { world.words = world.words || {}; const id = key.slice(5); if (value === null) delete world.words[id]; else putOwn(world.words, id, clone(value)); return; }
+    if (key.startsWith('def:')) { world.defs = world.defs || {}; const id = key.slice(4); if (value === null) delete world.defs[id]; else putOwn(world.defs, id, clone(value)); return; }
     const k = parseKey(key), [cp, id] = splitPath(k.path), c = containerAt(world, cp);
     if (!c) throw new Error('unit targets a missing container: ' + key);
     if (k.isEdge) { if (value === null) delete c.edges[id]; else c.edges[id] = clone(value); return; }
@@ -792,8 +792,8 @@
     const out = diffContainer(base, cand, '', []), a = base.defs || {}, b = cand.defs || {}, wa = base.words || {}, wb = cand.words || {}, ca = base.child_worlds || {}, cb = cand.child_worlds || {};
     if (canonical(base.save_policy) !== canonical(cand.save_policy)) out.push({ key: 'world:save_policy', value: cand.save_policy === undefined ? null : clone(cand.save_policy) });
     for (const id of Array.from(new Set([...Object.keys(ca), ...Object.keys(cb)])).sort()) if (canonical(ca[id]) !== canonical(cb[id])) out.push({ key: 'childworld:' + id, value: cb[id] ? clone(cb[id]) : null });
-    for (const id of Array.from(new Set([...Object.keys(a), ...Object.keys(b)])).sort()) if (canonical(a[id]) !== canonical(b[id])) out.push({ key: 'def:' + id, value: b[id] ? clone(b[id]) : null });
-    for (const id of Array.from(new Set([...Object.keys(wa), ...Object.keys(wb)])).sort()) if (canonical(wa[id]) !== canonical(wb[id])) out.push({ key: 'word:' + id, value: wb[id] ? clone(wb[id]) : null });
+    for (const id of Array.from(new Set([...Object.keys(a), ...Object.keys(b)])).sort()) { const av = hasOwn(a, id) ? a[id] : undefined, bv = hasOwn(b, id) ? b[id] : undefined; if (canonical(av) !== canonical(bv)) out.push({ key: 'def:' + id, value: bv === undefined ? null : clone(bv) }); }
+    for (const id of Array.from(new Set([...Object.keys(wa), ...Object.keys(wb)])).sort()) { const av = hasOwn(wa, id) ? wa[id] : undefined, bv = hasOwn(wb, id) ? wb[id] : undefined; if (canonical(av) !== canonical(bv)) out.push({ key: 'word:' + id, value: bv === undefined ? null : clone(bv) }); }
     return out;
   }
   const isWorldUnit = (key) => key === 'world:save_policy' || key.startsWith('childworld:');
