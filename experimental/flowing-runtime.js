@@ -406,7 +406,7 @@ module.exports = {
   FORMAT, VERSION,
   selectorMatches, artifactRef,
   createRuntime, currentGeneration, currentHead,
-  planMutation, stageGeneration, commitGeneration, rollback,
+  planMutation, stageGeneration, commitGeneration, rollback, reactivate,
   wakeContract, sleepContract, hotArtifact,
   exportRuntime, importRuntime, validatePersistent,
 };
