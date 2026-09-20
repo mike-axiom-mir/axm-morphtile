@@ -185,6 +185,37 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
   const KNOWN_FORMS = ['game_asset', 'ui_panel', 'website', 'vehicle', 'character', 'world', 'tool'];
   const SPATIAL_FORMS = ['game_asset', 'vehicle', 'character', 'world'];
   const PRESENTATION_MODES = ['screen', 'docked', 'floating', 'fullscreen', 'embedded', 'world', 'tile'];
+  const SAVE_POLICY_MODES = ['none', 'profile'];
+  function savePolicyError(p) {
+    if (!p || typeof p !== 'object' || Array.isArray(p)) return 'save_policy must be an object';
+    if (!SAVE_POLICY_MODES.includes(p.mode)) return 'save_policy.mode must be none|profile';
+    if (p.ai_bridge != null && typeof p.ai_bridge !== 'boolean') return 'save_policy.ai_bridge must be boolean';
+    if (p.mode === 'none' && p.ai_bridge === true) return 'save_policy.ai_bridge cannot be true when saves are disabled';
+    return null;
+  }
+  function normalizeSavePolicy(p) { return { mode: p.mode, ai_bridge: p.mode === 'profile' ? !!p.ai_bridge : false }; }
+  function childWorldError(id, spec) {
+    if (!id || !/^[A-Za-z0-9_.-]+$/.test(id)) return 'child world id must be [A-Za-z0-9_.-]+';
+    if (!spec || typeof spec !== 'object' || Array.isArray(spec)) return 'child world must be an object';
+    if (typeof spec.world_ref !== 'string' || !spec.world_ref) return 'child world needs an opaque world_ref';
+    if (spec.activation != null && spec.activation !== 'lazy') return 'child world activation must be lazy';
+    if (spec.label != null && typeof spec.label !== 'string') return 'child world label must be a string';
+    if (spec.via != null) {
+      if (typeof spec.via !== 'object' || Array.isArray(spec.via)) return 'child world via must be an object';
+      if (typeof spec.via.tile !== 'string' || !spec.via.tile) return 'child world via.tile must be a tile path';
+      if (spec.via.action != null && (typeof spec.via.action !== 'string' || !spec.via.action)) return 'child world via.action must be a non-empty string';
+    }
+    for (const forbidden of ['world', 'profile', 'profiles', 'save', 'saves', 'payload']) if (spec[forbidden] !== undefined) return 'child world descriptors carry references only, not ' + forbidden;
+    return null;
+  }
+  function normalizeChildWorld(id, spec) {
+    const out = { id, world_ref: spec.world_ref, activation: 'lazy' };
+    if (spec.label != null) out.label = spec.label;
+    if (spec.via != null) { out.via = { tile: spec.via.tile }; if (spec.via.action != null) out.via.action = spec.via.action; }
+    return out;
+  }
+  const savePolicyOf = (world) => world && world.save_policy ? clone(world.save_policy) : null;
+  const childWorldOf = (world, id) => clone(((world && world.child_worlds) || {})[id] || null);
   const IDENTITY_SPATIAL_ROOT = { origin: [0, 0, 0], rotation: [0, 0, 0] };
   const vec = (v, n) => Array.isArray(v) && v.length === n && v.every((x) => typeof x === 'number' && isFinite(x));
   function spatialRootOf(world) {
@@ -192,13 +223,44 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
     return r ? { origin: clone(r.origin), rotation: clone(r.rotation || [0, 0, 0]), explicit: true } : { origin: [0, 0, 0], rotation: [0, 0, 0], explicit: false };
   }
   function presentationError(p) {
-    if (!p || typeof p !== 'object') return 'presentation must be an object';
+    if (!p || typeof p !== 'object' || Array.isArray(p)) return 'presentation must be an object';
+    const unknown = Object.keys(p).filter((k) => !['mode', 'dock', 'preferred_size', 'preferred_position', 'user_adjustable', 'anchor'].includes(k)).sort();
+    if (unknown.length) return 'presentation unknown fields: ' + unknown.join(', ');
     if (!PRESENTATION_MODES.includes(p.mode)) return 'presentation.mode must be ' + PRESENTATION_MODES.join('|');
     if (p.dock != null && !['left', 'right', 'top', 'bottom'].includes(p.dock)) return 'presentation.dock must be left|right|top|bottom';
     if (p.preferred_size != null && (!vec(p.preferred_size, 2) || p.preferred_size.some((x) => x <= 0))) return 'presentation.preferred_size must be two positive numbers';
     if (p.preferred_position != null && !(vec(p.preferred_position, 2) || vec(p.preferred_position, 3))) return 'presentation.preferred_position must be two or three numbers';
     if (p.user_adjustable != null && typeof p.user_adjustable !== 'boolean') return 'presentation.user_adjustable must be boolean';
     if (p.anchor != null && typeof p.anchor !== 'string') return 'presentation.anchor must be a tile path string';
+    return null;
+  }
+  // Public authored wake contract. Validation never resolves grants or wakes a node.
+  function capabilityError(c) {
+    if (!c || typeof c !== 'object' || Array.isArray(c)) return 'capability must be an object';
+    if (typeof c.id !== 'string' || !c.id) return 'a capability needs a non-empty string id';
+    if (c.wake === undefined) return null; // Omitted wake is the existing manual default.
+    const w = c.wake, finite = (x) => typeof x === 'number' && Number.isFinite(x);
+    if (!w || typeof w !== 'object' || Array.isArray(w)) return 'capability wake must be an object';
+    const fields = {
+      manual: ['on'], signal: ['on', 'name'], near: ['on', 'within', 'hysteresis', 'sleeps'],
+      value: ['on', 'tile', 'var', 'over', 'under', 'sleeps'], time: ['on', 'after', 'sleeps'],
+    };
+    if (typeof w.on !== 'string' || !Object.prototype.hasOwnProperty.call(fields, w.on)) return 'capability wake.on must be manual|signal|near|value|time';
+    const unknown = Object.keys(w).filter((k) => !fields[w.on].includes(k)).sort();
+    if (unknown.length) return 'capability wake unknown fields: ' + unknown.join(', ');
+    if (w.sleeps !== undefined && typeof w.sleeps !== 'boolean') return 'capability wake.sleeps must be boolean';
+    if (w.on === 'signal' && (typeof w.name !== 'string' || !w.name)) return 'signal wake needs a non-empty name';
+    if (w.on === 'near') {
+      if (w.within !== undefined && (!finite(w.within) || w.within <= 0)) return 'near wake.within must be a positive finite number';
+      if (w.hysteresis !== undefined && (!finite(w.hysteresis) || w.hysteresis < 1)) return 'near wake.hysteresis must be a finite number >= 1';
+    }
+    if (w.on === 'value') {
+      if (typeof w.var !== 'string' || !w.var) return 'value wake needs a non-empty var name';
+      if (w.tile !== undefined && (typeof w.tile !== 'string' || (w.tile !== '' && !/^[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*$/.test(w.tile)))) return 'value wake.tile must be a descendant tile path or empty for this tile';
+      if ((w.over !== undefined) === (w.under !== undefined)) return 'value wake needs exactly one of over or under';
+      if (!finite(w.over !== undefined ? w.over : w.under)) return 'value wake threshold must be a finite number';
+    }
+    if (w.on === 'time' && (!finite(w.after) || w.after < 0)) return 'time wake.after must be a non-negative finite number';
     return null;
   }
   function defaultFacets() {
@@ -225,9 +287,9 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
       state: { version: 1, mutable: true, last_transform: null },
     };
     if (spec.params) tile.params = clone(spec.params);
-    if (spec.capabilities) tile.capabilities = clone(spec.capabilities);
+    if (spec.capabilities !== undefined) tile.capabilities = clone(spec.capabilities);
     if (spec.view) tile.view = clone(spec.view);
-    if (spec.presentation) tile.presentation = clone(spec.presentation);
+    if (spec.presentation !== undefined) tile.presentation = clone(spec.presentation);
     tile.provenance.sha256 = contentHash(tile);
     return tile;
   }
@@ -251,7 +313,18 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
       }
     }
     if (!Array.isArray(tile.form_hints)) e.push('form_hints must be an array');
-    if (tile.presentation) { const bad = presentationError(tile.presentation); if (bad) e.push(bad); }
+    if (tile.presentation !== undefined) { const bad = presentationError(tile.presentation); if (bad) e.push(bad); }
+    if (tile.capabilities !== undefined) {
+      if (!Array.isArray(tile.capabilities)) e.push('capabilities must be an array');
+      else {
+        const seen = new Set();
+        for (const c of tile.capabilities) {
+          const bad = capabilityError(c);
+          if (bad) e.push(bad);
+          if (c && typeof c.id === 'string') { if (seen.has(c.id)) e.push('duplicate capability ' + c.id); seen.add(c.id); }
+        }
+      }
+    }
     return { ok: e.length === 0, errors: e };
   }
   const findSocket = (tile, id) => ((tile.facets.connect.sockets || []).find((s) => s.id === id) || null);
@@ -424,7 +497,7 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
   function deliver(world, path, name, t, depth, trace) {
     let tile = resolveTile(world, path);
     if (!tile) return;
-    for (const c of tile.capabilities || []) if (!isAwake(world, path, c.id) && c.wake && c.wake.on === 'signal' && (c.wake.name === name || c.wake.name === undefined)) { setAwake(world, path, c.id, true); trace.push({ tile: path, woke: c.id }); } // a capability that sleeps until it is called for
+    for (const c of tile.capabilities || []) if (!isAwake(world, path, c.id) && c.wake && c.wake.on === 'signal' && typeof c.wake.name === 'string' && c.wake.name.length && c.wake.name === name) { setAwake(world, path, c.id, true); trace.push({ tile: path, woke: c.id }); } // only the explicitly named signal wakes it
     tile = activeTile(world, path, tile);
     if (depth > 48) { trace.push({ halt: 'signal depth limit', tile: path }); return; }
     trace.push({ tile: path, signal: name });
@@ -461,7 +534,12 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
   }
 
   // ───────────────────────────── 4 world
-  function createWorld(name) { return { kind: 'morphtile-world', version: '0.1', name: name || 'Untitled world', spatial_root: clone(IDENTITY_SPATIAL_ROOT), tiles: {}, edges: {}, vars: {}, defs: {}, time: 0 }; }
+  function createWorld(name, opts) {
+    opts = opts || {};
+    const world = { kind: 'morphtile-world', version: '0.1', name: name || 'Untitled world', spatial_root: clone(IDENTITY_SPATIAL_ROOT), tiles: {}, edges: {}, vars: {}, defs: {}, time: 0 };
+    if (opts.save_policy !== undefined) { const bad = savePolicyError(opts.save_policy); if (bad) throw new Error(bad); world.save_policy = normalizeSavePolicy(opts.save_policy); }
+    return world;
+  }
   // Definitions: one shared body that many tiles ARE. The body lives once in world.defs; each instance is a real tile
   // with its own id, name, place, wires and state. Syncing a definition rewrites every instance's body through ordinary
   // merge units — so instancing gains nothing that is hidden from planning, receipts or rollback.
@@ -491,7 +569,12 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
   }
   function instancesOf(world, defId) { const out = []; for (const e of leaves(world)) if (e.tile.provenance && e.tile.provenance.instance_of === defId) out.push(e); return out; }
   function defDrift(world, defId) { const def = (world.defs || {})[defId]; if (!def) return null; const h = bodyHash(def.body); return instancesOf(world, defId).filter((e) => bodyHash(bodyOf(e.tile)) !== h).map((e) => e.path); }
-  const structHash = (world) => hashOf({ tiles: world.tiles, edges: world.edges, defs: world.defs || {}, words: world.words || {}, spatial_root: world.spatial_root });
+  const structHash = (world) => {
+    const matter = { tiles: world.tiles, edges: world.edges, defs: world.defs || {}, words: world.words || {}, spatial_root: world.spatial_root };
+    if (world.save_policy !== undefined) matter.save_policy = world.save_policy;
+    if (world.child_worlds !== undefined) matter.child_worlds = world.child_worlds;
+    return hashOf(matter);
+  };
   const parentEdgeOf = (c, tileId) => sortedEdges(c).find((e) => e.kind === 'attach' && e.to.tile === tileId) || null;
   const childrenOf = (c, tileId) => sortedEdges(c).filter((e) => e.kind === 'attach' && e.from.tile === tileId).map((e) => e.to.tile);
   const rootsOf = (c) => Object.keys(c.tiles).sort().filter((id) => !parentEdgeOf(c, id));
@@ -528,6 +611,15 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
     const e = [], root = spatialRootOf(world);
     if (!vec(root.origin, 3) || !vec(root.rotation, 3)) e.push('spatial_root needs three-number origin and rotation arrays');
     else if (canonical(root.origin) !== canonical([0, 0, 0]) || canonical(root.rotation) !== canonical([0, 0, 0])) e.push('spatial_root is the canonical identity frame; place content through tile-local frames instead');
+    if (world.save_policy !== undefined) { const bad = savePolicyError(world.save_policy); if (bad) e.push(bad); }
+    if (world.child_worlds !== undefined) {
+      if (!world.child_worlds || typeof world.child_worlds !== 'object' || Array.isArray(world.child_worlds)) e.push('child_worlds must be an object');
+      else for (const id of Object.keys(world.child_worlds)) {
+        const child = world.child_worlds[id], bad = childWorldError(id, child);
+        if (bad) e.push('child world ' + id + ': ' + bad);
+        else if (child.id !== id) e.push('child world ' + id + ': key does not match child.id');
+      }
+    }
     validateContainer(world, '', e);
     for (const entry of leaves(world)) { const d = entry.tile.provenance && entry.tile.provenance.instance_of; if (d && !(world.defs || {})[d]) e.push(entry.path + ': points at a definition that is not here: ' + d); }
     return { ok: e.length === 0, errors: e };
@@ -570,6 +662,20 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
     const box = (cpath) => { const c = containerAt(world, cpath || ''); if (!c) throw new Error('no container ' + cpath); return c; };
     let rekeys = [];
     switch (op.op) {
+      case 'world.save-policy.set': {
+        if (op.save_policy === null || op.save_policy === undefined) delete world.save_policy;
+        else { const bad = savePolicyError(op.save_policy); if (bad) throw new Error(bad); world.save_policy = normalizeSavePolicy(op.save_policy); }
+        break;
+      }
+      case 'child-world.put': {
+        const id = op.id || (op.child && op.child.id), spec = Object.assign({}, op.child || {}, op.world_ref != null ? { world_ref: op.world_ref } : {});
+        const bad = childWorldError(id, spec); if (bad) throw new Error(bad);
+        world.child_worlds = world.child_worlds || {}; world.child_worlds[id] = normalizeChildWorld(id, spec); break;
+      }
+      case 'child-world.remove': {
+        if (!(world.child_worlds || {})[op.id]) throw new Error('no child world ' + op.id);
+        delete world.child_worlds[op.id]; if (!Object.keys(world.child_worlds).length) delete world.child_worlds; break;
+      }
       case 'tile.add': { const c = box(op.in), t = clone(op.tile); if (c.tiles[t.id] && op.rename) { const b0 = t.id; let n = 2; while (c.tiles[b0 + '_' + n]) n++; t.id = b0 + '_' + n; } if (c.tiles[t.id]) throw new Error('tile exists: ' + t.id); if (t.provenance) t.provenance.sha256 = contentHash(t); c.tiles[t.id] = t; break; }
       case 'tile.replace': { const [cpath, id] = splitPath(op.id), c = box(cpath); need(op.id); if (!op.tile || op.tile.id !== id) throw new Error('the replacement must keep the id ' + id); c.tiles[id] = clone(op.tile); break; }
       case 'word.define': { // teach this world a word; every expression anywhere in it can use it at once
@@ -591,7 +697,7 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
         if (op.rotation != null) { if (!vec(op.rotation, 3)) throw new Error('frame rotation must be three finite numbers'); cn.rotation = clone(op.rotation); }
         break;
       }
-      case 'cap.add': { const t = need(op.id), c = clone(op.capability); if (!c.id) throw new Error('a capability needs an id'); if (capOf(t, c.id)) throw new Error('capability exists: ' + c.id); (t.capabilities = t.capabilities || []).push(c); break; }
+      case 'cap.add': { const t = need(op.id), bad = capabilityError(op.capability); if (bad) throw new Error(bad); const c = clone(op.capability); if (capOf(t, c.id)) throw new Error('capability exists: ' + c.id); (t.capabilities = t.capabilities || []).push(c); break; }
       case 'cap.remove': { const t = need(op.id); if (!capOf(t, op.capability)) throw new Error('no capability ' + op.capability); t.capabilities = t.capabilities.filter((c) => c.id !== op.capability); if (!t.capabilities.length) delete t.capabilities; break; }
       case 'def.create': { // this tile becomes the first instance of a shared definition
         const t = need(op.id), defId = op.as || 'def_' + hashOf({ b: bodyOf(t), n: op.name || t.name }).slice(0, 6);
@@ -724,6 +830,8 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
   const metaOf = (t) => ({ name: t.name, form_hints: t.form_hints, bridges: t.provenance.bridges, created_by: t.provenance.created_by, instance_of: t.provenance.instance_of, was_instance_of: t.provenance.was_instance_of });
   function parseKey(key) { const rest = key.slice(5), h = rest.indexOf('#'); return { isEdge: key.startsWith('edge:'), path: h < 0 ? rest : rest.slice(0, h), part: h < 0 ? null : rest.slice(h + 1) }; }
   function unitValue(world, key) {
+    if (key === 'world:save_policy') return world.save_policy || null;
+    if (key.startsWith('childworld:')) return (world.child_worlds || {})[key.slice('childworld:'.length)] || null;
     if (key.startsWith('word:')) return (world.words || {})[key.slice(5)] || null;
     if (key.startsWith('def:')) return (world.defs || {})[key.slice(4)] || null;
     const k = parseKey(key), [cp, id] = splitPath(k.path), c = containerAt(world, cp);
@@ -735,6 +843,8 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
     return k.part === 'meta' ? metaOf(t) : k.part === 'view' ? t.view || null : k.part === 'presentation' ? t.presentation || null : k.part === 'capabilities' ? t.capabilities || null : k.part === 'params' ? t.params || null : k.part === 'ports' ? (t.interior ? t.interior.ports : null) : k.part === 'interior' ? t.interior || null : t.facets[k.part.slice(6)] || null;
   }
   function setUnit(world, key, value) {
+    if (key === 'world:save_policy') { if (value === null) delete world.save_policy; else world.save_policy = clone(value); return; }
+    if (key.startsWith('childworld:')) { const id = key.slice('childworld:'.length); if (value === null) { if (world.child_worlds) { delete world.child_worlds[id]; if (!Object.keys(world.child_worlds).length) delete world.child_worlds; } } else { world.child_worlds = world.child_worlds || {}; world.child_worlds[id] = clone(value); } return; }
     if (key.startsWith('word:')) { world.words = world.words || {}; if (value === null) delete world.words[key.slice(5)]; else world.words[key.slice(5)] = clone(value); return; }
     if (key.startsWith('def:')) { world.defs = world.defs || {}; if (value === null) delete world.defs[key.slice(4)]; else world.defs[key.slice(4)] = clone(value); return; }
     const k = parseKey(key), [cp, id] = splitPath(k.path), c = containerAt(world, cp);
@@ -772,15 +882,18 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
     return out;
   }
   function diffUnits(base, cand) {
-    const out = diffContainer(base, cand, '', []), a = base.defs || {}, b = cand.defs || {}, wa = base.words || {}, wb = cand.words || {};
+    const out = diffContainer(base, cand, '', []), a = base.defs || {}, b = cand.defs || {}, wa = base.words || {}, wb = cand.words || {}, ca = base.child_worlds || {}, cb = cand.child_worlds || {};
+    if (canonical(base.save_policy) !== canonical(cand.save_policy)) out.push({ key: 'world:save_policy', value: cand.save_policy === undefined ? null : clone(cand.save_policy) });
+    for (const id of Array.from(new Set([...Object.keys(ca), ...Object.keys(cb)])).sort()) if (canonical(ca[id]) !== canonical(cb[id])) out.push({ key: 'childworld:' + id, value: cb[id] ? clone(cb[id]) : null });
     for (const id of Array.from(new Set([...Object.keys(a), ...Object.keys(b)])).sort()) if (canonical(a[id]) !== canonical(b[id])) out.push({ key: 'def:' + id, value: b[id] ? clone(b[id]) : null });
     for (const id of Array.from(new Set([...Object.keys(wa), ...Object.keys(wb)])).sort()) if (canonical(wa[id]) !== canonical(wb[id])) out.push({ key: 'word:' + id, value: wb[id] ? clone(wb[id]) : null });
     return out;
   }
-  const isWhole = (key) => !key.startsWith('edge:') && !key.startsWith('def:') && !key.startsWith('word:') && (key.indexOf('#') < 0 || key.endsWith('#interior'));
-  const touchedPath = (key) => { if (key.startsWith('def:') || key.startsWith('word:')) return null; const k = parseKey(key); return k.isEdge ? splitPath(k.path)[0] || null : k.path; };
+  const isWorldUnit = (key) => key === 'world:save_policy' || key.startsWith('childworld:');
+  const isWhole = (key) => !isWorldUnit(key) && !key.startsWith('edge:') && !key.startsWith('def:') && !key.startsWith('word:') && (key.indexOf('#') < 0 || key.endsWith('#interior'));
+  const touchedPath = (key) => { if (isWorldUnit(key) || key.startsWith('def:') || key.startsWith('word:')) return null; const k = parseKey(key); return k.isEdge ? splitPath(k.path)[0] || null : k.path; };
   const ancestors = (path) => { const out = []; let p = path; while (p.indexOf('/') >= 0) { p = splitPath(p)[0]; out.push(p); } return out; };
-  const unitOrder = (key) => (key.startsWith('word:') ? -2 : key.startsWith('def:') ? -1 : key.startsWith('edge:') ? 2 : key.indexOf('#') < 0 ? 0 : key.endsWith('#interior') ? 1 : 3);
+  const unitOrder = (key) => (key === 'world:save_policy' ? -4 : key.startsWith('childworld:') ? -3 : key.startsWith('word:') ? -2 : key.startsWith('def:') ? -1 : key.startsWith('edge:') ? 2 : key.indexOf('#') < 0 ? 0 : key.endsWith('#interior') ? 1 : 3);
   // Events: the only way a live world changes. Deterministic: same world + same event -> same world.
   function applyEvent(world, ev) {
     const trace = [];
@@ -1813,11 +1926,11 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
   }
 
   return {
-    VERSION: '0.4', FACETS, KNOWN_FORMS, SPATIAL_FORMS, PRESENTATION_MODES, IDENTITY_SPATIAL_ROOT, EVIDENCE, PRESETS,
+    VERSION: '0.4', FACETS, KNOWN_FORMS, SPATIAL_FORMS, PRESENTATION_MODES, SAVE_POLICY_MODES, IDENTITY_SPATIAL_ROOT, EVIDENCE, PRESETS,
     clone, canonical, sha256, hashOf, ihash,
     createTile, validateTile, contentHash, findSocket,
     evalExpr, getVar, readVars, rekeyVars, paramValue, relTile, getAt, activeTile, isAwake, capOf, capStatus, grantsOf, sleepingReport, pendingWakes, splitPath, resolveTile, containerAt, countTiles, depthOf, leaves,
-    createWorld, validateWorld, structHash, spatialRootOf, placementOf, composePlacement, tileMatrix, BUILTIN_WORDS, bodyOf, bodyHash, instancesOf, defDrift, applyStructOp, applyEvent, diffUnits, unitValue, rootsOf, childrenOf, parentEdgeOf,
+    createWorld, validateWorld, structHash, spatialRootOf, placementOf, composePlacement, tileMatrix, savePolicyOf, savePolicyError, childWorldOf, childWorldError, BUILTIN_WORDS, bodyOf, bodyHash, instancesOf, defDrift, applyStructOp, applyEvent, diffUnits, unitValue, rootsOf, childrenOf, parentEdgeOf,
     reconstruct, exportWorld, importWorld, exportWords, importWords, exportKit, importKit, needsOf, createWorkspace, record, cloneBody, editCandidate, planMerge, commitPlan, rollback, exportWorkspace, importWorkspace,
     weakestEvidence, ingestMaterialOffer, materialFromOffer, createRegistry, dataUrlBytes,
     compileMesh, compileMeshData, clearRuntimeCaches, renderAsset, renderReceipt, compilePanel, compileView, resolvePresentation, presentationError, vnodeToHTML, compileWebsite, toText, parseText, fromText,

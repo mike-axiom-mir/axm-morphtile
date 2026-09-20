@@ -13,13 +13,13 @@ function lab() {
       material: { type: "primitive", source: null, data: { color: [0.95, 0.35, 0.12], pattern: "stripes", scale: 0.15 } },
       behavior: { type: "scripted", data: { ops: [{ op: "bob", amp: 0.2, rate: 2 }] } }
     },
-    capabilities: [{ id: "dash", grants: { vars: { dash: 1 } }, wake: { mode: "manual" } }],
+    capabilities: [{ id: "dash", grants: { vars: { dash: 1 } }, wake: { on: "manual" } }],
     view: { title: "Donor UI", body: [{ text: "mixed in" }] }
   });
   w.tiles.target = MT.createTile({
     id: "target", name: "Receiver",
     facets: { connect: { sockets: [], bridges: [], place: [7, 2, 9], rotation: [0, 0.5, 0] } },
-    capabilities: [{ id: "old", grants: { vars: { old: 1 } }, wake: { mode: "manual" } }]
+    capabilities: [{ id: "old", grants: { vars: { old: 1 } }, wake: { on: "manual" } }]
   });
   return w;
 }

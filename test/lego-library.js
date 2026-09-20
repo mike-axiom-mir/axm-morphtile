@@ -9,7 +9,7 @@ function sourceWorld() {
   const source = MT.createTile({
     id: "source", name: "Source",
     facets: { material: { type: "primitive", source: null, data: { color: [0.9, 0.2, 0.4], pattern: "checker", scale: 0.2 } } },
-    capabilities: [{ id: "jump", grants: { vars: { jumps: 0 } }, wake: { mode: "manual" } }],
+    capabilities: [{ id: "jump", grants: { vars: { jumps: 0 } }, wake: { on: "manual" } }],
     view: { title: "Source view", body: [{ text: "Reusable" }] }
   });
   const target = MT.createTile({ id: "target", name: "Target" });
@@ -78,7 +78,7 @@ test("a self-created world can be scanned for new Lego without vaulting anything
 test("selected Lego pulls its definition dependencies so the source world can be deleted safely", () => {
   let w = sourceWorld(), lib = L.createLegoLibrary();
   w.defs.shared_jump = { id: "shared_jump", name: "Shared jump body", body: MT.bodyOf(w.tiles.source), created_by: "human" };
-  w.tiles.source.capabilities.push({ id: "bring_shared", grants_ref: { def: "shared_jump" }, wake: { mode: "manual" } });
+  w.tiles.source.capabilities.push({ id: "bring_shared", grants_ref: { def: "shared_jump" }, wake: { on: "manual" } });
 
   const scan = L.discoverWorldLego(lib, w, { provenance: { source: "self-created" } });
   const cap = scan.candidates.find((x) => x.kind === "capability" && x.name === "bring_shared");

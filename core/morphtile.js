@@ -128,13 +128,44 @@
     return r ? { origin: clone(r.origin), rotation: clone(r.rotation || [0, 0, 0]), explicit: true } : { origin: [0, 0, 0], rotation: [0, 0, 0], explicit: false };
   }
   function presentationError(p) {
-    if (!p || typeof p !== 'object') return 'presentation must be an object';
+    if (!p || typeof p !== 'object' || Array.isArray(p)) return 'presentation must be an object';
+    const unknown = Object.keys(p).filter((k) => !['mode', 'dock', 'preferred_size', 'preferred_position', 'user_adjustable', 'anchor'].includes(k)).sort();
+    if (unknown.length) return 'presentation unknown fields: ' + unknown.join(', ');
     if (!PRESENTATION_MODES.includes(p.mode)) return 'presentation.mode must be ' + PRESENTATION_MODES.join('|');
     if (p.dock != null && !['left', 'right', 'top', 'bottom'].includes(p.dock)) return 'presentation.dock must be left|right|top|bottom';
     if (p.preferred_size != null && (!vec(p.preferred_size, 2) || p.preferred_size.some((x) => x <= 0))) return 'presentation.preferred_size must be two positive numbers';
     if (p.preferred_position != null && !(vec(p.preferred_position, 2) || vec(p.preferred_position, 3))) return 'presentation.preferred_position must be two or three numbers';
     if (p.user_adjustable != null && typeof p.user_adjustable !== 'boolean') return 'presentation.user_adjustable must be boolean';
     if (p.anchor != null && typeof p.anchor !== 'string') return 'presentation.anchor must be a tile path string';
+    return null;
+  }
+  // Public authored wake contract. Validation never resolves grants or wakes a node.
+  function capabilityError(c) {
+    if (!c || typeof c !== 'object' || Array.isArray(c)) return 'capability must be an object';
+    if (typeof c.id !== 'string' || !c.id) return 'a capability needs a non-empty string id';
+    if (c.wake === undefined) return null; // Omitted wake is the existing manual default.
+    const w = c.wake, finite = (x) => typeof x === 'number' && Number.isFinite(x);
+    if (!w || typeof w !== 'object' || Array.isArray(w)) return 'capability wake must be an object';
+    const fields = {
+      manual: ['on'], signal: ['on', 'name'], near: ['on', 'within', 'hysteresis', 'sleeps'],
+      value: ['on', 'tile', 'var', 'over', 'under', 'sleeps'], time: ['on', 'after', 'sleeps'],
+    };
+    if (typeof w.on !== 'string' || !Object.prototype.hasOwnProperty.call(fields, w.on)) return 'capability wake.on must be manual|signal|near|value|time';
+    const unknown = Object.keys(w).filter((k) => !fields[w.on].includes(k)).sort();
+    if (unknown.length) return 'capability wake unknown fields: ' + unknown.join(', ');
+    if (w.sleeps !== undefined && typeof w.sleeps !== 'boolean') return 'capability wake.sleeps must be boolean';
+    if (w.on === 'signal' && (typeof w.name !== 'string' || !w.name)) return 'signal wake needs a non-empty name';
+    if (w.on === 'near') {
+      if (w.within !== undefined && (!finite(w.within) || w.within <= 0)) return 'near wake.within must be a positive finite number';
+      if (w.hysteresis !== undefined && (!finite(w.hysteresis) || w.hysteresis < 1)) return 'near wake.hysteresis must be a finite number >= 1';
+    }
+    if (w.on === 'value') {
+      if (typeof w.var !== 'string' || !w.var) return 'value wake needs a non-empty var name';
+      if (w.tile !== undefined && (typeof w.tile !== 'string' || (w.tile !== '' && !/^[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*$/.test(w.tile)))) return 'value wake.tile must be a descendant tile path or empty for this tile';
+      if ((w.over !== undefined) === (w.under !== undefined)) return 'value wake needs exactly one of over or under';
+      if (!finite(w.over !== undefined ? w.over : w.under)) return 'value wake threshold must be a finite number';
+    }
+    if (w.on === 'time' && (!finite(w.after) || w.after < 0)) return 'time wake.after must be a non-negative finite number';
     return null;
   }
   function defaultFacets() {
@@ -161,9 +192,9 @@
       state: { version: 1, mutable: true, last_transform: null },
     };
     if (spec.params) tile.params = clone(spec.params);
-    if (spec.capabilities) tile.capabilities = clone(spec.capabilities);
+    if (spec.capabilities !== undefined) tile.capabilities = clone(spec.capabilities);
     if (spec.view) tile.view = clone(spec.view);
-    if (spec.presentation) tile.presentation = clone(spec.presentation);
+    if (spec.presentation !== undefined) tile.presentation = clone(spec.presentation);
     tile.provenance.sha256 = contentHash(tile);
     return tile;
   }
@@ -187,7 +218,18 @@
       }
     }
     if (!Array.isArray(tile.form_hints)) e.push('form_hints must be an array');
-    if (tile.presentation) { const bad = presentationError(tile.presentation); if (bad) e.push(bad); }
+    if (tile.presentation !== undefined) { const bad = presentationError(tile.presentation); if (bad) e.push(bad); }
+    if (tile.capabilities !== undefined) {
+      if (!Array.isArray(tile.capabilities)) e.push('capabilities must be an array');
+      else {
+        const seen = new Set();
+        for (const c of tile.capabilities) {
+          const bad = capabilityError(c);
+          if (bad) e.push(bad);
+          if (c && typeof c.id === 'string') { if (seen.has(c.id)) e.push('duplicate capability ' + c.id); seen.add(c.id); }
+        }
+      }
+    }
     return { ok: e.length === 0, errors: e };
   }
   const findSocket = (tile, id) => ((tile.facets.connect.sockets || []).find((s) => s.id === id) || null);
@@ -360,7 +402,7 @@
   function deliver(world, path, name, t, depth, trace) {
     let tile = resolveTile(world, path);
     if (!tile) return;
-    for (const c of tile.capabilities || []) if (!isAwake(world, path, c.id) && c.wake && c.wake.on === 'signal' && (c.wake.name === name || c.wake.name === undefined)) { setAwake(world, path, c.id, true); trace.push({ tile: path, woke: c.id }); } // a capability that sleeps until it is called for
+    for (const c of tile.capabilities || []) if (!isAwake(world, path, c.id) && c.wake && c.wake.on === 'signal' && typeof c.wake.name === 'string' && c.wake.name.length && c.wake.name === name) { setAwake(world, path, c.id, true); trace.push({ tile: path, woke: c.id }); } // only the explicitly named signal wakes it
     tile = activeTile(world, path, tile);
     if (depth > 48) { trace.push({ halt: 'signal depth limit', tile: path }); return; }
     trace.push({ tile: path, signal: name });
@@ -560,7 +602,7 @@
         if (op.rotation != null) { if (!vec(op.rotation, 3)) throw new Error('frame rotation must be three finite numbers'); cn.rotation = clone(op.rotation); }
         break;
       }
-      case 'cap.add': { const t = need(op.id), c = clone(op.capability); if (!c.id) throw new Error('a capability needs an id'); if (capOf(t, c.id)) throw new Error('capability exists: ' + c.id); (t.capabilities = t.capabilities || []).push(c); break; }
+      case 'cap.add': { const t = need(op.id), bad = capabilityError(op.capability); if (bad) throw new Error(bad); const c = clone(op.capability); if (capOf(t, c.id)) throw new Error('capability exists: ' + c.id); (t.capabilities = t.capabilities || []).push(c); break; }
       case 'cap.remove': { const t = need(op.id); if (!capOf(t, op.capability)) throw new Error('no capability ' + op.capability); t.capabilities = t.capabilities.filter((c) => c.id !== op.capability); if (!t.capabilities.length) delete t.capabilities; break; }
       case 'def.create': { // this tile becomes the first instance of a shared definition
         const t = need(op.id), defId = op.as || 'def_' + hashOf({ b: bodyOf(t), n: op.name || t.name }).slice(0, 6);
