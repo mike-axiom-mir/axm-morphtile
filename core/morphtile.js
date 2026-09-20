@@ -1208,7 +1208,13 @@
     const vars = Object.assign({}, data.vars || {}), budget = Math.min(data.budget || RECIPE_BUDGET, RECIPE_BUDGET);
     const world = ctx.world || null, seen = ctx.seen || [], depth0 = ctx.depth || 0, spent = ctx.made || 0; // what the rest of the chain has already used
     let made = 0, stopped = null;
-    const num = (v, scope, d) => { if (v === undefined) return d; const x = evalExpr(v, { t: 0, words: wordsOf(world), get: (n) => (n in scope ? scope[n] : vars[n]) }); return typeof x === 'number' && isFinite(x) ? x : d; };
+    const NONFINITE_RECIPE_VALUE = {};
+    const num = (v, scope, d) => {
+      if (v === undefined) return d;
+      const x = evalExpr(v, { t: 0, words: wordsOf(world), get: (n) => (n in scope ? scope[n] : vars[n]) });
+      if (typeof x === 'number' && !Number.isFinite(x)) { stopped = stopped || 'HOLD_RECIPE_NONFINITE_VALUE'; throw NONFINITE_RECIPE_VALUE; }
+      return typeof x === 'number' ? x : d;
+    };
     const vec = (v, scope, d) => (Array.isArray(v) ? [num(v[0], scope, d[0]), num(v[1], scope, d[1]), num(v[2], scope, d[2])] : d);
     const walk = (nodes, scope, depth) => {
       if (stopped || depth > 8) { if (depth > 8) stopped = stopped || 'HOLD_RECIPE_TOO_DEEP'; return; }
@@ -1255,7 +1261,7 @@
           color: n.color ? vec(n.color, scope, [0.6, 0.6, 0.7]) : null, segments: n.segments, taper: n.taper === undefined ? undefined : num(n.taper, scope, 1), sub: n.sub });
       }
     };
-    walk(data.parts, {}, 0);
+    try { walk(data.parts, {}, 0); } catch (err) { if (err !== NONFINITE_RECIPE_VALUE) throw err; }
     if (stopped) { out.hold = stopped; if (!ctx.depth) addPart(out, { shape: 'box', size: [1, 1, 1], color: [1, 0.7, 0.3] }); }
     out.recipe_parts = made;
   }
