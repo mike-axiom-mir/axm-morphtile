@@ -1,0 +1,64 @@
+name: bounded-kit-own-key-repair-2
+
+on:
+  push:
+    branches: [core-kit-own-key-identity]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[kit-own-key-repair-2]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: core-kit-own-key-identity
+      - name: Apply bounded registry merge-unit repair
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('core/morphtile.js')
+          text = path.read_text()
+          replacements = [
+            (
+              "    if (key.startsWith('word:')) return (world.words || {})[key.slice(5)] || null;\n    if (key.startsWith('def:')) return (world.defs || {})[key.slice(4)] || null;\n",
+              "    if (key.startsWith('word:')) { const src = world.words || {}, id = key.slice(5); return hasOwn(src, id) ? src[id] : null; }\n    if (key.startsWith('def:')) { const src = world.defs || {}, id = key.slice(4); return hasOwn(src, id) ? src[id] : null; }\n"
+            ),
+            (
+              "    if (key.startsWith('word:')) { world.words = world.words || {}; if (value === null) delete world.words[key.slice(5)]; else world.words[key.slice(5)] = clone(value); return; }\n    if (key.startsWith('def:')) { world.defs = world.defs || {}; if (value === null) delete world.defs[key.slice(4)]; else world.defs[key.slice(4)] = clone(value); return; }\n",
+              "    if (key.startsWith('word:')) { world.words = world.words || {}; const id = key.slice(5); if (value === null) delete world.words[id]; else putOwn(world.words, id, clone(value)); return; }\n    if (key.startsWith('def:')) { world.defs = world.defs || {}; const id = key.slice(4); if (value === null) delete world.defs[id]; else putOwn(world.defs, id, clone(value)); return; }\n"
+            ),
+            (
+              "    for (const id of Array.from(new Set([...Object.keys(a), ...Object.keys(b)])).sort()) if (canonical(a[id]) !== canonical(b[id])) out.push({ key: 'def:' + id, value: b[id] ? clone(b[id]) : null });\n    for (const id of Array.from(new Set([...Object.keys(wa), ...Object.keys(wb)])).sort()) if (canonical(wa[id]) !== canonical(wb[id])) out.push({ key: 'word:' + id, value: wb[id] ? clone(wb[id]) : null });\n",
+              "    for (const id of Array.from(new Set([...Object.keys(a), ...Object.keys(b)])).sort()) { const av = hasOwn(a, id) ? a[id] : undefined, bv = hasOwn(b, id) ? b[id] : undefined; if (canonical(av) !== canonical(bv)) out.push({ key: 'def:' + id, value: bv === undefined ? null : clone(bv) }); }\n    for (const id of Array.from(new Set([...Object.keys(wa), ...Object.keys(wb)])).sort()) { const av = hasOwn(wa, id) ? wa[id] : undefined, bv = hasOwn(wb, id) ? wb[id] : undefined; if (canonical(av) !== canonical(bv)) out.push({ key: 'word:' + id, value: bv === undefined ? null : clone(bv) }); }\n"
+            ),
+            (
+              "      case 'word.remove': { if (!(world.words || {})[op.name]) throw new Error('no word ' + op.name); delete world.words[op.name]; if (!Object.keys(world.words).length) delete world.words; break; }\n",
+              "      case 'word.remove': { if (!hasOwn(world.words || {}, op.name)) throw new Error('no word ' + op.name); delete world.words[op.name]; if (!Object.keys(world.words).length) delete world.words; break; }\n"
+            ),
+            (
+              "        if (world.defs[defId]) throw new Error('a definition called ' + defId + ' already exists');\n        world.defs[defId] = { id: defId, name: op.name || t.name, body: bodyOf(t), created_by: op.by || 'human' };\n",
+              "        if (hasOwn(world.defs, defId)) throw new Error('a definition called ' + defId + ' already exists');\n        putOwn(world.defs, defId, { id: defId, name: op.name || t.name, body: bodyOf(t), created_by: op.by || 'human' });\n"
+            ),
+            (
+              "        if (!defId || !(world.defs || {})[defId]) throw new Error(op.id + ' is not an instance of a definition');\n        world.defs[defId] = Object.assign({}, world.defs[defId], { body: bodyOf(t) }); break;\n",
+              "        if (!defId || !hasOwn(world.defs || {}, defId)) throw new Error(op.id + ' is not an instance of a definition');\n        putOwn(world.defs, defId, Object.assign({}, world.defs[defId], { body: bodyOf(t) })); break;\n"
+            )
+          ]
+          for old, new in replacements:
+            count = text.count(old)
+            if count != 1:
+              raise SystemExit(f'expected exactly one bounded source match, found {count}: {old[:100]!r}')
+            text = text.replace(old, new, 1)
+          path.write_text(text)
+          PY
+      - name: Commit bounded repair
+        run: |
+          git config user.name "mike-axiom-mir"
+          git config user.email "miketobi90@gmail.com"
+          git add core/morphtile.js
+          git diff --cached --exit-code && exit 1 || true
+          git commit -m "fix: preserve registry identity through merge units [kit-own-key-repair-2]"
+          git push origin HEAD:core-kit-own-key-identity
