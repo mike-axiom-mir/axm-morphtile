@@ -17,6 +17,8 @@ function tileFor(parts) {
 }
 
 const overflow = ['*', Number.MAX_VALUE, 2];
+const negativeOverflow = ['*', -Number.MAX_VALUE, 2];
+const nanResult = ['pow', -1, 0.5];
 const EXPECTED_HOLD = 'HOLD_RECIPE_NONFINITE_VALUE';
 
 test('non-finite recipe position expression holds instead of silently becoming zero', () => {
@@ -61,6 +63,17 @@ test('non-finite definition setting expression holds instead of silently falling
 
   const mesh = MT.compileMesh(tile, world);
   assert.equal(mesh.hold, EXPECTED_HOLD);
+});
+
+test('all numeric non-finite result classes fail closed', () => {
+  for (const [label, expression] of [
+    ['positive infinity', overflow],
+    ['negative infinity', negativeOverflow],
+    ['NaN', nanResult]
+  ]) {
+    const mesh = MT.compileMesh(tileFor([{ shape: 'plane', pos: [expression, 0, 0] }]));
+    assert.equal(mesh.hold, EXPECTED_HOLD, label);
+  }
 });
 
 test('large finite recipe values remain ordinary candidate geometry', () => {
