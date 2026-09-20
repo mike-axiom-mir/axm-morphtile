@@ -1205,13 +1205,13 @@
   const RECIPE_BUDGET = 4000;
   function runRecipe(out, data, ctx) {
     ctx = ctx || {};
-    const vars = Object.assign({}, data.vars || {}), budget = Math.min(data.budget || RECIPE_BUDGET, RECIPE_BUDGET);
+    const vars = Object.assign(Object.create(null), data.vars || {}), budget = Math.min(data.budget || RECIPE_BUDGET, RECIPE_BUDGET);
     const world = ctx.world || null, seen = ctx.seen || [], depth0 = ctx.depth || 0, spent = ctx.made || 0; // what the rest of the chain has already used
     let made = 0, stopped = null;
     const NONFINITE_RECIPE_VALUE = {};
     const num = (v, scope, d) => {
       if (v === undefined) return d;
-      const x = evalExpr(v, { t: 0, words: wordsOf(world), get: (n) => (n in scope ? scope[n] : vars[n]) });
+      const x = evalExpr(v, { t: 0, words: wordsOf(world), get: (n) => (Object.prototype.hasOwnProperty.call(scope, n) ? scope[n] : vars[n]) });
       if (typeof x === 'number' && !Number.isFinite(x)) { stopped = stopped || 'HOLD_RECIPE_NONFINITE_VALUE'; throw NONFINITE_RECIPE_VALUE; }
       return typeof x === 'number' ? x : d;
     };
@@ -1223,10 +1223,10 @@
         if (n.repeat !== undefined) {
           const count = Math.max(0, Math.floor(num(n.repeat, scope, 0)));
           if (count + spent > budget) { stopped = 'HOLD_RECIPE_OVER_BUDGET'; return; }
-          for (let i = 0; i < count; i++) { const inner = Object.assign({}, scope); inner[n.as || 'i'] = i; inner[(n.as || 'i') + '_of'] = count; inner[(n.as || 'i') + '_at'] = count > 1 ? i / (count - 1) : 0; walk(n.body, inner, depth + 1); if (stopped) return; }
+          for (let i = 0; i < count; i++) { const inner = Object.assign(Object.create(null), scope); inner[n.as || 'i'] = i; inner[(n.as || 'i') + '_of'] = count; inner[(n.as || 'i') + '_at'] = count > 1 ? i / (count - 1) : 0; walk(n.body, inner, depth + 1); if (stopped) return; }
           continue;
         }
-        if (n.when !== undefined && !evalExpr(n.when, { t: 0, words: wordsOf(world), get: (k) => (k in scope ? scope[k] : vars[k]) })) continue;
+        if (n.when !== undefined && !evalExpr(n.when, { t: 0, words: wordsOf(world), get: (k) => (Object.prototype.hasOwnProperty.call(scope, k) ? scope[k] : vars[k]) })) continue;
         if (n.body) { walk(n.body, scope, depth + 1); continue; }
         if (n.use !== undefined) { // a part that is another invented shape: composition, not a special case
           if (!world) { stopped = 'HOLD_NO_WORLD_TO_LOOK_IN'; return; }
@@ -1237,8 +1237,8 @@
           const sub = { P: [], T: [], K: [], hold: null };
           let subMesh = def.body.facets.mesh;
           if (n.with) { // the same shape, asked for at different settings: the definition itself is untouched
-            const over = {}; for (const k in n.with) over[k] = num(n.with[k], scope, undefined);
-            if (subMesh.type === 'generated' && subMesh.data && subMesh.data.generator === 'recipe') subMesh = { type: 'generated', source: null, data: Object.assign({}, subMesh.data, { vars: Object.assign({}, subMesh.data.vars, over) }) };
+            const over = Object.create(null); for (const k of Object.keys(n.with)) over[k] = num(n.with[k], scope, undefined);
+            if (subMesh.type === 'generated' && subMesh.data && subMesh.data.generator === 'recipe') subMesh = { type: 'generated', source: null, data: Object.assign({}, subMesh.data, { vars: Object.assign(Object.create(null), subMesh.data.vars || {}, over) }) };
             else stopped = 'HOLD_SETTINGS_NOT_ACCEPTED';
             if (stopped) return;
           }
@@ -1261,7 +1261,7 @@
           color: n.color ? vec(n.color, scope, [0.6, 0.6, 0.7]) : null, segments: n.segments, taper: n.taper === undefined ? undefined : num(n.taper, scope, 1), sub: n.sub });
       }
     };
-    try { walk(data.parts, {}, 0); } catch (err) { if (err !== NONFINITE_RECIPE_VALUE) throw err; }
+    try { walk(data.parts, Object.create(null), 0); } catch (err) { if (err !== NONFINITE_RECIPE_VALUE) throw err; }
     if (stopped) { out.hold = stopped; if (!ctx.depth) addPart(out, { shape: 'box', size: [1, 1, 1], color: [1, 0.7, 0.3] }); }
     out.recipe_parts = made;
   }
