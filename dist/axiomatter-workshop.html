@@ -922,6 +922,12 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
       for (const u of ev.units) setUnit(world, u.key, u.value);
       for (const p in ev.tile_states || {}) { const t = resolveTile(world, p); if (t) { t.state = clone(ev.tile_states[p].state); t.provenance.sha256 = ev.tile_states[p].sha256; } }
       for (const k in ev.vars || {}) world.vars[k] = clone(ev.vars[k]);
+      // Empty registries and absent registries have the same structural meaning,
+      // but different full-world hashes. Preserve the original authored shape.
+      for (const key of ['words', 'defs', 'child_worlds']) if (ev.registry_presence && typeof ev.registry_presence[key] === 'boolean') {
+        if (ev.registry_presence[key] && world[key] === undefined) world[key] = {};
+        else if (!ev.registry_presence[key] && world[key] && !Object.keys(world[key]).length) delete world[key];
+      }
     } else if (ev.type !== 'tick') throw new Error('unknown event type: ' + ev.type);
     return trace;
   }
@@ -1016,7 +1022,8 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
     const before = structHash(ws.live);
     if (before !== plan.base_struct_hash) return { ok: false, status: 'REFUSED_PLAN_STALE' };
     const seen = {}, ready = plan.entries.filter((e) => e.status === 'READY' && !seen[e.key] && (seen[e.key] = 1)).sort((a, b) => unitOrder(a.key) - unitOrder(b.key));
-    const tile_states = {}, var_restore = {}, moved = rekeyVars(clone(ws.live.vars), plan.rekeys);
+    const tile_states = {}, var_restore = {}, moved = rekeyVars(clone(ws.live.vars), plan.rekeys), registry_presence = {};
+    for (const key of ['words', 'defs', 'child_worlds']) registry_presence[key] = Object.prototype.hasOwnProperty.call(ws.live, key);
     for (const en of ready) {
       const p = touchedPath(en.key);
       if (p) for (const q of [p].concat(ancestors(p))) { const t = resolveTile(ws.live, q); if (t) tile_states[q] = { state: clone(t.state), sha256: t.provenance.sha256 }; }
@@ -1026,7 +1033,7 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
     const receipt = {
       id: 'rcpt_' + ++ws.counter, plan_id: plan.id, plan_hash: plan.plan_hash, seq: ws.ledger.events.length, by: by || 'human',
       before_struct_hash: before, after_struct_hash: structHash(ws.live),
-      units: ready.map((e) => ({ key: e.key, prior: e.prior })), tile_states, var_restore, rekeys_back: plan.rekeys.map((r) => [r[1], r[0]]).reverse(),
+      units: ready.map((e) => ({ key: e.key, prior: e.prior })), tile_states, var_restore, registry_presence, rekeys_back: plan.rekeys.map((r) => [r[1], r[0]]).reverse(),
       held: plan.entries.filter((e) => e.status !== 'READY').map((e) => ({ key: e.key, candidate: e.candidate, status: e.status })),
       rolled_back: false,
     };
@@ -1043,7 +1050,9 @@ details summary{cursor:pointer;color:var(--ion);min-height:36px;display:flex;ali
     if (r.rolled_back) return { ok: false, status: 'REFUSED_ALREADY_ROLLED_BACK' };
     if (structHash(ws.live) !== r.after_struct_hash) return { ok: false, status: 'REFUSED_STATE_DRIFTED', detail: 'The world changed after this commit, so an exact restore is no longer possible.' };
     const units = r.units.map((u) => ({ key: u.key, value: u.prior })).sort((a, b) => unitOrder(a.key) - unitOrder(b.key));
-    record(ws, { type: 'rollback', receipt_id: r.id, rekeys: r.rekeys_back || [], units, tile_states: r.tile_states, vars: r.var_restore || {} });
+    const event = { type: 'rollback', receipt_id: r.id, rekeys: r.rekeys_back || [], units, tile_states: r.tile_states, vars: r.var_restore || {} };
+    if (r.registry_presence) event.registry_presence = clone(r.registry_presence);
+    record(ws, event);
     r.rolled_back = true;
     return { ok: true, status: 'ROLLED_BACK', exact: structHash(ws.live) === r.before_struct_hash };
   }

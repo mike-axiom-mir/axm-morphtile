@@ -8,7 +8,7 @@ Ground rules that are already true and should stay true:
 5. Ops and merge-unit keys address tiles by PATH. Never add an API that only works at the root.
 6. A form may stop descending (a simple view). It may never keep its own reduced copy of the world.
 
-**If you are the next model picking this up: read `docs/PRINCIPLES.md`, then `docs/FORMAT.md`, then run `npm test` (176 tests). Every test name is a claim; if one fails, that claim is what broke.** The workshop is `npm run build` -> `dist/axiomatter-workshop.html`, one file, no server.
+**If you are the next model picking this up: read `docs/PRINCIPLES.md`, then `docs/FORMAT.md`, then run `npm test` (179 tests). Every test name is a claim; if one fails, that claim is what broke.** The workshop is `npm run build` -> `dist/axiomatter-workshop.html`, one file, no server.
 
 The 2026-09-20 contract convergence finishes the presentation and capability wake regressions raised by the
 Interface and Capability specialists. See `evidence/CONTRACT_CONVERGENCE_2026-09-20.md` for provenance,
