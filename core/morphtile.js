@@ -1501,7 +1501,8 @@
       if (n.meter !== undefined) { const v = Number(evs(n.meter, 0)) || 0, lo = Number(evs(n.min, 0)) || 0, hi = Number(evs(n.max, 1)) || 1, k = hi === lo ? 0 : Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
         return h('div', { cls: 'v-meter' }, [h('span', { cls: 'v-label', text: label(n.label, '') }), h('div', { cls: 'v-bar' }, [h('i', { style: { width: (k * 100).toFixed(1) + '%' } })])]); }
       if (n.button !== undefined) { const sock = findSocket(tile, n.button);
-        return h('button', { cls: 'v-button', text: label(n.label, (sock && sock.label) || n.button), on: { type: 'signal', tile: path, name: (sock && (sock.signal || sock.id)) || n.button } }); }
+        if (!sock || sock.kind !== 'signal' || sock.dir !== 'in') return h('p', { cls: 'v-missing', text: 'no exposed action called ' + n.button });
+        return h('button', { cls: 'v-button', text: label(n.label, sock.label || n.button), on: { type: 'signal', tile: path, name: sock.signal || sock.id } }); }
       if (n.control !== undefined) { const p2 = (tile.params || []).find((q) => q.id === n.control);
         if (!p2) return h('p', { cls: 'v-missing', text: 'no control called ' + n.control });
         const v = paramValue(tile, p2), ctl = { tile: path, id: p2.id };
