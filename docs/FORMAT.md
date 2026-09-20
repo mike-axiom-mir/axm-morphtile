@@ -103,6 +103,16 @@ Evidence classes, weakest-link first: `inferred_candidate_not_tested` < `structu
 - `capabilities[]` = `{id, name, wake, grants | grants_ref: {def}}`. Asleep it costs nothing — no geometry, no
   rules, no state. Waking is `world.awake[path][id] = true`; **matter is byte-identical awake or asleep**.
   `wake.on` is `manual` | `signal` (`name`) | `near` (`within`, `hysteresis`) | `value` (`tile`, `var`, `over`/`under`) | `time` (`after`).
+  Omitted `wake` means manual. An authored wake descriptor must use exactly its mode's fields: no unknown keys or numeric coercion.
+  Signal requires a non-empty name (there is no implicit wildcard). Near defaults to radius `8` and hysteresis `1.25`;
+  authored radius must be positive and hysteresis at least `1`, both finite numbers. Value requires a non-empty variable
+  and exactly one finite `over`/`under` threshold; `tile` is an optional descendant path (empty means this tile).
+  Time requires a finite, non-negative `after`. Near/value/time may set boolean `sleeps: false` to retain a waking
+  capability when its condition becomes false. Capability ids must be non-empty strings and unique within a tile.
+  Validation does not resolve or execute sleeping grants. Malformed legacy descriptors are held rather than silently migrated.
+
+Presentation descriptors accept only the six keys listed in section 5. Unknown fields are rejected by both
+tile validation and `presentation.set`, including whole-tile and imported-world validation paths.
 
 ## 7. World-defined words
 `words[name] = {name, args: ["x"], body: <expr>, note}`. Usable everywhere an expression is. The 26 built-ins
