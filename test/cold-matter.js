@@ -72,3 +72,6 @@ test('missing and corrupted region payloads hold visibly', () => {
 test('cold storage refuses to overwrite an occupied evidence directory', () => {
   const d = temp(); try { fs.writeFileSync(path.join(d, 'keep.txt'), 'evidence'); assert.throws(() => Cold.freezeWorld(world(), d), /must be empty/); } finally { cleanup(d); }
 });
+
+// Flowing Compute runtime builds on the cold-matter contract; keep its tests in the ordinary npm test surface.
+require('./flowing-runtime.js');
