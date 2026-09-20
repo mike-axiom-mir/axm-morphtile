@@ -1,0 +1,46 @@
+name: interface-action-authority-repair-once
+
+on:
+  push:
+    branches:
+      - candidate/interface-action-exposure
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Synchronize current main and apply exact authority repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git merge --no-edit origin/main
+          node <<'NODE'
+          const fs = require('fs');
+          const p = 'core/morphtile.js';
+          const src = fs.readFileSync(p, 'utf8');
+          const before = `      if (n.button !== undefined) { const sock = findSocket(tile, n.button);\n        return h('button', { cls: 'v-button', text: label(n.label, (sock && sock.label) || n.button), on: { type: 'signal', tile: path, name: (sock && (sock.signal || sock.id)) || n.button } }); }`;
+          const after = `      if (n.button !== undefined) { const sock = findSocket(tile, n.button);\n        if (!sock || sock.kind !== 'signal' || sock.dir !== 'in') return h('p', { cls: 'v-missing', text: 'no exposed action called ' + n.button });\n        return h('button', { cls: 'v-button', text: label(n.label, sock.label || n.button), on: { type: 'signal', tile: path, name: sock.signal || sock.id } }); }`;
+          const hits = src.split(before).length - 1;
+          if (hits !== 1) throw new Error('expected exactly one compileView button authority site, found ' + hits);
+          fs.writeFileSync(p, src.replace(before, after));
+          NODE
+          rm .github/workflows/interface-action-repair-once.yml
+          git diff --check
+          npm test
+          npm run build
+          npm run conformance
+          git config user.name "AXM Interface Machine"
+          git config user.email "actions@github.com"
+          git add core/morphtile.js .github/workflows/interface-action-repair-once.yml
+          git commit -m "Fail closed on custom view action authority"
+          git push origin HEAD:candidate/interface-action-exposure
