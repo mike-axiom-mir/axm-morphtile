@@ -1310,6 +1310,10 @@
       const g = GENERATORS[(mf.data || {}).generator];
       if (g) g(out, mf.data, ctx); else { out.hold = 'HOLD_UNKNOWN_GENERATOR'; addPart(out, { shape: 'box', size: [1, 1, 1], color: [1, 0.7, 0.3] }); }
     } else for (const part of (mf.data && mf.data.parts) || [mf.data || {}]) addPart(out, part);
+    if (out.P.some((value) => typeof value !== 'number' || !Number.isFinite(value))) {
+      out.P = []; out.T = []; out.K = [];
+      if (!out.hold) out.hold = 'HOLD_MESH_NONFINITE_VALUE';
+    }
     const paint = md.paint; // {vars, color: [expr, expr, expr] over x, y, z, and the tile's own numbers}
     if (paint && Array.isArray(paint.color)) {
       const pv = paint.vars || {};
