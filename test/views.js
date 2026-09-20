@@ -11,7 +11,7 @@ const VIEW = { title: 'Beacon', accent: [1, 0.7, 0.25], body: [
   { row: [{ button: 'toggle', label: 'Switch it' }, { control: 'levels' }] },
   { when: ['==', ['var', 'beacon'], 1], text: 'Ships can see you' }] };
 
-test('a tile can carry its own interface, and it is used instead of the engine\u2019s card', () => {
+test('a tile can carry its own interface, and it is used instead of the engine’s card', () => {
   const ws = fresh(), before = html(ws);
   assert.ok(/Beacon tower/.test(before) && !/is-view/.test(before), 'the default card first');
   const rc = commit(ws, [{ op: 'view.set', id: 'mt_tower', view: VIEW }]);
@@ -22,11 +22,11 @@ test('a tile can carry its own interface, and it is used instead of the engine\u
   assert.deepEqual(rc.units.map((u) => u.key), ['tile:mt_tower#view'], 'and a view is an ordinary merge unit');
   assert.ok(MT.rollback(ws, rc.rollback_token).exact); assert.equal(html(ws), before, 'rolling back restores the default exactly');
 });
-test('a written interface still addresses the real matter: its controls are the tile\u2019s own', () => {
+test('a written interface still addresses the real matter: its controls are the tile’s own', () => {
   const ws = fresh(); commit(ws, [{ op: 'view.set', id: 'mt_tower', view: VIEW }]);
   const page = html(ws);
-  assert.ok(/data-signal="mt_tower:toggle"/.test(page), 'the button is the tile\u2019s real signal');
-  assert.ok(/data-param="mt_tower:levels"/.test(page), 'the slider is the tile\u2019s real control');
+  assert.ok(/data-signal="mt_tower:toggle"/.test(page), 'the button is the tile’s real signal');
+  assert.ok(/data-param="mt_tower:levels"/.test(page), 'the slider is the tile’s real control');
   const h0 = MT.hashOf(ws.live); html(ws); assert.equal(MT.hashOf(ws.live), h0, 'and reading the interface changes nothing');
   MT.act(ws, { do: 'signal', tile: 'mt_tower', name: 'toggle' });
   assert.equal(MT.readVars(ws.live, 'mt_tower', 0).beacon, 1);
@@ -84,7 +84,8 @@ test('custom view buttons bind only to exposed input signal sockets', () => {
     { button: 'toggle', label: 'Allowed input' },
     { button: 'hidden-rule', label: 'Rule without socket' },
     { button: 'roof', label: 'Attach socket is not an action' },
-    { button: 'lit', label: 'Output signal is not an input action' }
+    { button: 'lit', label: 'Output signal is not an input action' },
+    { button: 'missing-action', label: 'No such socket' }
   ] } }]);
 
   const page = html(ws);
@@ -92,7 +93,9 @@ test('custom view buttons bind only to exposed input signal sockets', () => {
   assert.doesNotMatch(page, /data-signal="mt_tower:hidden-rule"/, 'internal rules are not promoted to UI authority');
   assert.doesNotMatch(page, /data-signal="mt_tower:roof"/, 'attach sockets are not promoted to actions');
   assert.doesNotMatch(page, /data-signal="mt_tower:lit"/, 'output sockets are not promoted to input actions');
+  assert.doesNotMatch(page, /data-signal="mt_tower:missing-action"/, 'missing sockets are not promoted to actions');
   assert.match(page, /no exposed action called hidden-rule/);
   assert.match(page, /no exposed action called roof/);
   assert.match(page, /no exposed action called lit/);
+  assert.match(page, /no exposed action called missing-action/);
 });
