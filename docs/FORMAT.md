@@ -138,6 +138,11 @@ Structural ops (inside `edit`) are `tile.add/remove/replace/meta/stamp/collapse/
 `port.add`, `param.add/set/remove`, `cap.add/remove`, `view.set`, `presentation.set`, `frame.set`, `def.create/instance/update/sync/detach/put`, `word.define/remove`,
 `bridge.attach`. Nothing edits a live world directly: edits land on a clone, a plan says what would merge and what is
 held, a commit writes a receipt, and a rollback restores exactly until the world has drifted.
+New receipts also record whether `words`, `defs` and `child_worlds` were present before the commit.
+Rollback events carry that optional `registry_presence` metadata so removing the last imported entry
+restores an absent registry as absent, or an explicitly empty registry as empty. This preserves full-world
+hashes for immediate rollback as well as structural hashes. Older receipts/events without the metadata
+retain their historical replay behavior; rollback does not rewind later runtime signals or elapsed time.
 
 
 ## 12. Profile saves and child-world references

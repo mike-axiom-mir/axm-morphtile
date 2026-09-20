@@ -5,7 +5,7 @@ Software as matter. One tile schema (mesh, material, behavior, logic, connect) t
 same JSON. Its own small world with the door open: it depends on nothing (not UC, not any
 fabric repo, not a CDN, not npm) and anything may bridge in or out.
 
-    npm test          # 176 behavioral, world-module and licence-contract tests, Node >= 18, zero dependencies
+    npm test          # 179 behavioral, world-module and licence-contract tests, Node >= 18, zero dependencies
     npm run build     # -> dist/axiomatter-workshop.html  (one file, opens on a phone)
     npm run shot      # -> evidence/world.png rendered by the built-in rasterizer
     npm run cold:measure # -> bounded local cold-memory measurement evidence
