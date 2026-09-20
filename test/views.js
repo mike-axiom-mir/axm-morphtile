@@ -73,3 +73,26 @@ test('a view is matter: it travels by text, by file and by kit', () => {
   const dropped = MT.fromText(ws.live, MT.toText(ws.live).replace(/^\s+view \{.*$/m, ''));
   assert.deepEqual(dropped.ops.map((o) => o.op), ['tile.replace'], 'and removing the line removes the interface');
 });
+
+test('custom view buttons bind only to exposed input signal sockets', () => {
+  const ws = fresh();
+  const tower = ws.live.tiles.mt_tower;
+  tower.facets.logic.data.rules.push({ on: 'hidden-rule', do: [{ set: ['beacon', 1] }] });
+  tower.provenance.sha256 = MT.contentHash(tower);
+
+  commit(ws, [{ op: 'view.set', id: 'mt_tower', view: { title: 'Authority boundary', body: [
+    { button: 'toggle', label: 'Allowed input' },
+    { button: 'hidden-rule', label: 'Rule without socket' },
+    { button: 'roof', label: 'Attach socket is not an action' },
+    { button: 'lit', label: 'Output signal is not an input action' }
+  ] } }]);
+
+  const page = html(ws);
+  assert.match(page, /data-signal="mt_tower:toggle"/, 'declared input signal socket stays actionable');
+  assert.doesNotMatch(page, /data-signal="mt_tower:hidden-rule"/, 'internal rules are not promoted to UI authority');
+  assert.doesNotMatch(page, /data-signal="mt_tower:roof"/, 'attach sockets are not promoted to actions');
+  assert.doesNotMatch(page, /data-signal="mt_tower:lit"/, 'output sockets are not promoted to input actions');
+  assert.match(page, /no exposed action called hidden-rule/);
+  assert.match(page, /no exposed action called roof/);
+  assert.match(page, /no exposed action called lit/);
+});
