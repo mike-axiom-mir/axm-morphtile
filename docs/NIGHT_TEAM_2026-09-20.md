@@ -34,8 +34,9 @@ Each AI specialist has a dual job:
 - Creation knowledge belongs in the machine.
 - Universal representation/runtime requirements belong in MorphTile core.
 - Preserve provenance when copying/reusing code.
-- No sibling-repo write storms. One coherent improvement per run unless a repair genuinely spans boundaries.
-- Specialists do not merge their own work. The Director integrates only evidence-grounded, non-conflicting work.
+- No sibling-repo write storms. Continue through coherent evidence-grounded improvements while material value remains; stop only at real evidence, overlap, dependency, scope, regression-risk or diminishing-value boundaries.
+- There is no per-activation minimum or maximum change count. Zero, one or multiple changes are valid when independently justified.
+- Specialists do not merge their own work. The Director integrates evidence-grounded, non-conflicting work and does not defer a clean integration merely to save it for a later hourly activation.
 
 ## Per-run questions for every machine specialist
 
@@ -172,11 +173,12 @@ Each hour:
 
 1. Inspect latest MorphTile + all relevant machine repo state.
 2. Check active/open lanes for semantic overlap.
-3. Take one bounded improvement.
+3. Take as many bounded, non-overlapping, evidence-grounded improvements as remain materially useful in the activation; zero, one or multiple are valid.
 4. Prefer converting repeated AI judgment into deterministic capability.
-5. Test it.
-6. Leave a concise handoff.
-7. Director reviews and coordinates cross-machine integration.
+5. Test every exact claim that will be published or integrated.
+6. Continue while the next useful action remains safely grounded; HOLD when a real boundary appears.
+7. Leave a concise handoff.
+8. Director reviews and coordinates cross-machine integration, merging clean candidates without an artificial activation-count limit.
 
 When a machine request exposes a missing capability:
 
@@ -208,9 +210,9 @@ The team has **no forced end date and no production quota**.
 
 Each role may continue hourly while it can identify a meaningful, non-duplicative reason to act.
 
-No-change is valid.
+No-change is valid, but one quiet activation by itself is not evidence of saturation.
 
-A role may pause its own recurring task when:
+A role may pause its own recurring task when repeated evidence shows:
 - the useful lane is saturated;
 - only speculative churn remains;
 - another lane already owns the meaningful work;
