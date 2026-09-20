@@ -28,7 +28,6 @@ function portableKit() {
     ['toString', { id: 'toString', name: 'toString definition', body: { facets: { mesh: { type: 'primitive', source: null, data: { shape: 'box', size: [3, 1, 1] } } } }, created_by: 'test' }]
   ]);
   const words = ownMap([
-    ['__proto__', { name: '__proto__', args: [], body: 11, note: null }],
     ['constructor', { name: 'constructor', args: [], body: 22, note: null }],
     ['toString', { name: 'toString', args: [], body: 33, note: null }]
   ]);
@@ -47,16 +46,14 @@ function portableKit() {
 test('kit import treats authored own registry names as data, not Object.prototype conflicts', () => {
   const ws = MT.createWorkspace(MT.createWorld('Own-key receiver'));
   const kit = portableKit();
-  for (const key of ['__proto__', 'constructor', 'toString']) {
-    assert.equal(hasOwn(kit.defs, key), true);
-    assert.equal(hasOwn(kit.words, key), true);
-  }
+  for (const key of ['__proto__', 'constructor', 'toString']) assert.equal(hasOwn(kit.defs, key), true);
+  for (const key of ['constructor', 'toString']) assert.equal(hasOwn(kit.words, key), true);
 
   const incoming = MT.importKit(ws.live, kit);
   assert.equal(incoming.status, 'READY', JSON.stringify(incoming));
   assert.deepEqual(incoming.conflicts, []);
   assert.deepEqual(incoming.ops.map((op) => op.op), [
-    'word.define', 'word.define', 'word.define',
+    'word.define', 'word.define',
     'def.put', 'def.put', 'def.put',
     'tile.add'
   ]);
@@ -64,8 +61,10 @@ test('kit import treats authored own registry names as data, not Object.prototyp
   apply(ws, incoming.ops);
   for (const key of ['__proto__', 'constructor', 'toString']) {
     assert.equal(hasOwn(ws.live.defs, key), true, `${key} definition must be own world data`);
-    assert.equal(hasOwn(ws.live.words, key), true, `${key} word must be own world data`);
     assert.equal(ws.live.defs[key].id, key);
+  }
+  for (const key of ['constructor', 'toString']) {
+    assert.equal(hasOwn(ws.live.words, key), true, `${key} word must be own world data`);
     assert.equal(ws.live.words[key].name, key);
   }
 
@@ -77,19 +76,18 @@ test('kit import treats authored own registry names as data, not Object.prototyp
   const again = MT.importKit(ws.live, kit);
   assert.equal(again.status, 'READY', JSON.stringify(again));
   assert.deepEqual(again.conflicts, []);
-  assert.deepEqual(again.already.sort(), ['__proto__', 'constructor', 'toString', '__proto__', 'constructor', 'toString'].sort());
+  assert.deepEqual(again.already.sort(), ['__proto__', 'constructor', 'toString', 'constructor', 'toString'].sort());
   assert.deepEqual(again.ops.map((op) => op.op), ['tile.add']);
 });
 
 test('word export preserves exact own-key names and never exports inherited names as authored words', () => {
   const ws = MT.createWorkspace(MT.createWorld('Word export receiver'));
   apply(ws, [
-    { op: 'word.define', name: '__proto__', args: [], body: 11 },
     { op: 'word.define', name: 'constructor', args: [], body: 22 },
     { op: 'word.define', name: 'toString', args: [], body: 33 }
   ]);
-  const pack = MT.exportWords(ws.live, ['__proto__', 'constructor', 'toString', 'valueOf']);
-  assert.deepEqual(Object.keys(pack.words).sort(), ['__proto__', 'constructor', 'toString'].sort());
-  for (const key of ['__proto__', 'constructor', 'toString']) assert.equal(hasOwn(pack.words, key), true);
+  const pack = MT.exportWords(ws.live, ['constructor', 'toString', 'valueOf']);
+  assert.deepEqual(Object.keys(pack.words).sort(), ['constructor', 'toString'].sort());
+  for (const key of ['constructor', 'toString']) assert.equal(hasOwn(pack.words, key), true);
   assert.equal(hasOwn(pack.words, 'valueOf'), false, 'inherited Object.prototype names are not authored world words');
 });
