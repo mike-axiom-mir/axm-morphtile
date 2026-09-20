@@ -382,16 +382,56 @@ function exportRuntime(runtime) {
 function validatePersistent(data) {
   if (!data || data.format !== FORMAT || data.version !== VERSION) throw new Error('unsupported flowing runtime');
   if (!verifySeal(data, 'runtime_sha256')) throw new Error('flow runtime hash mismatch');
-  const ids = Object.keys(data.registry || {}).sort();
+
+  const registry = data.registry || {};
+  const ids = Object.keys(registry).sort();
   if (!ids.length) throw new Error('flow runtime registry empty');
+  for (const id of ids) {
+    let normalized;
+    try { normalized = normalizeContract(registry[id]); }
+    catch (e) { throw new Error('flow runtime registry invalid ' + id + ': ' + e.message); }
+    if (normalized.id !== id) throw new Error('flow runtime registry id mismatch ' + id);
+    if (hash(normalized) !== hash(registry[id])) throw new Error('flow runtime registry contract not normalized ' + id);
+  }
+
   const gens = data.generations || {};
   if (!gens[data.current_generation_sha256]) throw new Error('flow runtime current generation missing');
   for (const [sha, g] of Object.entries(gens)) {
     if (sha !== g.generation_sha256 || !verifySeal(g, 'generation_sha256')) throw new Error('flow runtime generation hash mismatch ' + sha);
-    if (g.parent_generation_sha256 && !gens[g.parent_generation_sha256]) throw new Error('flow runtime missing parent ' + g.parent_generation_sha256);
-    for (const id of ids) if (!g.contracts || !g.contracts[id]) throw new Error('flow runtime generation missing contract ' + id);
+    if (g.parent_generation_sha256) {
+      const parent = gens[g.parent_generation_sha256];
+      if (!parent) throw new Error('flow runtime missing parent ' + g.parent_generation_sha256);
+      if (g.sequence !== parent.sequence + 1) throw new Error('flow runtime generation sequence mismatch ' + sha);
+    } else if (g.sequence !== 0) {
+      throw new Error('flow runtime root generation sequence mismatch ' + sha);
+    }
+    const contractIds = Object.keys(g.contracts || {}).sort();
+    if (contractIds.length !== ids.length || contractIds.some((id, index) => id !== ids[index])) {
+      throw new Error('flow runtime generation contract set mismatch ' + sha);
+    }
+    for (const id of ids) {
+      const row = g.contracts[id];
+      try { normalizeArtifact(row); }
+      catch (e) { throw new Error('flow runtime generation invalid artifact ' + id + ': ' + e.message); }
+    }
   }
-  for (const r of data.receipts || []) if (!verifySeal(r, 'receipt_sha256')) throw new Error('flow runtime receipt hash mismatch');
+
+  for (const r of data.receipts || []) {
+    if (!verifySeal(r, 'receipt_sha256')) throw new Error('flow runtime receipt hash mismatch');
+    if (r.type === 'generation.commit') {
+      const g = gens[r.generation_sha256];
+      if (!g) throw new Error('flow runtime commit receipt generation unknown ' + r.generation_sha256);
+      if (r.parent_generation_sha256 !== g.parent_generation_sha256 || r.sequence !== g.sequence || r.plan_sha256 !== g.plan_sha256) {
+        throw new Error('flow runtime commit receipt generation mismatch ' + r.generation_sha256);
+      }
+    } else if (r.type === 'generation.rollback' || r.type === 'generation.reactivate') {
+      if (!gens[r.from_generation_sha256] || !gens[r.to_generation_sha256]) {
+        throw new Error('flow runtime navigation receipt generation unknown');
+      }
+    } else {
+      throw new Error('flow runtime receipt type unsupported ' + String(r.type));
+    }
+  }
   return true;
 }
 
