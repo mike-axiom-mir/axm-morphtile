@@ -2,11 +2,13 @@
 
 Read `docs/PRINCIPLES.md` first: three principles from Mike that outrank everything here.
 
-Evidence words used here: **PROVEN** = a test in `test/run.js` asserts it. **WORKS** = exercised
+Evidence words used here: **PROVEN** = an automated repository test asserts it. **WORKS** = exercised
 by hand / headless browser, no assertion yet. **STUB** = shape exists, behavior thin.
 **ASPIRATION** = on the posters, not in the code.
 
-## PROVEN (123/123 tests pass: the original 101 plus spatial 6, presentation 4, cold matter 7 and World #1 commerce 5)
+## PROVEN (131/131 tests pass: previous 123 plus profile/save 4 and child-world/session 4)
+- **Profile-owned saves stay outside worlds.** Profiles carry categories, world slots and arbitrary save payloads in a separate zero-I/O store. Two profiles can point at one opaque world reference without copying world bytes. Local and platform AI instances can attach to a profile, and an allowed AI save bridge points at the existing save record rather than cloning it. World hashes stay unchanged while profile saves are written.
+- **Lazy child-world graph.** A world may carry reference-only child descriptors and a creator-chosen save policy. Both are ordinary rollback-capable merge units. Child descriptors reject embedded world/profile/save payloads. Runtime navigation carries exactly one active world reference plus a return stack, so a loaded child can expose another child recursively without preloading its siblings or rewriting parent matter.
 - **Universal spatial anchors.** New worlds explicitly carry the identity root and old worlds imply it without changing rendered placement. Root and nested local frames resolve recursively, including static rotation. A kit can be imported at a new destination position/rotation without rewriting descendants; moved/rotated collapse → expand preserves observed world frames; definitions exclude instance-local placement. Non-spatial panel/website semantics remain unchanged when only a spatial frame moves.
 - **Presentation placement is matter.** A tile can declare screen, docked, floating, fullscreen, embedded, world-anchored or tile-anchored placement with preferred size/position and user-adjustability. Tile anchors resolve through actual world frames. Session overrides layer on top without changing the world hash; missing anchors and unsupported modes HOLD visibly. Placement travels through text, files, definitions and kits.
 - **Cold matter experiment.** Hash-verified local region payloads wake one region without loading siblings, and a nested child can be the only resident branch. Mutation → sleep → process restart → wake preserves state; two instances of one definition retain independent state; full reconstruction matches the original live and structural hashes; missing/corrupt payloads HOLD. `npm run cold:measure` runs three isolated scales and records warm/cold heap, RSS, realized counts, storage and latency without converting bounded results into a universal claim.

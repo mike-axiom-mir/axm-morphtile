@@ -128,3 +128,35 @@ Structural ops (inside `edit`) are `tile.add/remove/replace/meta/stamp/collapse/
 `port.add`, `param.add/set/remove`, `cap.add/remove`, `view.set`, `presentation.set`, `frame.set`, `def.create/instance/update/sync/detach/put`, `word.define/remove`,
 `bridge.attach`. Nothing edits a live world directly: edits land on a clone, a plan says what would merge and what is
 held, a commit writes a receipt, and a rollback restores exactly until the world has drifted.
+
+
+## 12. Profile saves and child-world references
+
+A world may declare a save contract, but **profile data and save payloads are not world matter**.
+
+```json
+"save_policy": { "mode": "profile", "ai_bridge": true }
+```
+
+`mode` is `none|profile`. `ai_bridge` only says whether a profile-owned save may be exposed by reference to a connected AI instance. A world never contains profile identities, save slots, AI credentials or save payloads.
+
+A world may expose lazy child worlds by reference:
+
+```json
+"child_worlds": {
+  "dungeon": {
+    "id": "dungeon",
+    "world_ref": "local:worlds/dungeon-01",
+    "activation": "lazy",
+    "via": { "tile": "house/door", "action": "open" }
+  }
+}
+```
+
+A child descriptor contains no child-world bytes. The host resolves `world_ref` only when that child becomes active. Each loaded child world may define its own `child_worlds`, so the graph may continue to arbitrary depth without embedding an entire multiverse into the parent world.
+
+`world.save-policy.set`, `child-world.put` and `child-world.remove` are ordinary candidate operations. Their changes become merge units (`world:save_policy`, `childworld:<id>`) with normal receipt and rollback behavior.
+
+Profile categories, world slots, save slots, cross-profile world links and AI connections are defined by the separate zero-I/O profile store in `profiles/profile-store.js`. Multiple profiles may point at the same opaque `world_ref` without copying world memory. A save payload is opaque JSON: a checkpoint, RPG progression, editor state or another application-defined shape are all equally valid.
+
+Runtime navigation is separate again: `runtime/world-session.js` carries exactly one `active_world_ref` plus a return stack. Entering a child returns the one reference the host should load; it does not mutate either world and it does not preload sibling children.
