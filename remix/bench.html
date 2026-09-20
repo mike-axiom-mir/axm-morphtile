@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MorphTile Lego Library / Remix Bench</title>
+<style>
+:root{font-family:system-ui,sans-serif;color-scheme:dark;background:#090b12;color:#eef2ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% 0,#1b2140,#090b12 48%);min-height:100vh}
+main{max-width:1100px;margin:auto;padding:18px}.top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+h1{font-size:clamp(1.5rem,4vw,2.4rem);margin:.2rem 0}.sub{opacity:.72;margin:.2rem 0 1rem}
+.grid{display:grid;grid-template-columns:minmax(250px,.8fr) minmax(300px,1.2fr);gap:14px}@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.card{background:#111522d9;border:1px solid #30384f;border-radius:16px;padding:14px;box-shadow:0 12px 35px #0006}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}button,.file,label.file{border:1px solid #46516d;background:#171d2e;color:#eef2ff;border-radius:10px;padding:9px 12px;cursor:pointer}
+button:hover,label.file:hover{background:#222a40}button.primary{background:#2f3b72}.danger{background:#4a2530}select{width:100%;padding:10px;background:#0d1120;color:#eef2ff;border:1px solid #3d4763;border-radius:10px}
+#items{display:grid;gap:8px;max-height:420px;overflow:auto}.item{display:flex;gap:9px;align-items:flex-start;border:1px solid #2e3851;border-radius:11px;padding:9px;background:#0d111c}
+.item small,.muted{opacity:.65}.pill{font-size:.75rem;border:1px solid #44506f;border-radius:999px;padding:2px 7px}
+pre{white-space:pre-wrap;word-break:break-word;background:#080b13;border:1px solid #28314a;border-radius:10px;padding:10px;max-height:300px;overflow:auto}
+.status{min-height:2.5rem;padding:8px 0}.good{color:#9effba}.hold{color:#ffd08a}.tiny{font-size:.82rem;opacity:.67}
+input[type=file]{display:none}
+</style>
+</head>
+<body>
+<main>
+<div class="top"><div><h1>Lego Library / Remix Bench</h1><p class="sub">Reuse and recombine what already exists. No creation machine is called here.</p></div><span class="pill">created new atoms: 0</span></div>
+<div class="grid">
+<section class="card">
+<h2>Library</h2>
+<div class="row">
+<button id="demo">Load demo Lego</button>
+<label class="file">Import Lego Pack<input id="importFile" type="file" accept=".json,application/json"></label>
+<button id="export">Export library</button>
+</div>
+<p class="tiny">Finished products and individual mesh/material/behavior/capability/interface pieces can live together. Identical objects deduplicate by content hash.</p>
+<div id="items"></div>
+</section>
+<section class="card">
+<h2>Remix</h2>
+<label>Target tile<select id="target"></select></label>
+<p class="tiny">Select reusable pieces on the left, then stage. The target keeps its identity/history/placement; the selected Lego replaces compatible slots.</p>
+<div class="row">
+<button class="primary" id="stage">Stage selected remix</button>
+<button id="commit" disabled>Commit staged</button>
+<button class="danger" id="rollback" disabled>Rollback last</button>
+</div>
+<div id="status" class="status muted">Load or import Lego, choose pieces, then stage.</div>
+<h3>Candidate / target</h3><pre id="preview"></pre>
+</section>
+</div>
+</main>
+<script src="../core/morphtile.js"></script>
+<script src="../library/lego-library.js"></script>
+<script src="./remix-bench.js"></script>
+<script>
+(function(){
+  const MT=window.MorphTile, L=window.MorphTileLegoLibrary, R=window.MorphTileRemixBench;
+  let ws=MT.createWorkspace(MT.seedWorld()), library=L.createLegoLibrary(), staged=null, lastReceipt=null;
+  const q=(s)=>document.querySelector(s), items=q("#items"), target=q("#target"), status=q("#status"), preview=q("#preview");
+  function compatible(kind){return kind.startsWith("facet.")||["capability","parameter","view","presentation","form_hints","body"].includes(kind)}
+  function targets(){target.innerHTML=""; for(const e of MT.leaves(ws.live)){const o=document.createElement("option");o.value=e.path;o.textContent=e.path+" · "+e.tile.name;target.appendChild(o)} renderPreview()}
+  function renderItems(){
+    items.innerHTML="";
+    const ids=Object.keys(library.items).sort();
+    if(!ids.length){items.innerHTML='<p class="muted">Library is empty.</p>';return}
+    for(const id of ids){const f=L.getItem(library,id), row=document.createElement("label");row.className="item";
+      const cb=document.createElement("input");cb.type="checkbox";cb.value=id;cb.disabled=!compatible(f.object.kind);
+      const box=document.createElement("div");box.innerHTML="<b>"+id+"</b> <span class='pill'>"+f.object.kind+"</span><br><small>"+(f.item.name||"")+"</small>";
+      row.append(cb,box);items.appendChild(row)}
+  }
+  function renderPreview(obj){const tile=MT.resolveTile(ws.live,target.value);preview.textContent=JSON.stringify(obj||tile||{},null,2)}
+  function say(text,kind){status.className="status "+(kind||"muted");status.textContent=text}
+  q("#demo").onclick=()=>{
+    const pack=L.exportLegoPack(ws.live,[
+      {id:"tower_product",kind:"kit",path:"mt_tower",provenance:{source:"demo"}},
+      {id:"tower_skin",kind:"facet",facet:"material",path:"mt_tower",provenance:{source:"demo"}},
+      {id:"tower_form",kind:"facet",facet:"mesh",path:"mt_tower",provenance:{source:"demo"}},
+      {id:"core_skin",kind:"facet",facet:"material",path:"mt_core",provenance:{source:"demo"}},
+      {id:"core_motion",kind:"facet",facet:"behavior",path:"mt_core",provenance:{source:"demo"}},
+      {id:"rover_form",kind:"facet",facet:"mesh",path:"mt_rover",provenance:{source:"demo"}},
+      {id:"rover_motion",kind:"facet",facet:"behavior",path:"mt_rover",provenance:{source:"demo"}}
+    ],{name:"Demo Lego"});
+    const r=L.importLegoPack(library,pack,{rename:true});renderItems();say("Demo loaded · "+r.added.length+" labels, "+r.objects_added+" unique objects added.","good")
+  };
+  q("#importFile").onchange=async(ev)=>{try{const file=ev.target.files[0];if(!file)return;const pack=JSON.parse(await file.text()),r=L.importLegoPack(library,pack,{rename:true});if(!r.ok)throw new Error(r.status);renderItems();say("Imported "+r.added.length+" items · "+r.objects_added+" new objects.","good")}catch(e){say("Import held: "+e.message,"hold")}ev.target.value=""};
+  q("#export").onclick=()=>{try{const pack=L.exportLibraryPack(library);const blob=new Blob([JSON.stringify(pack,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="morphtile-lego-pack.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);say("Exported verified library pack.","good")}catch(e){say("Export held: "+e.message,"hold")}};
+  q("#stage").onclick=()=>{
+    const selected=[...items.querySelectorAll('input[type=checkbox]:checked')].map(x=>x.value);
+    const p=R.proposeRemix(ws.live,library,target.value,selected);
+    if(!p.ok||p.status!=="CANDIDATE"){staged=null;q("#commit").disabled=true;say((p.status||"HOLD")+": "+(p.detail||"nothing staged"),"hold");renderPreview();return}
+    staged=R.stageRemix(ws,p,"human:remix-screen");
+    if(!staged.ok||!["READY","PARTIAL_HELD"].includes(staged.status)){q("#commit").disabled=true;say(staged.status+(staged.detail?": "+staged.detail:""),"hold");renderPreview(p);return}
+    q("#commit").disabled=false;say("Staged "+selected.length+" choices · reused "+p.reused_atoms+" unique Lego objects · new atoms 0.","good");renderPreview({proposal:p,plan:staged.plan})
+  };
+  q("#commit").onclick=()=>{if(!staged)return;const r=MT.commitPlan(ws,staged.plan.id,"human:remix-screen");if(!r.ok){say(r.status,"hold");return}lastReceipt=r.receipt;staged=null;q("#commit").disabled=true;q("#rollback").disabled=false;say("Committed through normal MorphTile receipt. No creation step used.","good");targets()};
+  q("#rollback").onclick=()=>{if(!lastReceipt)return;const r=MT.rollback(ws,lastReceipt.rollback_token);if(!r.ok){say(r.status,"hold");return}lastReceipt=null;q("#rollback").disabled=true;say("Exact rollback applied.","good");targets()};
+  target.onchange=()=>renderPreview();
+  targets();renderItems();
+})();
+</script>
+</body></html>
