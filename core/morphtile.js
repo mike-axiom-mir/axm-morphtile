@@ -28,6 +28,8 @@
 
   // ───────────────────────────── 1 util
   const clone = (o) => (o === undefined ? undefined : JSON.parse(JSON.stringify(o)));
+  const hasOwn = (o, k) => !!o && Object.prototype.hasOwnProperty.call(o, k);
+  function putOwn(o, k, v) { Object.defineProperty(o, k, { value: v, enumerable: true, configurable: true, writable: true }); return v; }
   function canonical(v) {
     if (v === null || v === undefined || typeof v !== 'object') return JSON.stringify(v === undefined ? null : v);
     if (Array.isArray(v)) return '[' + v.map(canonical).join(',') + ']';
@@ -589,10 +591,10 @@
         if (BUILTIN_WORDS.indexOf(name) >= 0) throw new Error('"' + name + '" is one of the words the engine already knows');
         if (op.body === undefined) throw new Error('a word needs a body');
         world.words = world.words || {};
-        world.words[name] = { name, args: clone(op.args || []), body: clone(op.body), note: op.note || null };
+        putOwn(world.words, name, { name, args: clone(op.args || []), body: clone(op.body), note: op.note || null });
         break;
       }
-      case 'def.put': { world.defs = world.defs || {}; if (!op.id) throw new Error('a definition needs an id'); world.defs[op.id] = { id: op.id, name: op.name || op.id, body: clone(op.body), created_by: op.by || 'human' }; break; }
+      case 'def.put': { world.defs = world.defs || {}; if (!op.id) throw new Error('a definition needs an id'); putOwn(world.defs, op.id, { id: op.id, name: op.name || op.id, body: clone(op.body), created_by: op.by || 'human' }); break; }
       case 'word.remove': { if (!(world.words || {})[op.name]) throw new Error('no word ' + op.name); delete world.words[op.name]; if (!Object.keys(world.words).length) delete world.words; break; }
       case 'view.set': { const t = need(op.id); if (op.view === null || op.view === undefined) delete t.view; else t.view = clone(op.view); break; }
       case 'presentation.set': { const t = need(op.id); if (op.presentation === null || op.presentation === undefined) delete t.presentation; else { const bad = presentationError(op.presentation); if (bad) throw new Error(bad); t.presentation = clone(op.presentation); } break; }
@@ -970,7 +972,7 @@
   // Words can leave a world and join another: the same evidence discipline as every other thing that arrives from outside.
   function exportWords(world, names) {
     const src = world.words || {}, pick = {};
-    for (const k of (names && names.length ? names : Object.keys(src)).sort()) if (src[k]) pick[k] = clone(src[k]);
+    for (const k of (names && names.length ? names : Object.keys(src)).sort()) if (hasOwn(src, k)) putOwn(pick, k, clone(src[k]));
     return { format: 'morphtile-words', version: '0.4', words: pick, expect: { sha256: hashOf(pick), count: Object.keys(pick).length } };
   }
   function importWords(world, pack, opts) {
@@ -982,7 +984,7 @@
     for (const k of Object.keys(pack.words).sort()) {
       const w = pack.words[k];
       if (BUILTIN_WORDS.indexOf(k) >= 0) { conflicts.push({ name: k, why: 'the engine already knows this word' }); continue; }
-      if (mine[k]) { if (canonical(mine[k]) === canonical(w)) { already.push(k); continue; } if (!opts.overwrite) { conflicts.push({ name: k, why: 'this world has a different word by that name', mine: mine[k], theirs: w }); continue; } }
+      if (hasOwn(mine, k)) { if (canonical(mine[k]) === canonical(w)) { already.push(k); continue; } if (!opts.overwrite) { conflicts.push({ name: k, why: 'this world has a different word by that name', mine: mine[k], theirs: w }); continue; } }
       ops.push({ op: 'word.define', name: k, args: w.args, body: w.body, note: w.note });
     }
     return { ok: true, status: conflicts.length ? 'PARTIAL_HELD' : 'READY', evidence: claimed ? 'verified_payload_sha256' : 'structurally_possible_not_tested', ops, conflicts, already };
@@ -1026,7 +1028,7 @@
     ops.push(...wordPack.ops); conflicts.push(...wordPack.conflicts); already.push(...(wordPack.already || []));
     for (const id of Object.keys(kit.defs || {}).sort()) {
       const mine = (world.defs || {})[id], theirs = kit.defs[id];
-      if (mine) { if (canonical(mine.body) === canonical(theirs.body)) { already.push(id); continue; } if (!opts.overwrite) { conflicts.push({ name: id, why: 'this world has a different definition by that name' }); continue; } }
+      if (hasOwn(world.defs || {}, id)) { if (canonical(mine.body) === canonical(theirs.body)) { already.push(id); continue; } if (!opts.overwrite) { conflicts.push({ name: id, why: 'this world has a different definition by that name' }); continue; } }
       ops.push({ op: 'def.put', id, name: theirs.name, body: theirs.body, by: theirs.created_by });
     }
     if (conflicts.length && !opts.partial) return { ok: true, status: 'HELD_INCOMPLETE', evidence: claimed ? 'verified_payload_sha256' : 'structurally_possible_not_tested', ops: [], conflicts, already, detail: 'the tile would arrive without something it needs, so nothing is applied' };
