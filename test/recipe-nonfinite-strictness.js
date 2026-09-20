@@ -17,19 +17,24 @@ function tileFor(parts) {
 }
 
 const overflow = ['*', Number.MAX_VALUE, 2];
+const EXPECTED_HOLD = 'HOLD_RECIPE_NONFINITE_VALUE';
 
-test('recipe numeric expressions fail closed when evaluation becomes non-finite', () => {
-  const position = MT.compileMesh(tileFor([{ shape: 'plane', pos: [overflow, 0, 0] }]));
-  assert.equal(position.hold, 'HOLD_RECIPE_NONFINITE_VALUE', 'non-finite position must HOLD instead of silently becoming zero');
-
-  const size = MT.compileMesh(tileFor([{ shape: 'plane', size: [overflow, 1, 1] }]));
-  assert.equal(size.hold, 'HOLD_RECIPE_NONFINITE_VALUE', 'non-finite size must HOLD instead of silently becoming one');
-
-  const repeat = MT.compileMesh(tileFor([{ repeat: overflow, as: 'i', body: [{ shape: 'plane' }] }]));
-  assert.equal(repeat.hold, 'HOLD_RECIPE_NONFINITE_VALUE', 'non-finite repeat count must HOLD instead of silently becoming zero');
+test('non-finite recipe position expression holds instead of silently becoming zero', () => {
+  const mesh = MT.compileMesh(tileFor([{ shape: 'plane', pos: [overflow, 0, 0] }]));
+  assert.equal(mesh.hold, EXPECTED_HOLD);
 });
 
-test('definition setting expressions fail closed when evaluation becomes non-finite', () => {
+test('non-finite recipe size expression holds instead of silently becoming one', () => {
+  const mesh = MT.compileMesh(tileFor([{ shape: 'plane', size: [overflow, 1, 1] }]));
+  assert.equal(mesh.hold, EXPECTED_HOLD);
+});
+
+test('non-finite recipe repeat expression holds instead of silently becoming zero', () => {
+  const mesh = MT.compileMesh(tileFor([{ repeat: overflow, as: 'i', body: [{ shape: 'plane' }] }]));
+  assert.equal(mesh.hold, EXPECTED_HOLD);
+});
+
+test('non-finite definition setting expression holds instead of silently falling back', () => {
   const world = MT.createWorld('Non-finite setting probe');
   world.defs = {
     def_parametric: {
@@ -55,7 +60,7 @@ test('definition setting expressions fail closed when evaluation becomes non-fin
   world.tiles[tile.id] = tile;
 
   const mesh = MT.compileMesh(tile, world);
-  assert.equal(mesh.hold, 'HOLD_RECIPE_NONFINITE_VALUE', 'non-finite setting override must HOLD instead of falling back inside the definition');
+  assert.equal(mesh.hold, EXPECTED_HOLD);
 });
 
 test('large finite recipe values remain ordinary candidate geometry', () => {
