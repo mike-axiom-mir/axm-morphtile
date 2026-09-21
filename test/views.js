@@ -61,6 +61,22 @@ test('an interface can be written over repeats and expressions, like everything 
   MT.act(ws, { do: 'signal', tile: 'mt_core', name: 'surge' });
   assert.ok(/Charged core/.test(html(ws)), 'and its title follows the matter too');
 });
+test('repeat lexical scope reaches expression-backed node labels without changing action or control authority', () => {
+  const ws = fresh();
+  commit(ws, [{ op: 'view.set', id: 'mt_tower', view: { title: 'Scoped labels', body: [
+    { repeat: 2, as: 'i', body: [
+      { meter: ['var', 'beacon'], min: 0, max: 1, label: ['+', 'meter ', ['var', 'i']] },
+      { button: 'toggle', label: ['+', 'button ', ['var', 'i']] },
+      { control: 'levels', label: ['+', 'control ', ['var', 'i']] }
+    ] }
+  ] } }]);
+  const page = html(ws);
+  assert.match(page, /meter 0/); assert.match(page, /meter 1/);
+  assert.match(page, /button 0/); assert.match(page, /button 1/);
+  assert.match(page, /control 0/); assert.match(page, /control 1/);
+  assert.equal((page.match(/data-signal="mt_tower:toggle"/g) || []).length, 2, 'scoped labels do not widen signal authority');
+  assert.equal((page.match(/data-param="mt_tower:levels"/g) || []).length, 2, 'scoped labels do not duplicate control state');
+});
 test('a view is matter: it travels by text, by file and by kit', () => {
   const ws = fresh(); commit(ws, [{ op: 'view.set', id: 'mt_tower', view: VIEW }]);
   assert.ok(/^\s+view \{/m.test(MT.toText(ws.live)), 'the text surface writes it out');
