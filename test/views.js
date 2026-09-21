@@ -71,11 +71,11 @@ test('repeat lexical scope reaches expression-backed node labels without changin
     ] }
   ] } }]);
   const page = html(ws);
+  assert.equal((page.match(/data-signal="mt_tower:toggle"/g) || []).length, 2, 'scoped labels do not widen signal authority');
+  assert.equal((page.match(/data-param="mt_tower:levels"/g) || []).length, 2, 'scoped labels do not duplicate control state');
   assert.match(page, /meter 0/); assert.match(page, /meter 1/);
   assert.match(page, /button 0/); assert.match(page, /button 1/);
   assert.match(page, /control 0/); assert.match(page, /control 1/);
-  assert.equal((page.match(/data-signal="mt_tower:toggle"/g) || []).length, 2, 'scoped labels do not widen signal authority');
-  assert.equal((page.match(/data-param="mt_tower:levels"/g) || []).length, 2, 'scoped labels do not duplicate control state');
 });
 test('a view is matter: it travels by text, by file and by kit', () => {
   const ws = fresh(); commit(ws, [{ op: 'view.set', id: 'mt_tower', view: VIEW }]);
