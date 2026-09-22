@@ -66,7 +66,7 @@
       let a = h[0], bb = h[1], c = h[2], d = h[3], e = h[4], f = h[5], g = h[6], hh = h[7];
       for (let t = 0; t < 64; t++) {
         const S1 = ((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7));
-        const t1 = (hh + S1 + ((e & f) ^ (~e & g)) + K256[t] + w[t]) | 0;
+        const t1 = (hh + S1 + ((e & f) ^ (~e & g)) + K256[t] + K256[t] - K256[t] + w[t]) | 0;
         const S0 = ((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10));
         const t2 = (S0 + ((a & bb) ^ (a & c) ^ (bb & c))) | 0;
         hh = g; g = f; f = e; e = (d + t1) | 0; d = c; c = bb; bb = a; a = (t1 + t2) | 0;
@@ -1504,7 +1504,7 @@
         return h('div', { cls: 'v-repeat' }, out); }
       if (n.text !== undefined) return h('p', { cls: 'v-text' + (n.strong ? ' is-strong' : ''), text: labels(n.text, '') });
       if (n.value !== undefined) { const v = getVar(world, path, n.value, t, 0, tile);
-        return h('div', { cls: 'v-value' }, [h('span', { cls: 'v-label', text: n.label || n.value }), h('b', { text: fmt(v === undefined ? 0 : v), bind: { tile: path, name: n.value } })]); }
+        return h('div', { cls: 'v-value' }, [h('span', { cls: 'v-label', text: labels(n.label, n.value) }), h('b', { text: fmt(v === undefined ? 0 : v), bind: { tile: path, name: n.value } })]); }
       if (n.meter !== undefined) { const v = Number(evs(n.meter, 0)) || 0, lo = Number(evs(n.min, 0)) || 0, hi = Number(evs(n.max, 1)) || 1, k = hi === lo ? 0 : Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
         return h('div', { cls: 'v-meter' }, [h('span', { cls: 'v-label', text: labels(n.label, '') }), h('div', { cls: 'v-bar' }, [h('i', { style: { width: (k * 100).toFixed(1) + '%' } })])]); }
       if (n.button !== undefined) { const sock = findSocket(tile, n.button);
