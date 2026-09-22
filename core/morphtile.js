@@ -1497,23 +1497,24 @@
       if (typeof n === 'string') return h('p', { cls: 'v-text', text: n });
       const sctx = scope ? Object.assign({}, ctxExtra, scope) : ctxExtra;
       const evs = (e, d) => { if (e === undefined) return d; const v = evalExpr(e, { t, words: wordsOf(world), get: (k) => (sctx && k in sctx ? sctx[k] : getVar(world, path, k, t, 0, tile)) }); return v === null || v === undefined ? d : v; };
+      const labels = (e, d) => { const v = evs(e, d); return v === undefined || v === null ? d : (typeof v === 'number' ? fmt(v) : String(v)); };
       if (n.when !== undefined && !evs(n.when, false)) return null;
       if (n.repeat !== undefined) { const count = Math.max(0, Math.min(200, Math.floor(Number(evs(n.repeat, 0)) || 0))), out = [];
         for (let i = 0; i < count; i++) { const inner = Object.assign({}, sctx); inner[n.as || 'i'] = i; inner[(n.as || 'i') + '_of'] = count; out.push(h('div', { cls: 'v-item' }, (n.body || []).map((x) => one(x, inner)).filter(Boolean))); }
         return h('div', { cls: 'v-repeat' }, out); }
-      if (n.text !== undefined) return h('p', { cls: 'v-text' + (n.strong ? ' is-strong' : ''), text: label(n.text, '') });
+      if (n.text !== undefined) return h('p', { cls: 'v-text' + (n.strong ? ' is-strong' : ''), text: labels(n.text, '') });
       if (n.value !== undefined) { const v = getVar(world, path, n.value, t, 0, tile);
         return h('div', { cls: 'v-value' }, [h('span', { cls: 'v-label', text: n.label || n.value }), h('b', { text: fmt(v === undefined ? 0 : v), bind: { tile: path, name: n.value } })]); }
       if (n.meter !== undefined) { const v = Number(evs(n.meter, 0)) || 0, lo = Number(evs(n.min, 0)) || 0, hi = Number(evs(n.max, 1)) || 1, k = hi === lo ? 0 : Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
-        return h('div', { cls: 'v-meter' }, [h('span', { cls: 'v-label', text: label(n.label, '') }), h('div', { cls: 'v-bar' }, [h('i', { style: { width: (k * 100).toFixed(1) + '%' } })])]); }
+        return h('div', { cls: 'v-meter' }, [h('span', { cls: 'v-label', text: labels(n.label, '') }), h('div', { cls: 'v-bar' }, [h('i', { style: { width: (k * 100).toFixed(1) + '%' } })])]); }
       if (n.button !== undefined) { const sock = findSocket(tile, n.button);
         if (!sock || sock.kind !== 'signal' || sock.dir !== 'in') return h('p', { cls: 'v-missing', text: 'no exposed action called ' + n.button });
-        return h('button', { cls: 'v-button', text: label(n.label, sock.label || n.button), on: { type: 'signal', tile: path, name: sock.signal || sock.id } }); }
+        return h('button', { cls: 'v-button', text: labels(n.label, sock.label || n.button), on: { type: 'signal', tile: path, name: sock.signal || sock.id } }); }
       if (n.control !== undefined) { const p2 = (tile.params || []).find((q) => q.id === n.control);
         if (!p2) return h('p', { cls: 'v-missing', text: 'no control called ' + n.control });
         const v = paramValue(tile, p2), ctl = { tile: path, id: p2.id };
         if (v === undefined) return h('p', { cls: 'v-missing', text: (p2.label || p2.id) + ' is dormant' });
-        return h('label', { cls: 'v-control' }, [h('span', { cls: 'v-label', text: label(n.label, p2.label || p2.id) }), p2.type === 'choice'
+        return h('label', { cls: 'v-control' }, [h('span', { cls: 'v-label', text: labels(n.label, p2.label || p2.id) }), p2.type === 'choice'
           ? h('select', { param: ctl }, p2.options.map((o) => h('option', { text: o.label, attrs: Object.assign({ value: o.label }, canonical(o.value) === canonical(v) ? { selected: 'selected' } : {}) })))
           : h('input', { param: ctl, attrs: { type: 'range', min: p2.min, max: p2.max, step: p2.step || 1, value: v } }), h('output', { text: fmt(v) })]); }
       if (n.tile !== undefined) { // show another tile here: interfaces compose the way shapes do
