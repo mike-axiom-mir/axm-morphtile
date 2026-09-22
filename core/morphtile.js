@@ -1504,7 +1504,7 @@
         return h('div', { cls: 'v-repeat' }, out); }
       if (n.text !== undefined) return h('p', { cls: 'v-text' + (n.strong ? ' is-strong' : ''), text: labels(n.text, '') });
       if (n.value !== undefined) { const v = getVar(world, path, n.value, t, 0, tile);
-        return h('div', { cls: 'v-value' }, [h('span', { cls: 'v-label', text: n.label || n.value }), h('b', { text: fmt(v === undefined ? 0 : v), bind: { tile: path, name: n.value } })]); }
+        return h('div', { cls: 'v-value' }, [h('span', { cls: 'v-label', text: labels(n.label, n.value) }), h('b', { text: fmt(v === undefined ? 0 : v), bind: { tile: path, name: n.value } })]); }
       if (n.meter !== undefined) { const v = Number(evs(n.meter, 0)) || 0, lo = Number(evs(n.min, 0)) || 0, hi = Number(evs(n.max, 1)) || 1, k = hi === lo ? 0 : Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
         return h('div', { cls: 'v-meter' }, [h('span', { cls: 'v-label', text: labels(n.label, '') }), h('div', { cls: 'v-bar' }, [h('i', { style: { width: (k * 100).toFixed(1) + '%' } })])]); }
       if (n.button !== undefined) { const sock = findSocket(tile, n.button);
