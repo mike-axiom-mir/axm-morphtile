@@ -1,0 +1,51 @@
+name: core19-readout-label-repair-once
+
+on:
+  push:
+    branches:
+      - interface-core/repeat-readout-label-repair-preflight-once-20260922
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: interface-core/repeat-readout-label-repair-preflight-once-20260922
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply exact bounded readout-label repair
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const p = 'core/morphtile.js';
+          let s = fs.readFileSync(p, 'utf8');
+          const from = "text: n.label || n.value";
+          const to = "text: labels(n.label, n.value)";
+          const first = s.indexOf(from);
+          if (first < 0) throw new Error('missing expected readout-label source');
+          if (s.indexOf(from, first + from.length) >= 0) throw new Error('expected exactly one readout-label source occurrence');
+          if (s.includes(to)) throw new Error('repair target already present before bounded edit');
+          s = s.slice(0, first) + to + s.slice(first + from.length);
+          fs.writeFileSync(p, s);
+          NODE
+          test "$(git diff --numstat -- core/morphtile.js)" = $'1\t1\tcore/morphtile.js'
+          git diff --check -- core/morphtile.js
+      - name: Run exact core proof
+        run: |
+          npm test
+          npm run build
+          npm run conformance
+      - name: Commit exact repair and remove one-shot workflow
+        run: |
+          test "$(git diff --numstat -- core/morphtile.js)" = $'1\t1\tcore/morphtile.js'
+          rm .github/workflows/core19-readout-label-repair-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add core/morphtile.js .github/workflows/core19-readout-label-repair-once.yml
+          git commit -m "Repair repeat-scoped readout labels"
+          git push origin HEAD:interface-core/repeat-readout-label-repair-preflight-once-20260922
